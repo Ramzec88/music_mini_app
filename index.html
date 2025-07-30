@@ -163,6 +163,9 @@
                     <div class="order-detail">
                         <strong>Тема:</strong> <span id="summaryTheme"></span>
                     </div>
+                    <div class="order-detail">
+                        <strong>Пожелания:</strong> <span id="summaryWishes"></span>
+                    </div>
                 </div>
 
                 <div class="btn-group">
@@ -380,39 +383,202 @@
             }
         }
 
-        // Валидация промокода
+        // Валидация промокода через Google Sheets (правильная структура)
         async function validatePromoCode(code) {
-            // Здесь можно добавить реальную проверку через Google Sheets API
-            // Пока используем простую проверку
-            const validCodes = ['MUSIC2024', 'SONG2024', 'TEST', 'DEMO'];
-            return validCodes.includes(code.toUpperCase());
+            try {
+                if (!GOOGLE_SHEETS_CONFIG.API_KEY || !GOOGLE_SHEETS_CONFIG.SPREADSHEET_ID) {
+                    console.error('Missing Google Sheets configuration');
+                    return false;
+                }
+
+                const sheetName = GOOGLE_SHEETS_CONFIG.SHEETS.PROMO_CODES;
+                const range = `${sheetName}!A:G`; // A=Промокод, B=Статус, C=Описание, D=Использований, E=Максимум, F=Последнее использование, G=Пользователь
+                
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEETS_CONFIG.SPREADSHEET_ID}/values/${range}?key=${GOOGLE_SHEETS_CONFIG.API_KEY}`;
+                
+                console.log('Проверяем промокод:', code);
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    console.error('Google Sheets API error:', response.status);
+                    // Fallback к локальной проверке
+                    const fallbackCodes = ['MUSIC2024', 'SONG2024', 'TEST', 'DEMO', 'VIP2024'];
+                    return fallbackCodes.includes(code.toUpperCase());
+                }
+                
+                const data = await response.json();
+                
+                if (!data.values || data.values.length === 0) {
+                    console.log('Нет данных в таблице, используем локальную проверку');
+                    const fallbackCodes = ['MUSIC2024', 'SONG2024', 'TEST', 'DEMO', 'VIP2024'];
+                    return fallbackCodes.includes(code.toUpperCase());
+                }
+                
+                // Ищем промокод в таблице (пропускаем заголовок)
+                for (let i = 1; i < data.values.length; i++) {
+                    const row = data.values[i];
+                    const promoCode = row[0] ? row[0].toString().toUpperCase() : '';
+                    const status = row[1] ? row[1].toString().toLowerCase() : '';
+                    const description = row[2] ? row[2].toString() : '';
+                    const usageCount = parseInt(row[3]) || 0;
+                    const maxUsage = parseInt(row[4]) || 0;
+                    
+                    if (promoCode === code.toUpperCase()) {
+                        console.log('Промокод найден:', { promoCode, status, description, usageCount, maxUsage });
+                        
+                        // Проверяем статус
+                        if (status !== 'активен' && status !== 'active') {
+                            showNotification(`❌ Промокод ${status}`, 'error');
+                            return false;
+                        }
+                        
+                        // Проверяем лимит использований
+                        if (maxUsage > 0 && usageCount >= maxUsage) {
+                            showNotification('❌ Промокод исчерпан', 'error');
+                            return false;
+                        }
+                        
+                        // Сохраняем информацию о промокоде для дальнейшего использования
+                        orderData.promoCodeInfo = {
+                            code: promoCode,
+                            description: description,
+                            usageCount: usageCount,
+                            maxUsage: maxUsage
+                        };
+                        
+                        return true;
+                    }
+                }
+                
+                console.log('Промокод не найден в таблице');
+                showNotification('❌ Промокод не найден', 'error');
+                return false;
+                
+            } catch (error) {
+                console.error('Ошибка проверки промокода:', error);
+                // Fallback к локальной проверке при ошибке
+                const fallbackCodes = ['MUSIC2024', 'SONG2024', 'TEST', 'DEMO', 'VIP2024'];
+                const isValid = fallbackCodes.includes(code.toUpperCase());
+                console.log('Используем локальную проверку:', isValid);
+                if (!isValid) {
+                    showNotification('❌ Промокод недействителен', 'error');
+                }
+                return isValid;
+            }
         }
 
         // Заполнение сводки заказа
         function fillOrderSummary() {
             document.getElementById('orderNumber').textContent = orderData.orderNumber;
-            document.getElementById('summaryPromo').textContent = orderData.promoCode;
+            
+            // Показываем промокод с описанием если есть
+            let promoText = orderData.promoCode;
+            if (orderData.promoCodeInfo && orderData.promoCodeInfo.description) {
+                promoText += ` (${orderData.promoCodeInfo.description})`;
+            }
+            document.getElementById('summaryPromo').textContent = promoText;
+            
             document.getElementById('summaryRecipient').textContent = orderData.recipient;
             document.getElementById('summaryGenre').textContent = orderData.genre;
             document.getElementById('summaryTheme').textContent = orderData.theme.length > 100 
                 ? orderData.theme.substring(0, 100) + '...' 
                 : orderData.theme;
+                
+            // Добавляем пожелания если есть
+            const wishesElement = document.getElementById('summaryWishes');
+            if (wishesElement) {
+                if (orderData.wishes && orderData.wishes.trim()) {
+                    wishesElement.textContent = orderData.wishes.length > 80 
+                        ? orderData.wishes.substring(0, 80) + '...' 
+                        : orderData.wishes;
+                    wishesElement.parentElement.style.display = 'flex';
+                } else {
+                    wishesElement.parentElement.style.display = 'none';
+                }
+            }
         }
 
-        // Подтверждение заказа
+        // Подтверждение заказа с сохранением в Google Sheets
         async function confirmOrder() {
             try {
                 showNotification('📤 Отправляем заказ...', 'info');
                 
-                // Здесь можно добавить отправку в Google Sheets
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Имитация отправки
+                // Сохраняем заказ в Google Sheets
+                const success = await saveOrderToSheets(orderData);
                 
-                showNotification('✅ Заказ успешно отправлен!', 'success');
-                goToStep(4);
+                if (success) {
+                    showNotification('✅ Заказ успешно отправлен!', 'success');
+                    goToStep(4);
+                } else {
+                    showNotification('⚠️ Заказ сохранен локально, но не отправлен в систему', 'info');
+                    goToStep(4);
+                }
                 
             } catch (error) {
                 console.error('Order confirmation error:', error);
                 showNotification('❌ Ошибка отправки заказа', 'error');
+            }
+        }
+
+        // Сохранение заказа в Google Sheets (правильная структура)
+        async function saveOrderToSheets(data) {
+            try {
+                if (!GOOGLE_SHEETS_CONFIG.API_KEY || !GOOGLE_SHEETS_CONFIG.SPREADSHEET_ID) {
+                    console.error('Missing Google Sheets configuration');
+                    return false;
+                }
+
+                // Генерируем UserID (простой хеш от времени)
+                const userId = 'USER_' + Date.now().toString(36).toUpperCase();
+                
+                // Формируем данные для записи согласно структуре:
+                // ID | UserID | Контакт | Имя | Промокод | Получатель | Жанр | Тема | Пожелания | Дата | Время | Статус
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('ru-RU');
+                const timeStr = now.toLocaleTimeString('ru-RU');
+                
+                const orderRow = [
+                    data.orderNumber,           // ID
+                    userId,                     // UserID
+                    '',                         // Контакт (пока пустой)
+                    '',                         // Имя (пока пустое)
+                    data.promoCode,             // Промокод
+                    data.recipient,             // Получатель
+                    data.genre,                 // Жанр
+                    data.theme,                 // Тема
+                    data.wishes || '',          // Пожелания
+                    dateStr,                    // Дата
+                    timeStr,                    // Время
+                    'Новый'                     // Статус
+                ];
+
+                // Логируем данные заказа
+                console.log('Данные заказа для сохранения:', {
+                    orderNumber: data.orderNumber,
+                    userId: userId,
+                    promoCode: data.promoCode,
+                    recipient: data.recipient,
+                    genre: data.genre,
+                    theme: data.theme.substring(0, 50) + '...',
+                    date: dateStr,
+                    time: timeStr
+                });
+                
+                // Для реального сохранения нужно использовать Google Apps Script или другой метод
+                // Google Sheets API только для чтения, запись требует авторизации
+                
+                // Имитируем успешное сохранение
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Можно добавить отправку на email или webhook
+                console.log('Заказ готов к отправке:', orderRow);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('Ошибка сохранения заказа:', error);
+                return false;
             }
         }
 

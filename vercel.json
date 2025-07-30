@@ -1,7 +1,8 @@
 {
   "functions": {
     "api/env.js": {
-      "runtime": "edge"
+      "runtime": "edge",
+      "entrypoint": "api/env.js"
     }
   }
 }

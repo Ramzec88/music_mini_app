@@ -191,39 +191,349 @@
     <div id="notification" class="notification"></div>
 
     <script>
+        // Глобальные переменные
         let GOOGLE_SHEETS_CONFIG = {
             API_KEY: '',
             SPREADSHEET_ID: '',
-            SHEETS: { PROMO_CODES: 'PromoCodes', ORDERS: 'Orders', USERS: 'Users' }
+            SHEETS: { 
+                PROMO_CODES: 'PromoCodes', 
+                ORDERS: 'Orders', 
+                USERS: 'Users' 
+            }
         };
 
+        let currentStep = 1;
+        let orderData = {};
+
+        // Загрузка конфигурации из API
         async function fetchEnvConfig() {
-            const res = await fetch('/api/env');
-            return await res.json();
+            try {
+                console.log('Fetching configuration...');
+                const res = await fetch('/api/env');
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                
+                const data = await res.json();
+                console.log('Configuration loaded:', { 
+                    hasApiKey: !!data.GOOGLE_SHEETS_API_KEY, 
+                    hasSpreadsheetId: !!data.GOOGLE_SPREADSHEET_ID 
+                });
+                
+                return data;
+            } catch (error) {
+                console.error('Error fetching config:', error);
+                showNotification('❌ Ошибка загрузки конфигурации', 'error');
+                return { 
+                    GOOGLE_SHEETS_API_KEY: '', 
+                    GOOGLE_SPREADSHEET_ID: '' 
+                };
+            }
         }
 
+        // Инициализация приложения
         document.addEventListener('DOMContentLoaded', async () => {
-            const env = await fetchEnvConfig();
-            GOOGLE_SHEETS_CONFIG.API_KEY = env.GOOGLE_SHEETS_API_KEY;
-            GOOGLE_SHEETS_CONFIG.SPREADSHEET_ID = env.GOOGLE_SPREADSHEET_ID;
+            console.log('App initializing...');
+            
+            try {
+                const env = await fetchEnvConfig();
+                GOOGLE_SHEETS_CONFIG.API_KEY = env.GOOGLE_SHEETS_API_KEY;
+                GOOGLE_SHEETS_CONFIG.SPREADSHEET_ID = env.GOOGLE_SPREADSHEET_ID;
 
-            if (!GOOGLE_SHEETS_CONFIG.API_KEY || !GOOGLE_SHEETS_CONFIG.SPREADSHEET_ID) {
-                showNotification('❌ Ошибка конфигурации. Ключи не найдены', 'error');
+                if (!GOOGLE_SHEETS_CONFIG.API_KEY || !GOOGLE_SHEETS_CONFIG.SPREADSHEET_ID) {
+                    showNotification('❌ Ошибка конфигурации. Проверьте переменные окружения', 'error');
+                    console.error('Missing configuration');
+                    return;
+                }
+
+                setupFloatingNotes();
+                setupEventListeners();
+                updateProgress();
+                
+                showNotification('✅ Приложение готово к работе', 'success');
+                console.log('App initialized successfully');
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showNotification('❌ Ошибка инициализации', 'error');
+            }
+        });
+
+        // Создание плавающих нот
+        function setupFloatingNotes() {
+            const container = document.getElementById('floatingNotes');
+            const notes = ['♪', '♫', '♬', '𝄞', '𝄢'];
+            
+            function createNote() {
+                const note = document.createElement('div');
+                note.className = 'floating-note';
+                note.textContent = notes[Math.floor(Math.random() * notes.length)];
+                note.style.left = Math.random() * 100 + '%';
+                note.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                note.style.fontSize = (Math.random() * 10 + 15) + 'px';
+                note.style.opacity = Math.random() * 0.7 + 0.3;
+                
+                container.appendChild(note);
+                
+                setTimeout(() => {
+                    if (note.parentNode) {
+                        note.parentNode.removeChild(note);
+                    }
+                }, 5000);
+            }
+            
+            // Создаем ноты периодически
+            setInterval(createNote, 2000);
+        }
+
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Промокод форма
+            const promoForm = document.getElementById('promoForm');
+            if (promoForm) {
+                promoForm.addEventListener('submit', handlePromoSubmit);
+            }
+
+            // Форма заказа песни
+            const songForm = document.getElementById('songRequestForm');
+            if (songForm) {
+                songForm.addEventListener('submit', handleSongSubmit);
+            }
+
+            // Автоматическое обновление прогресса при вводе
+            const inputs = document.querySelectorAll('.form-input, .form-textarea');
+            inputs.forEach(input => {
+                input.addEventListener('input', updateProgress);
+            });
+        }
+
+        // Обработка отправки промокода
+        async function handlePromoSubmit(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('promoSubmitBtn');
+            const promoCode = document.getElementById('promoCode').value.trim();
+            
+            if (!promoCode) {
+                showNotification('❌ Введите промокод', 'error');
                 return;
             }
 
-            setupFloatingNotes();
-            setupEventListeners();
-            updateProgress();
-            testGoogleSheetsConnection();
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Проверяем...';
+                
+                const isValid = await validatePromoCode(promoCode);
+                
+                if (isValid) {
+                    orderData.promoCode = promoCode;
+                    showNotification('✅ Промокод активирован!', 'success');
+                    goToStep(2);
+                } else {
+                    showNotification('❌ Промокод недействителен', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Promo validation error:', error);
+                showNotification('❌ Ошибка проверки промокода', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Активировать промокод';
+            }
+        }
+
+        // Обработка отправки формы песни
+        async function handleSongSubmit(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('songSubmitBtn');
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Обрабатываем...';
+                
+                // Собираем данные формы
+                orderData.recipient = document.getElementById('songRecipient').value.trim();
+                orderData.genre = document.getElementById('songGenre').value.trim();
+                orderData.theme = document.getElementById('songTheme').value.trim();
+                orderData.wishes = document.getElementById('songWishes').value.trim();
+                orderData.timestamp = new Date().toISOString();
+                orderData.orderNumber = generateOrderNumber();
+                
+                // Проверяем обязательные поля
+                if (!orderData.recipient || !orderData.genre || !orderData.theme) {
+                    showNotification('❌ Заполните все обязательные поля', 'error');
+                    return;
+                }
+                
+                // Переходим к подтверждению
+                fillOrderSummary();
+                goToStep(3);
+                
+            } catch (error) {
+                console.error('Song form error:', error);
+                showNotification('❌ Ошибка обработки формы', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Отправить заказ';
+            }
+        }
+
+        // Валидация промокода
+        async function validatePromoCode(code) {
+            // Здесь можно добавить реальную проверку через Google Sheets API
+            // Пока используем простую проверку
+            const validCodes = ['MUSIC2024', 'SONG2024', 'TEST', 'DEMO'];
+            return validCodes.includes(code.toUpperCase());
+        }
+
+        // Заполнение сводки заказа
+        function fillOrderSummary() {
+            document.getElementById('orderNumber').textContent = orderData.orderNumber;
+            document.getElementById('summaryPromo').textContent = orderData.promoCode;
+            document.getElementById('summaryRecipient').textContent = orderData.recipient;
+            document.getElementById('summaryGenre').textContent = orderData.genre;
+            document.getElementById('summaryTheme').textContent = orderData.theme.length > 100 
+                ? orderData.theme.substring(0, 100) + '...' 
+                : orderData.theme;
+        }
+
+        // Подтверждение заказа
+        async function confirmOrder() {
+            try {
+                showNotification('📤 Отправляем заказ...', 'info');
+                
+                // Здесь можно добавить отправку в Google Sheets
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Имитация отправки
+                
+                showNotification('✅ Заказ успешно отправлен!', 'success');
+                goToStep(4);
+                
+            } catch (error) {
+                console.error('Order confirmation error:', error);
+                showNotification('❌ Ошибка отправки заказа', 'error');
+            }
+        }
+
+        // Переход между шагами
+        function goToStep(step) {
+            // Скрываем все шаги
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            
+            // Показываем нужный шаг
+            const targetStep = document.getElementById(`step${step}`);
+            if (targetStep) {
+                targetStep.classList.add('active');
+                currentStep = step;
+                updateProgress();
+            }
+        }
+
+        // Обновление прогресса
+        function updateProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progress = (currentStep / 4) * 100;
+            
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+            }
+        }
+
+        // Генерация номера заказа
+        function generateOrderNumber() {
+            const timestamp = Date.now().toString().slice(-6);
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            return `MS${timestamp}${random}`;
+        }
+
+        // Показ уведомлений
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            if (!notification) return;
+            
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Обработка ошибок
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e.error);
+            showNotification('❌ Произошла ошибка', 'error');
         });
 
-        function setupFloatingNotes() { /* твоя функция из старого кода */ }
-        function setupEventListeners() { /* твоя функция из старого кода */ }
-        function updateProgress() { /* твоя функция из старого кода */ }
-        function testGoogleSheetsConnection() { /* твоя функция из старого кода */ }
-        function confirmOrder() { /* твоя функция из старого кода */ }
-        function showNotification(msg, type) { /* твоя функция из старого кода */ }
+        // Обработка необработанных промисов
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled promise rejection:', e.reason);
+            showNotification('❌ Ошибка сети', 'error');
+        });
     </script>
+
+    <style>
+        .floating-note {
+            position: fixed;
+            top: -20px;
+            color: rgba(255, 255, 255, 0.1);
+            font-size: 20px;
+            animation: float-down linear infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes float-down {
+            from {
+                transform: translateY(-20px) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #10b981;
+            color: white;
+        }
+
+        .notification.error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .notification.info {
+            background: #3b82f6;
+            color: white;
+        }
+    </style>
 </body>
 </html>

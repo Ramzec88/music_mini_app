@@ -1,18 +1,19 @@
-export default async function handler(request) {
-  // Проверяем метод запроса
-  if (request.method !== 'GET') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      {
-        status: 405,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        }
-      }
-    );
+export default function handler(req, res) {
+  // Устанавливаем CORS заголовки
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Обрабатываем OPTIONS запрос
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  // Разрешаем только GET запросы
+  if (req.method !== 'GET') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
   }
 
   try {
@@ -26,55 +27,28 @@ export default async function handler(request) {
         hasSpreadsheetId: !!spreadsheetId
       });
       
-      return new Response(
-        JSON.stringify({ 
-          error: 'Configuration error: Missing environment variables',
-          GOOGLE_SHEETS_API_KEY: '',
-          GOOGLE_SPREADSHEET_ID: ''
-        }),
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          }
-        }
-      );
+      res.status(500).json({ 
+        error: 'Configuration error: Missing environment variables',
+        GOOGLE_SHEETS_API_KEY: '',
+        GOOGLE_SPREADSHEET_ID: ''
+      });
+      return;
     }
 
-    return new Response(
-      JSON.stringify({
-        GOOGLE_SHEETS_API_KEY: apiKey,
-        GOOGLE_SPREADSHEET_ID: spreadsheetId,
-        status: 'success'
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        }
-      }
-    );
+    // Возвращаем конфигурацию
+    res.status(200).json({
+      GOOGLE_SHEETS_API_KEY: apiKey,
+      GOOGLE_SPREADSHEET_ID: spreadsheetId,
+      status: 'success'
+    });
 
   } catch (error) {
     console.error('API Error:', error);
     
-    return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        GOOGLE_SHEETS_API_KEY: '',
-        GOOGLE_SPREADSHEET_ID: ''
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      }
-    );
+    res.status(500).json({ 
+      error: 'Internal server error',
+      GOOGLE_SHEETS_API_KEY: '',
+      GOOGLE_SPREADSHEET_ID: ''
+    });
   }
 }

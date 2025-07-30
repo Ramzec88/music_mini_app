@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Тест Google Sheets API</title>
+</head>
+<body>
+    <h1>Тест подключения к Google Sheets API</h1>
+    <div id="results"></div>
+    <button onclick="testAPI()">Проверить API</button>
+    <button onclick="testSheets()">Проверить Google Sheets</button>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.style.padding = '10px';
+            div.style.margin = '5px 0';
+            div.style.borderRadius = '5px';
+            div.style.backgroundColor = type === 'error' ? '#ffe6e6' : type === 'success' ? '#e6ffe6' : '#e6f3ff';
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        async function testAPI() {
+            results.innerHTML = '';
+            log('🔍 Проверяем API endpoint...');
+            
+            try {
+                const res = await fetch('/api/env');
+                log(`📡 Response status: ${res.status}`);
+                
+                if (!res.ok) {
+                    log(`❌ API Error: ${res.status} ${res.statusText}`, 'error');
+                    return;
+                }
+                
+                const data = await res.json();
+                log('✅ API Response получен', 'success');
+                log(`🔑 API Key присутствует: ${!!data.GOOGLE_SHEETS_API_KEY ? 'ДА' : 'НЕТ'}`);
+                log(`📊 Spreadsheet ID присутствует: ${!!data.GOOGLE_SPREADSHEET_ID ? 'ДА' : 'НЕТ'}`);
+                
+                if (data.GOOGLE_SHEETS_API_KEY) {
+                    log(`🔑 API Key: ${data.GOOGLE_SHEETS_API_KEY.substring(0, 20)}...`);
+                }
+                if (data.GOOGLE_SPREADSHEET_ID) {
+                    log(`📊 Spreadsheet ID: ${data.GOOGLE_SPREADSHEET_ID}`);
+                }
+                
+                // Сохраняем для следующего теста
+                window.GOOGLE_CONFIG = data;
+                
+            } catch (error) {
+                log(`❌ Network Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testSheets() {
+            if (!window.GOOGLE_CONFIG) {
+                log('❌ Сначала запустите тест API', 'error');
+                return;
+            }
+            
+            const { GOOGLE_SHEETS_API_KEY, GOOGLE_SPREADSHEET_ID } = window.GOOGLE_CONFIG;
+            
+            if (!GOOGLE_SHEETS_API_KEY || !GOOGLE_SPREADSHEET_ID) {
+                log('❌ Отсутствуют необходимые параметры', 'error');
+                return;
+            }
+            
+            log('🔍 Проверяем доступ к Google Sheets...');
+            
+            try {
+                // Попробуем получить метаданные таблицы
+                const metadataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SPREADSHEET_ID}?key=${GOOGLE_SHEETS_API_KEY}`;
+                
+                log('📡 Отправляем запрос к Google Sheets API...');
+                const response = await fetch(metadataUrl);
+                
+                log(`📡 Google API Response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`❌ Google API Error: ${response.status} - ${errorText}`, 'error');
+                    
+                    if (response.status === 403) {
+                        log('💡 Возможные причины ошибки 403:', 'info');
+                        log('- API Key недействителен');
+                        log('- Google Sheets API не включен в проекте');
+                        log('- Превышена квота запросов');
+                    } else if (response.status === 404) {
+                        log('💡 Ошибка 404: Таблица не найдена или недоступна', 'info');
+                    }
+                    return;
+                }
+                
+                const data = await response.json();
+                log('✅ Успешно подключились к Google Sheets!', 'success');
+                log(`📊 Название таблицы: ${data.properties.title}`);
+                log(`📄 Количество листов: ${data.sheets.length}`);
+                
+                data.sheets.forEach((sheet, index) => {
+                    log(`📝 Лист ${index + 1}: ${sheet.properties.title}`);
+                });
+                
+                // Проверим, есть ли нужные листы
+                const requiredSheets = ['PromoCodes', 'Orders', 'Users'];
+                const existingSheets = data.sheets.map(s => s.properties.title);
+                
+                requiredSheets.forEach(sheetName => {
+                    if (existingSheets.includes(sheetName)) {
+                        log(`✅ Лист "${sheetName}" найден`, 'success');
+                    } else {
+                        log(`❌ Лист "${sheetName}" отсутствует`, 'error');
+                    }
+                });
+                
+            } catch (error) {
+                log(`❌ Network Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Автоматически запускаем тест при загрузке
+        window.addEventListener('load', testAPI);
+    </script>
+</body>
+</html>

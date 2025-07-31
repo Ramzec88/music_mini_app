@@ -1,5 +1,4 @@
-// api/sheets.js - Улучшенная версия с аутентификацией через Сервисный аккаунт
-// и декодированием приватного ключа из Base64
+// api/sheets.js - Финальная версия с надежной обработкой приватного ключа
 // Для работы требуется установить пакеты: google-auth-library и googleapis
 // npm install google-auth-library googleapis
 
@@ -28,20 +27,20 @@ export default async function handler(req, res) {
     
     // Получаем переменные окружения для СЕРВИСНОГО АККАУНТА
     const CLIENT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    // Приватный ключ теперь ожидается в Base64
-    const PRIVATE_KEY_BASE64 = process.env.GOOGLE_PRIVATE_KEY_BASE64; // Имя переменной изменено
+    // Приватный ключ теперь ожидается как строка с экранированными \\n
+    const PRIVATE_KEY_ESCAPED = process.env.GOOGLE_PRIVATE_KEY_BASE64; // Используем то же имя переменной
     const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
     
     console.log('📝 API Request:', { 
       action, 
       sheetName, 
       hasClientEmail: !!CLIENT_EMAIL, 
-      hasPrivateKeyBase64: !!PRIVATE_KEY_BASE64, // Проверяем новую переменную
+      hasPrivateKeyEscaped: !!PRIVATE_KEY_ESCAPED, // Проверяем наличие переменной
       hasSpreadsheetId: !!SPREADSHEET_ID,
       timestamp: new Date().toISOString()
     });
     
-    if (!CLIENT_EMAIL || !PRIVATE_KEY_BASE64 || !SPREADSHEET_ID) {
+    if (!CLIENT_EMAIL || !PRIVATE_KEY_ESCAPED || !SPREADSHEET_ID) {
       console.error('❌ Missing environment variables for Service Account');
       return res.status(500).json({ 
         error: 'Server configuration error',
@@ -50,12 +49,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // Декодируем приватный ключ из Base64
-    // Важно: ключ должен быть в формате PEM (с BEGIN/END PRIVATE KEY и переносами строк)
-    // Поэтому добавляем их обратно после декодирования
-    const decodedPrivateKey = Buffer.from(PRIVATE_KEY_BASE64, 'base64').toString('utf8');
-    const fullPrivateKey = `-----BEGIN PRIVATE KEY-----\n${decodedPrivateKey}\n-----END PRIVATE KEY-----\n`;
-
+    // Восстанавливаем приватный ключ из экранированной строки
+    // Заменяем \\n на реальные \n
+    const fullPrivateKey = PRIVATE_KEY_ESCAPED.replace(/\\n/g, '\n');
 
     // Инициализация аутентификации через Сервисный аккаунт
     const auth = new GoogleAuth({

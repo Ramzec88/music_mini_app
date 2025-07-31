@@ -1,9 +1,9 @@
 import { google } from 'googleapis';
 
-// Парсим JSON из GOOGLE_PRIVATE_KEY
+// Parse JSON from GOOGLE_PRIVATE_KEY
 const credentials = JSON.parse(process.env.GOOGLE_PRIVATE_KEY);
 const privateKey = credentials.private_key.replace(/\\n/g, '\n');
-const clientEmail = credentials.client_email;
+const clientEmail = credentials.email; // Use 'email' field instead of 'client_email' for some environments
 
 const auth = new google.auth.JWT(
   clientEmail,
@@ -15,6 +15,7 @@ const auth = new google.auth.JWT(
 const sheets = google.sheets({ version: 'v4', auth });
 
 export default async function handler(req, res) {
+  // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -29,10 +30,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { action, sheetName, range, values, searchValue, updateRange, updateValue, cell, newValue } = req.body;
+    const { action, sheetName, range, values, searchValue, updateRange, updateValue, cell, newValue, rowIndex, updates } = req.body;
     
     console.log('📝 API Request:', { 
-      action, sheetName, range, searchValue, updateRange, cell, newValue,
+      action, sheetName, range, values, searchValue, updateRange, updateValue, cell, newValue, rowIndex, updates,
       timestamp: new Date().toISOString()
     });
 
@@ -73,7 +74,6 @@ export default async function handler(req, res) {
         if (!sheetName || searchValue === undefined) { 
           return res.status(400).json({ error: 'Missing required parameters: sheetName or searchValue for find action' });
         }
-        // ИСПРАВЛЕНО: Теперь считываем ВЕСЬ лист для поиска
         const searchRange = sheetName; 
 
         try {
@@ -84,7 +84,6 @@ export default async function handler(req, res) {
           
           const rows = response.data.values || [];
           
-          // НормализуемsearchValue и ищем совпадение
           const normalizedSearchValue = String(searchValue).trim().toLowerCase();
           const foundRow = rows.find((row) => 
             row[0] && String(row[0]).trim().toLowerCase() === normalizedSearchValue
@@ -108,16 +107,18 @@ export default async function handler(req, res) {
         if (!sheetName || !values) {
           return res.status(400).json({ error: 'Missing required parameters: sheetName or values for append action' });
         }
-        const appendValues = Array.isArray(values) ? values : values.split(',').map(s => s.trim());
+        
+        // Ensure values is an array of arrays, as required by the Sheets API
+        const appendValues = Array.isArray(values) && Array.isArray(values[0]) ? values : [values];
 
         try {
           const response = await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
-            range: sheetName,
+            range: sheetName, // Use sheetName directly for appending to the end
             valueInputOption: 'RAW',
             insertDataOption: 'INSERT_ROWS',
             resource: {
-              values: [appendValues],
+              values: appendValues,
             },
           });
           console.log('✅ APPEND response successful:', response.data);
@@ -148,6 +149,44 @@ export default async function handler(req, res) {
         } catch (error) {
           console.error('UPDATE Error:', error);
           return handleGoogleApiError(error, res);
+        }
+      }
+
+      case 'updateRow': {
+        if (!sheetName || !rowIndex || !updates) {
+            return res.status(400).json({ error: 'Missing required parameters: sheetName, rowIndex, or updates for updateRow action' });
+        }
+        try {
+            // Fetch the existing row to update specific cells
+            const existingRowResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId: SPREADSHEET_ID,
+                range: `${sheetName}!A${rowIndex}:Z${rowIndex}`,
+            });
+            
+            let existingRow = existingRowResponse.data.values ? existingRowResponse.data.values[0] : [];
+            
+            // Apply updates
+            for (const colIndex in updates) {
+                if (updates.hasOwnProperty(colIndex)) {
+                    existingRow[colIndex] = updates[colIndex];
+                }
+            }
+
+            const updateRange = `${sheetName}!A${rowIndex}`;
+            const response = await sheets.spreadsheets.values.update({
+                spreadsheetId: SPREADSHEET_ID,
+                range: updateRange,
+                valueInputOption: 'RAW',
+                resource: {
+                    values: [existingRow],
+                },
+            });
+            console.log('✅ UPDATE ROW response successful:', response.data);
+            return res.status(200).json(response.data);
+
+        } catch (error) {
+            console.error('UPDATE ROW Error:', error);
+            return handleGoogleApiError(error, res);
         }
       }
 

@@ -3,778 +3,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧪 Тест Google Sheets API</title>
+    <title>🔧 Простой тест Google Sheets</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1000px;
+            font-family: Arial, sans-serif;
+            max-width: 800px;
             margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
         }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-
-        .test-panel {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
+        .container {
+            background: white;
             padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-
-        .test-section {
+        h1 {
+            color: #333;
+            text-align: center;
             margin-bottom: 30px;
-            padding: 20px;
-            border: 2px solid #e2e8f0;
-            border-radius: 15px;
-            background: #f7fafc;
         }
-
-        .test-section h3 {
-            color: #4a5568;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 12px 20px;
+        .test-button {
+            background: #007bff;
+            color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
+            padding: 15px 30px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 5px;
+            font-size: 16px;
+            margin: 10px;
+            display: block;
+            width: 100%;
         }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
+        .test-button:hover {
+            background: #0056b3;
         }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-success {
-            background: #48bb78;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #f56565;
-            color: white;
-        }
-
-        .btn-warning {
-            background: #ed8936;
-            color: white;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
+        .test-button:disabled {
+            background: #ccc;
             cursor: not-allowed;
-            transform: none !important;
         }
-
-        .log-container {
-            background: #1a202c;
-            color: #e2e8f0;
-            border-radius: 10px;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
             max-height: 400px;
             overflow-y: auto;
-            white-space: pre-wrap;
-            line-height: 1.4;
         }
-
-        .log-entry {
-            margin-bottom: 5px;
-            padding: 3px 0;
-        }
-
-        .log-success {
-            color: #48bb78;
-        }
-
-        .log-error {
-            color: #f56565;
-        }
-
-        .log-warning {
-            color: #ed8936;
-        }
-
-        .log-info {
-            color: #4299e1;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #4a5568;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 10px 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .status-indicator {
-            display: inline-block;
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        .status {
             padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-
-        .status-success {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-
-        .status-error {
-            background: #fed7d7;
-            color: #742a2a;
-        }
-
-        .status-pending {
-            background: #fef5e7;
-            color: #744210;
-        }
-
-        .config-section {
-            background: #fff5f5;
-            border: 2px solid #feb2b2;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .config-section h3 {
-            color: #c53030;
-            margin-bottom: 15px;
-        }
-
-        .loading {
+            border-radius: 3px;
+            font-weight: bold;
+            margin: 5px 0;
             display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 8px;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        .data-table th,
-        .data-table td {
-            border: 1px solid #e2e8f0;
-            padding: 8px 12px;
-            text-align: left;
-        }
-
-        .data-table th {
-            background: #4a5568;
-            color: white;
-            font-weight: 600;
-        }
-
-        .data-table tr:nth-child(even) {
-            background: #f7fafc;
-        }
+        .status-success { background: #d4edda; color: #155724; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        .status-pending { background: #fff3cd; color: #856404; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🧪 Диагностика Google Sheets API</h1>
-            <p>Тестирование подключения и функциональности</p>
+        <h1>🔧 Диагностика Google Sheets API</h1>
+        
+        <div id="status">
+            <div class="status status-pending">⏳ Готов к тестированию</div>
         </div>
 
-        <!-- Configuration Check -->
-        <div class="config-section">
-            <h3>⚙️ Проверка конфигурации</h3>
-            <div id="configCheck">
-                <p>Проверяем переменные окружения и API доступность...</p>
-            </div>
-        </div>
+        <button class="test-button" onclick="runBasicTest()">
+            🚀 Запустить базовую диагностику
+        </button>
 
-        <!-- Test Controls -->
-        <div class="test-panel">
-            <h2>🎯 Тестовые операции</h2>
-            
-            <div class="grid">
-                <!-- Basic Tests -->
-                <div class="test-section">
-                    <h3>🔍 Базовые тесты</h3>
-                    <button class="btn btn-primary" onclick="testAPIAvailability()">
-                        Тест доступности API
-                    </button>
-                    <button class="btn btn-primary" onclick="testEnvironmentVars()">
-                        Проверить переменные окружения
-                    </button>
-                    <button class="btn btn-primary" onclick="testNetworkConnectivity()">
-                        Тест сетевого подключения
-                    </button>
-                </div>
+        <button class="test-button" onclick="testAPIEndpoint()">
+            📡 Проверить API функцию
+        </button>
 
-                <!-- Read Tests -->
-                <div class="test-section">
-                    <h3>📖 Тесты чтения</h3>
-                    <button class="btn btn-success" onclick="testReadPromoCodes()">
-                        Читать промокоды
-                    </button>
-                    <button class="btn btn-success" onclick="testReadOrders()">
-                        Читать заказы
-                    </button>
-                    <button class="btn btn-success" onclick="testReadUsers()">
-                        Читать пользователей
-                    </button>
-                </div>
+        <button class="test-button" onclick="testReadData()">
+            📖 Тест чтения данных
+        </button>
 
-                <!-- Write Tests -->
-                <div class="test-section">
-                    <h3>✏️ Тесты записи</h3>
-                    <button class="btn btn-warning" onclick="testWriteUser()">
-                        Создать тестового пользователя
-                    </button>
-                    <button class="btn btn-warning" onclick="testWriteOrder()">
-                        Создать тестовый заказ
-                    </button>
-                    <button class="btn btn-warning" onclick="testUpdateCell()">
-                        Обновить ячейку
-                    </button>
-                </div>
+        <button class="test-button" onclick="testWriteData()">
+            ✏️ Тест записи данных
+        </button>
 
-                <!-- Advanced Tests -->
-                <div class="test-section">
-                    <h3>🔬 Продвинутые тесты</h3>
-                    <div class="form-group">
-                        <label class="form-label">Тестовый промокод:</label>
-                        <input type="text" class="form-input" id="testPromoCode" value="TEST123" placeholder="Введите промокод для тестирования">
-                    </div>
-                    <button class="btn btn-primary" onclick="testPromoCodeValidation()">
-                        Валидация промокода
-                    </button>
-                    <button class="btn btn-danger" onclick="testErrorHandling()">
-                        Тест обработки ошибок
-                    </button>
-                </div>
-            </div>
+        <button class="test-button" onclick="clearLog()">
+            🗑️ Очистить лог
+        </button>
 
-            <!-- Full Integration Test -->
-            <div class="test-section" style="text-align: center; margin-top: 30px;">
-                <h3>🚀 Полный интеграционный тест</h3>
-                <button class="btn btn-primary" onclick="runFullTest()" style="font-size: 1.2rem; padding: 15px 30px;">
-                    Запустить полное тестирование
-                </button>
-            </div>
-        </div>
-
-        <!-- Results -->
-        <div class="test-panel">
-            <h2>📊 Результаты тестирования</h2>
-            <div id="testResults">
-                <p>Результаты тестов будут отображаться здесь...</p>
-            </div>
-        </div>
-
-        <!-- Logs -->
-        <div class="test-panel">
-            <h2>📝 Логи</h2>
-            <button class="btn btn-danger" onclick="clearLogs()" style="margin-bottom: 15px;">
-                Очистить логи
-            </button>
-            <div id="logContainer" class="log-container">
-                <div class="log-entry">🚀 Система диагностики готова к работе</div>
-            </div>
-        </div>
+        <div class="log" id="log">Лог диагностики:\n</div>
     </div>
 
     <script>
-        // Test API Class
-        class GoogleSheetsTestAPI {
-            constructor() {
-                this.baseUrl = '/api/sheets';
-                this.testResults = {};
-            }
-
-            async makeRequest(action, params) {
-                const startTime = Date.now();
-                
-                try {
-                    logMessage(`📡 Отправка запроса: ${action}`, 'info');
-                    logMessage(`📝 Параметры: ${JSON.stringify(params)}`, 'info');
-                    
-                    const response = await fetch(this.baseUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            action,
-                            ...params
-                        })
-                    });
-
-                    const responseTime = Date.now() - startTime;
-                    logMessage(`⏱️ Время ответа: ${responseTime}ms`, 'info');
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`HTTP ${response.status}: ${errorText}`);
-                    }
-
-                    const data = await response.json();
-                    
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    
-                    logMessage(`✅ Успешный ответ: ${JSON.stringify(data).substring(0, 200)}...`, 'success');
-                    return data;
-                } catch (error) {
-                    logMessage(`❌ Ошибка запроса: ${error.message}`, 'error');
-                    throw error;
-                }
-            }
-
-            async testGet(sheetName, range = '') {
-                return await this.makeRequest('get', { sheetName, range });
-            }
-
-            async testAppend(sheetName, values) {
-                return await this.makeRequest('append', { sheetName, values });
-            }
-
-            async testUpdate(sheetName, range, value) {
-                return await this.makeRequest('update', { 
-                    sheetName, 
-                    updateRange: range, 
-                    updateValue: value 
-                });
-            }
-
-            async testFind(sheetName, searchValue) {
-                return await this.makeRequest('find', { sheetName, searchValue });
-            }
-        }
-
-        const testAPI = new GoogleSheetsTestAPI();
-
-        // Logging functions
-        function logMessage(message, type = 'info') {
-            const logContainer = document.getElementById('logContainer');
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
             const timestamp = new Date().toLocaleTimeString();
-            const logEntry = document.createElement('div');
-            logEntry.className = `log-entry log-${type}`;
-            logEntry.textContent = `[${timestamp}] ${message}`;
-            logContainer.appendChild(logEntry);
-            logContainer.scrollTop = logContainer.scrollHeight;
-            
+            const colorClass = type;
+            logDiv.innerHTML += `<span class="${colorClass}">[${timestamp}] ${message}</span>\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
             console.log(`${type.toUpperCase()}: ${message}`);
         }
 
-        function clearLogs() {
-            document.getElementById('logContainer').innerHTML = '';
-            logMessage('📋 Логи очищены', 'info');
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            const statusClass = `status-${type}`;
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '⏳';
+            statusDiv.innerHTML = `<div class="status ${statusClass}">${icon} ${message}</div>`;
         }
 
-        function updateTestResult(testName, status, details = '') {
-            testAPI.testResults[testName] = { status, details, timestamp: new Date() };
-            updateResultsSummary();
+        function clearLog() {
+            document.getElementById('log').innerHTML = 'Лог диагностики:\n';
+            updateStatus('Лог очищен', 'success');
         }
 
-        function updateResultsSummary() {
-            const resultsContainer = document.getElementById('testResults');
-            const results = testAPI.testResults;
-            
-            if (Object.keys(results).length === 0) {
-                resultsContainer.innerHTML = '<p>Результаты тестов будут отображаться здесь...</p>';
-                return;
-            }
+        async function runBasicTest() {
+            log('🚀 Запуск базовой диагностики...', 'info');
+            updateStatus('Диагностика запущена...', 'pending');
 
-            let html = '<table class="data-table"><thead><tr><th>Тест</th><th>Статус</th><th>Детали</th><th>Время</th></tr></thead><tbody>';
-            
-            for (const [testName, result] of Object.entries(results)) {
-                const statusClass = result.status === 'success' ? 'status-success' : 
-                                  result.status === 'error' ? 'status-error' : 'status-pending';
-                
-                const statusIcon = result.status === 'success' ? '✅' : 
-                                 result.status === 'error' ? '❌' : '⏳';
-                
-                html += `
-                    <tr>
-                        <td>${testName}</td>
-                        <td><span class="status-indicator ${statusClass}">${statusIcon} ${result.status}</span></td>
-                        <td>${result.details}</td>
-                        <td>${result.timestamp.toLocaleTimeString()}</td>
-                    </tr>
-                `;
-            }
-            
-            html += '</tbody></table>';
-            resultsContainer.innerHTML = html;
+            // Тест 1: Проверяем текущий URL
+            log(`🌐 Текущий URL: ${window.location.href}`, 'info');
+            log(`🏠 Домен: ${window.location.hostname}`, 'info');
+
+            // Тест 2: Проверяем доступность API
+            await testAPIEndpoint();
+
+            // Тест 3: Базовый тест чтения
+            await testReadData();
+
+            log('🏁 Базовая диагностика завершена', 'info');
         }
 
-        // Configuration check
-        async function checkConfiguration() {
-            const configDiv = document.getElementById('configCheck');
-            configDiv.innerHTML = '<p>🔍 Проверяем конфигурацию...</p>';
-
+        async function testAPIEndpoint() {
+            log('📡 Проверяем доступность API функции...', 'info');
+            
             try {
-                // Test API endpoint availability
+                // Простой запрос к API
                 const response = await fetch('/api/sheets', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'test' })
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'test'
+                    })
                 });
 
+                log(`📊 Статус ответа: ${response.status}`, 'info');
+                log(`📋 Заголовки: ${JSON.stringify(Object.fromEntries(response.headers))}`, 'info');
+
                 if (response.status === 404) {
-                    configDiv.innerHTML = `
-                        <h4>❌ API функция не найдена</h4>
-                        <p><strong>Проблема:</strong> Файл /api/sheets.js не существует или не задеплоен</p>
-                        <p><strong>Решение:</strong> Создайте файл api/sheets.js в корне проекта и переделайте деплой</p>
-                    `;
+                    log('❌ КРИТИЧЕСКАЯ ОШИБКА: API функция не найдена!', 'error');
+                    log('💡 РЕШЕНИЕ: Создайте файл api/sheets.js в корне проекта', 'warning');
+                    log('📁 Структура должна быть: your-project/api/sheets.js', 'warning');
+                    updateStatus('API функция не найдена', 'error');
+                    return false;
+                }
+
+                const responseText = await response.text();
+                log(`📄 Ответ сервера (первые 200 символов): ${responseText.substring(0, 200)}`, 'info');
+
+                if (response.ok) {
+                    log('✅ API функция доступна', 'success');
+                    updateStatus('API функция работает', 'success');
+                    return true;
+                } else {
+                    log(`⚠️ API отвечает с ошибкой: ${response.status}`, 'warning');
+                    
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        if (errorData.error && errorData.error.includes('configuration')) {
+                            log('❌ ОШИБКА КОНФИГУРАЦИИ: Переменные окружения не настроены!', 'error');
+                            log('💡 РЕШЕНИЕ: Добавьте в Vercel Environment Variables:', 'warning');
+                            log('   - GOOGLE_SHEETS_API_KEY (ваш API ключ)', 'warning');
+                            log('   - GOOGLE_SPREADSHEET_ID (ID таблицы)', 'warning');
+                            updateStatus('Переменные окружения не настроены', 'error');
+                        }
+                    } catch (e) {
+                        log('❌ Неизвестная ошибка API', 'error');
+                    }
+                    
+                    return false;
+                }
+
+            } catch (error) {
+                log(`❌ КРИТИЧЕСКАЯ ОШИБКА: ${error.message}`, 'error');
+                
+                if (error.message.includes('Failed to fetch')) {
+                    log('🌐 Проблемы с сетевым подключением или CORS', 'error');
+                    log('💡 Возможные причины:', 'warning');
+                    log('   - Нет интернет подключения', 'warning');
+                    log('   - Приложение не задеплоено', 'warning');
+                    log('   - Блокировка запросов браузером', 'warning');
+                }
+                
+                updateStatus('Критическая ошибка подключения', 'error');
+                return false;
+            }
+        }
+
+        async function testReadData() {
+            log('📖 Тестируем чтение данных из Google Sheets...', 'info');
+            
+            try {
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'get',
+                        sheetName: 'PromoCodes',
+                        range: 'A1:A1'
+                    })
+                });
+
+                log(`📊 Статус ответа чтения: ${response.status}`, 'info');
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`❌ Ошибка чтения: ${response.status} - ${errorText}`, 'error');
+                    
+                    if (response.status === 403) {
+                        log('🔒 ОШИБКА ДОСТУПА: Нет прав на чтение Google Sheets', 'error');
+                        log('💡 РЕШЕНИЯ:', 'warning');
+                        log('   - Проверьте API ключ в Google Cloud Console', 'warning');
+                        log('   - Убедитесь, что включен Google Sheets API', 'warning');
+                        log('   - Предоставьте доступ к таблице', 'warning');
+                    } else if (response.status === 404) {
+                        log('📋 ТАБЛИЦА НЕ НАЙДЕНА: Неверный SPREADSHEET_ID', 'error');
+                        log('💡 РЕШЕНИЕ: Проверьте ID таблицы в переменных окружения', 'warning');
+                    }
+                    
+                    updateStatus('Ошибка чтения данных', 'error');
                     return;
                 }
 
                 const data = await response.json();
+                log(`📊 Данные получены: ${JSON.stringify(data)}`, 'success');
                 
-                if (data.error && data.error.includes('configuration')) {
-                    configDiv.innerHTML = `
-                        <h4>⚠️ Проблема с конфигурацией</h4>
-                        <p><strong>Проблема:</strong> Переменные окружения не настроены</p>
-                        <p><strong>Решение:</strong> Добавьте в Vercel Environment Variables:</p>
-                        <ul>
-                            <li>GOOGLE_SHEETS_API_KEY</li>
-                            <li>GOOGLE_SPREADSHEET_ID</li>
-                        </ul>
-                    `;
+                if (data.values) {
+                    log(`✅ Успешно прочитано ${data.values.length} строк`, 'success');
+                    updateStatus('Чтение данных работает', 'success');
+                } else {
+                    log('⚠️ Таблица пуста или лист не найден', 'warning');
+                    updateStatus('Таблица пуста', 'warning');
+                }
+
+            } catch (error) {
+                log(`❌ Ошибка чтения данных: ${error.message}`, 'error');
+                updateStatus('Ошибка чтения', 'error');
+            }
+        }
+
+        async function testWriteData() {
+            log('✏️ Тестируем запись данных в Google Sheets...', 'info');
+            
+            try {
+                const testData = [
+                    `test_${Date.now()}@example.com`,
+                    'Тестовый пользователь',
+                    new Date().toISOString(),
+                    new Date().toISOString(),
+                    'diagnostic_test'
+                ];
+
+                log(`📝 Записываем тестовые данные: ${JSON.stringify(testData)}`, 'info');
+
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'append',
+                        sheetName: 'Users',
+                        values: testData
+                    })
+                });
+
+                log(`📊 Статус ответа записи: ${response.status}`, 'info');
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`❌ Ошибка записи: ${response.status} - ${errorText}`, 'error');
+                    
+                    if (response.status === 403) {
+                        log('🔒 ОШИБКА ДОСТУПА: Нет прав на запись в Google Sheets', 'error');
+                        log('💡 РЕШЕНИЯ:', 'warning');
+                        log('   - Предоставьте права редактирования для таблицы', 'warning');
+                        log('   - Проверьте, что API ключ имеет права на запись', 'warning');
+                    }
+                    
+                    updateStatus('Ошибка записи данных', 'error');
                     return;
                 }
 
-                configDiv.innerHTML = `
-                    <h4>✅ Базовая конфигурация в порядке</h4>
-                    <p>API функция доступна, переменные окружения настроены</p>
-                `;
+                const result = await response.json();
+                log(`✅ Данные записаны успешно: ${JSON.stringify(result)}`, 'success');
+                updateStatus('Запись данных работает', 'success');
 
             } catch (error) {
-                configDiv.innerHTML = `
-                    <h4>❌ Критическая ошибка</h4>
-                    <p><strong>Ошибка:</strong> ${error.message}</p>
-                    <p><strong>Возможные причины:</strong></p>
-                    <ul>
-                        <li>Приложение не задеплоено</li>
-                        <li>Проблемы с интернет-соединением</li>
-                        <li>Серверные ошибки Vercel</li>
-                    </ul>
-                `;
+                log(`❌ Ошибка записи данных: ${error.message}`, 'error');
+                updateStatus('Ошибка записи', 'error');
             }
         }
 
-        // Individual test functions
-        async function testAPIAvailability() {
-            const testName = 'API Availability';
-            updateTestResult(testName, 'pending', 'Тестирование...');
+        // Автоматический запуск при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🔧 Система диагностики запущена', 'info');
+            log('💡 Нажмите "Запустить базовую диагностику" для начала', 'info');
+            log('📋 Или используйте отдельные тесты для детальной проверки', 'info');
             
-            try {
-                logMessage('🔍 Тестируем доступность API...', 'info');
-                
-                const response = await fetch('/api/sheets', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'test' })
-                });
+            // Показываем информацию о среде
+            setTimeout(() => {
+                log(`🌍 User Agent: ${navigator.userAgent}`, 'info');
+                log(`📱 Платформа: ${navigator.platform}`, 'info');
+                log(`🌐 Язык: ${navigator.language}`, 'info');
+            }, 1000);
+        });
 
-                if (response.ok || response.status === 400) {
-                    updateTestResult(testName, 'success', 'API функция доступна');
-                    logMessage('✅ API функция доступна', 'success');
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-            } catch (error) {
-                updateTestResult(testName, 'error', error.message);
-                logMessage(`❌ API недоступен: ${error.message}`, 'error');
-            }
-        }
+        // Обработка ошибок JavaScript
+        window.addEventListener('error', function(e) {
+            log(`💥 JavaScript ошибка: ${e.message}`, 'error');
+            log(`📁 Файл: ${e.filename}:${e.lineno}`, 'error');
+        });
 
-        async function testEnvironmentVars() {
-            const testName = 'Environment Variables';
-            updateTestResult(testName, 'pending', 'Проверка...');
-            
-            try {
-                logMessage('🔍 Проверяем переменные окружения...', 'info');
-                
-                const data = await testAPI.makeRequest('get', { sheetName: 'PromoCodes', range: 'A1:A1' });
-                updateTestResult(testName, 'success', 'Переменные настроены корректно');
-                logMessage('✅ Переменные окружения в порядке', 'success');
-            } catch (error) {
-                if (error.message.includes('configuration')) {
-                    updateTestResult(testName, 'error', 'Переменные окружения не настроены');
-                    logMessage('❌ Переменные окружения не настроены в Vercel', 'error');
-                } else if (error.message.includes('403')) {
-                    updateTestResult(testName, 'error', 'Проблемы с доступом к Google Sheets API');
-                    logMessage('❌ API ключ недействителен или нет прав доступа', 'error');
-                } else if (error.message.includes('404')) {
-                    updateTestResult(testName, 'error', 'Таблица не найдена');
-                    logMessage('❌ Google таблица не найдена, проверьте SPREADSHEET_ID', 'error');
-                } else {
-                    updateTestResult(testName, 'error', error.message);
-                    logMessage(`❌ Ошибка проверки: ${error.message}`, 'error');
-                }
-            }
-        }
+        // Обработка неперехваченных Promise ошибок
+        window.addEventListener('unhandledrejection', function(e) {
+            log(`💥 Неперехваченная ошибка Promise: ${e.reason}`, 'error');
+        });
 
-        async function testNetworkConnectivity() {
-            const testName = 'Network Connectivity';
-            updateTestResult(testName, 'pending', 'Проверка...');
-            
-            try {
-                logMessage('🌐 Тестируем сетевое подключение...', 'info');
-                
-                const startTime = Date.now();
-                await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors' });
-                const responseTime = Date.now() - startTime;
-                
-                updateTestResult(testName, 'success', `Подключение стабильное (${responseTime}ms)`);
-                logMessage(`✅ Интернет подключение: ${responseTime}ms`, 'success');
-            } catch (error) {
-                updateTestResult(testName, 'error', 'Нет интернет подключения');
-                logMessage('❌ Проблемы с интернет подключением', 'error');
-            }
-        }
-
-        async function testReadPromoCodes() {
-            const testName = 'Read PromoCodes';
-            updateTestResult(testName, 'pending', 'Чтение...');
-            
-            try {
-                logMessage('📖 Читаем промокоды...', 'info');
-                
-                const data = await testAPI.testGet('PromoCodes');
-                const rowCount = data.values ? data.values.length : 0;
-                
-                updateTestResult(testName, 'success', `Прочитано ${rowCount} строк`);
-                logMessage(`✅ Промокоды прочитаны: ${rowCount} строк`, 'success');
-                
-                if (data.values && data.values.length > 0) {
-                    logMessage(`📊 Первые строки: ${JSON.stringify(data.values.slice(0, 3))}`, 'info');
-                }
-            } catch (error) {
-                updateTestResult(testName, 'error', error.message);
-                logMessage(`❌ Ошибка чтения промокодов: ${error.message}`, 'error');
-            }
-        }
-
-        async function testReadOrders() {
-            const testName = 'Read Orders';
-            updateTestResult(testName, 'pending', 'Чтение...');
-            
-            try {
-                logMessage('📖 Читаем заказы...', 'info');
-                
-                const data = await testAPI.testGet('Orders');
-                const rowCount = data.values ? data.values.length : 0;
-                
-                updateTestResult(testName, 'success', `Прочитано ${rowCount} строк`);
-                logMessage(`✅ Заказы прочитаны: ${rowCount} строк`, 'success');
-            } catch (error) {
-                updateTestResult(testName, 'error', error.message);
-                logMessage(`❌ Ошибка чтения заказов: ${error.message}`, 'error');
-            }
-        }
-
-        async function testReadUsers() {
-            const testName = 'Read Users';
-            updateTestResult(testName, 'pending', 'Чтение...');
-            
-            try {
-                logMessage('📖 Читаем пользователей...', 'info');
-                
-                const data = await testAPI.testGet('Users');
-                const rowCount = data.values ? data.values.length : 0;
-                
-                updateTestResult(testName, 'success', `Прочитано ${rowCount} строк`);
-                logMessage(`✅ Пользователи прочитаны: ${rowCount} строк`, 'success');
-            } catch (error) {
-                updateTestResult(testName, 'error', error.message);
-                logMessage(`❌ Ошибка чтения пользователей: ${error.message}`, 'error');
-            }
-        }
-
-        async function testWriteUser() {
-            const testName = 'Write Test User';
-            updateTestResult(testName, 'pending', 'Запись...');
-            
-            try {
-                logMessage('✏️ Создаем тестового пользователя...', 'info');
-                
-                const testUserData = [
-                    `test_${Date.now()}@example.com`,
-                    'Тестовый Пользователь',
-                    new Date().toISOString(),
-                    new Date().toISOString(),
-                    'test'
-                ];
-                
-                const result = await testAPI.testAppend('Users', testUserData);
-                
-                updateTestResult(testName, 'success', 'Пользователь создан');
-                logMessage(`✅ Тестовый пользователь создан: ${JSON.stringify(result)}`, 'success');
-            } catch (error) {
-                updateTestResult(testName, 'error', error.message);
-                logMessage(`❌ Ошибка создания пользователя: ${error.message}`, 'error');
-            }
-        }
-
-        async function testWriteOrder() {
-            const testName = 'Write Test Order';
-            updateTestResult(testName, 'pending', 'Запись...');
-            
-            try {
-                logMessage('✏️ Создаем тестовый заказ...', 'info');
-                
-                const testOrderData = [
-                    `TEST${Date.now()}`,
-                    '1',
-                    'test@example.com',
-                    'Тестовый Пользователь',
-                    'TEST123',
-                    'Тестовый получатель',
-                    'Тестовый жанр',
-                    'Тестовая тема песни для проверки API',
-                    'Особые тестовые пожелания',
-                    'pending',
-                    new Date().toISOString(),
-                    '',
-                    '',
-                    ''
-                ];
-                
-                const result = await testAPI.testAppend('Orders', testOrderData);
-                
-                updateTestResult(testName, 'success', 'Заказ создан');
-                logMessage(`✅ Тестовый заказ создан: ${JSON.stringify(result)}`, 'success');
-            } catch (error) {
-                updateTestResult(testName, 'error', error.message);
-                logMessage(`❌ Ошибка создания заказа: ${error.message}`, 'error');
-            }
-        }
-
-        async function testUpdateCell() {
-            const testName = 'Update Cell';
-            updateTestResult(testName, 'pending', 'Обновление...');
-            
-            try {
-                logMessage('✏️ Обновляем тестовую ячейку...', 'info');
-                
-                // Попробуем обновить ячейку в листе Users
-                const testValue = `Тест обновления ${new Date().toLocaleTimeString()}`;
-                const result = await testAPI.testUpdate('Users', 'E1', testValue);
-                
-                updateTestResult(testName, 'success', 'Ячейка обновлена');
-                logMessage(`✅ Ячейка обновлена: ${testValue}`, 'success');
-            } catch (error) {
-                updateTestResult(testName, 'error', error.message);
-                logMessage(`❌ Ошибка обновления ячейки: ${error.message}`, 'error');
-            }
-        }
-
-        async function testPromoCodeValidation() {
-            const testName = 'Promo Code Validation';
-            updateTestResult(testName, 'pending', 'Валидация...');
-            
-            try {
-                const promoCode = document.getElementById('testPromoCode').value;
-                logMessage(`🎟️ Тестируем промокод: ${promoCode}`, 'info');
-                
-                const result = await testAPI.testFind('PromoCodes', promoCode);
-                
-                if (result.found) {
-                    updateTestResult(testName, 'success', `Промокод найден в строке ${result.rowIndex}`);
-                    logMessage(`✅ Промокод найден: строка ${result.rowIndex}, данные: ${JSON.stringify(result.rowData)}`, 'success');
-                } else {
-                    updateTestResult(testName, 'success', 'Промокод не найден (это нормально для теста)');
-                    logMessage(`ℹ️ Промокод не найден в таблице`, 'info');
-                }
-            } catch (error) {
-                updateTestResult(testName, 'error', error.message);
-                logMessage(`❌ Ошибка валидации промокода: ${error.message}`, 'error');
-            }
-        }
-
-        async function testErrorHandling() {
-            const testName = 'Error Handling';
-            updateTestResult(testName, 'pending', 'Тестирование...');
-            
-            try {
-                logMessage('🧪 Тестируем обработку ошибок...', 'info');
-                
-                // Намеренно отправляем некорректный запрос
-                await testAPI.makeRequest('invalid_action', { test: true });
-                
-                updateTestResult(testName, 'error', 'Ошибка не была обработана корректно');
-                logMessage('❌ Обработка ошибок работает некорректно', 'error');
-            } catch (error) {
-                updateTestResult(testName, 'success', 'Ошибки обрабатываются корректно');
-                logMessage(`✅ Обработка ошибок работает: ${error.message}`,
+    </script>
+</body>
+</html>

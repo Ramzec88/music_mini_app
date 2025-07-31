@@ -3,7 +3,7 @@ import { google } from 'googleapis';
 const auth = new google.auth.JWT(
   process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
   null,
-  Buffer.from(process.env.GOOGLE_PRIVATE_KEY_BASE64, 'base64').toString('utf-8'),
+  process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
   ['https://www.googleapis.com/auth/spreadsheets']
 );
 
@@ -65,7 +65,7 @@ export default async function handler(req, res) {
           spreadsheetId: SPREADSHEET_ID,
           range: `${sheetName}!${range}`,
           valueInputOption: 'RAW',
-          requestBody: { values: [[newValue || '']] },
+          requestBody: { values: [[newValue]] },
         });
         break;
 
@@ -73,9 +73,9 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: `Unknown action: ${action}` });
     }
 
-    return res.status(200).json(response.data || response);
+    res.status(200).json(response.data || response);
   } catch (error) {
-    console.error('Google Sheets API error:', error);
-    return res.status(500).json({ error: 'Internal Google Sheets API error', details: error.message });
+    console.error('Google Sheets API Error:', error);
+    res.status(500).json({ error: 'Internal Google Sheets API error', details: error.message });
   }
 }

@@ -880,37 +880,34 @@
 
         // Corrected showNotification function to handle WebAppMethodUnsupported
         function showNotification(message, type = 'success') {
-            console.log(`${type.toUpperCase()}: ${message}`);
-            
-            // Проверяем, доступно ли Telegram Web App
-            if (window.Telegram && window.Telegram.WebApp) {
-                const tg = window.Telegram.WebApp;
-                
-                // Используем showPopup если поддерживается, иначе showAlert
-                if (type === 'error' || !tg.showPopup) {
-                    tg.showAlert(message);
-                } else {
-                    tg.showPopup({
-                        title: type === 'success' ? '✅ Успех' : 'ℹ️ Уведомление',
-                        message: message,
-                        buttons: [{type: 'ok'}]
-                    });
-                }
-                return;
-            }
-            
-            // Запасной вариант для обычных браузеров
-            const notification = document.getElementById('notification');
-            if (notification) {
-                notification.textContent = message;
-                notification.className = `notification ${type}`;
-                notification.classList.add('show');
+    console.log(`${type.toUpperCase()}: ${message}`);
 
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 3000);
+    if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        try {
+            if (type === 'error' || !tg.showPopup) {
+                tg.showAlert(message);
+            } else {
+                tg.showPopup({
+                    title: type === 'success' ? '✅ Успех' : 'ℹ️ Уведомление',
+                    message,
+                    buttons: [{ type: 'ok' }]
+                });
             }
+        } catch (e) {
+            tg.showAlert(message);
         }
+        return;
+    }
+
+    const notification = document.getElementById('notification');
+    if (notification) {
+        notification.textContent = message;
+        notification.className = `notification ${type}`;
+        notification.classList.add('show');
+        setTimeout(() => notification.classList.remove('show'), 3000);
+    }
+}
 
         // Add tooltips for better UX (Moved to the correct place)
         function addTooltip(elementId, text) {

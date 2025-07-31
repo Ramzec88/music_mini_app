@@ -1,4 +1,5 @@
 // api/sheets.js - Улучшенная версия с аутентификацией через Сервисный аккаунт
+// и декодированием приватного ключа из Base64
 // Для работы требуется установить пакеты: google-auth-library и googleapis
 // npm install google-auth-library googleapis
 
@@ -27,35 +28,40 @@ export default async function handler(req, res) {
     
     // Получаем переменные окружения для СЕРВИСНОГО АККАУНТА
     const CLIENT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY; // Приватный ключ из JSON-файла
+    // Приватный ключ теперь ожидается в Base64
+    const PRIVATE_KEY_BASE64 = process.env.GOOGLE_PRIVATE_KEY_BASE64; // Имя переменной изменено
     const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
     
     console.log('📝 API Request:', { 
       action, 
       sheetName, 
       hasClientEmail: !!CLIENT_EMAIL, 
-      hasPrivateKey: !!PRIVATE_KEY,
+      hasPrivateKeyBase64: !!PRIVATE_KEY_BASE64, // Проверяем новую переменную
       hasSpreadsheetId: !!SPREADSHEET_ID,
       timestamp: new Date().toISOString()
     });
     
-    if (!CLIENT_EMAIL || !PRIVATE_KEY || !SPREADSHEET_ID) {
+    if (!CLIENT_EMAIL || !PRIVATE_KEY_BASE64 || !SPREADSHEET_ID) {
       console.error('❌ Missing environment variables for Service Account');
       return res.status(500).json({ 
         error: 'Server configuration error',
-        details: 'Missing GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, or GOOGLE_SPREADSHEET_ID',
+        details: 'Missing GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY_BASE64, or GOOGLE_SPREADSHEET_ID',
         solution: 'Add environment variables in Vercel Dashboard for Service Account authentication'
       });
     }
+
+    // Декодируем приватный ключ из Base64
+    // Важно: ключ должен быть в формате PEM (с BEGIN/END PRIVATE KEY и переносами строк)
+    // Поэтому добавляем их обратно после декодирования
+    const decodedPrivateKey = Buffer.from(PRIVATE_KEY_BASE64, 'base64').toString('utf8');
+    const fullPrivateKey = `-----BEGIN PRIVATE KEY-----\n${decodedPrivateKey}\n-----END PRIVATE KEY-----\n`;
+
 
     // Инициализация аутентификации через Сервисный аккаунт
     const auth = new GoogleAuth({
       credentials: {
         client_email: CLIENT_EMAIL,
-        // Важно: приватный ключ может содержать символы новой строки (\n),
-        // которые в переменных окружения Vercel могут быть экранированы как \\n.
-        // Поэтому заменяем \\n на \n.
-        private_key: PRIVATE_KEY.replace(/\\n/g, '\n'), 
+        private_key: fullPrivateKey, 
       },
       scopes: ['https://www.googleapis.com/auth/spreadsheets'], // Область доступа для чтения и записи
     });
@@ -79,7 +85,6 @@ export default async function handler(req, res) {
           
         } catch (error) {
           console.error('GET Error:', error);
-          // Детальная обработка ошибок Google Sheets API
           return handleGoogleApiError(error, res);
         }
 
@@ -192,7 +197,7 @@ export default async function handler(req, res) {
             recommendations: [
               'Share the Google Sheet with the Service Account email (Editor role).',
               'Ensure Google Sheets API is enabled in Google Cloud Console.',
-              'Check GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY in Vercel environment variables.'
+              'Check GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY_BASE64 in Vercel environment variables.'
             ]
           });
         }
@@ -214,15 +219,15 @@ export default async function handler(req, res) {
     let statusCode = 500;
     let solutions = [];
     
-    if (error.message.includes('GOOGLE_PRIVATE_KEY') || error.message.includes('GOOGLE_SERVICE_ACCOUNT_EMAIL')) {
+    if (error.message.includes('GOOGLE_PRIVATE_KEY_BASE64') || error.message.includes('GOOGLE_SERVICE_ACCOUNT_EMAIL')) {
       userError = 'Server configuration error: Service Account credentials missing';
-      solutions = ['Ensure GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY are set correctly in Vercel Environment Variables.'];
-    } else if (error.message.includes('401')) { // Это уже не должно происходить с SA, но на всякий случай
+      solutions = ['Ensure GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY_BASE64 are set correctly in Vercel Environment Variables.'];
+    } else if (error.message.includes('401')) { 
       userError = 'Authentication failed with Google Sheets API (Service Account)';
       statusCode = 401;
       solutions = [
         'Check if Service Account email is correct',
-        'Verify private key is correctly formatted (especially newlines)',
+        'Verify private key is correctly formatted (especially newlines or Base64 encoding)',
         'Ensure Google Sheets API is enabled'
       ];
     } else if (error.message.includes('403')) {
@@ -276,8 +281,8 @@ function handleGoogleApiError(error, res) {
   if (statusCode === 401) {
     userError = 'Authentication failed with Service Account';
     solutions = [
-      'Check GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY in Vercel variables.',
-      'Ensure private key is correctly formatted (especially newlines).'
+      'Check GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY_BASE64 in Vercel variables.',
+      'Ensure private key is correctly formatted (Base64 encoded).'
     ];
   } else if (statusCode === 403) {
     userError = 'Access denied to Google Sheet';

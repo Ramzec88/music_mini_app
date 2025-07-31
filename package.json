@@ -1,0 +1,17 @@
+    {
+      "name": "music-mini-app",
+      "version": "1.0.0",
+      "description": "Telegram mini-app for custom song orders",
+      "main": "api/sheets.js",
+      "scripts": {
+        "start": "node api/sheets.js"
+      },
+      "keywords": [],
+      "author": "",
+      "license": "ISC",
+      "dependencies": {
+        "google-auth-library": "^9.10.0",  // Убедитесь, что версии актуальны
+        "googleapis": "^128.0.0"          // Эти строки должны быть добавлены
+      }
+    }
+    

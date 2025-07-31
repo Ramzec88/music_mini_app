@@ -586,18 +586,15 @@
     </style>
 </head>
 <body>
-    <!-- Floating musical notes -->
     <div class="floating-notes" id="floatingNotes"></div>
 
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <div class="logo">🎵</div>
             <h1>Создаем вашу уникальную песню</h1>
             <p>Персональные композиции для особых моментов</p>
         </div>
 
-        <!-- Features -->
         <div class="features">
             <div class="feature-card">
                 <span class="feature-icon">🎤</span>
@@ -616,14 +613,11 @@
             </div>
         </div>
 
-        <!-- Main Application -->
         <div class="main-card">
-            <!-- Progress Bar -->
             <div class="progress-bar">
                 <div class="progress-fill" id="progressBar" style="width: 25%"></div>
             </div>
 
-            <!-- Step 1: Promo Code -->
             <div class="step active" id="step1">
                 <div class="step-header">
                     <div class="step-number">1</div>
@@ -655,7 +649,6 @@
                 </form>
             </div>
 
-            <!-- Step 2: Song Request -->
             <div class="step" id="step2">
                 <div class="step-header">
                     <div class="step-number">2</div>
@@ -728,7 +721,6 @@
                 </form>
             </div>
 
-            <!-- Step 3: Order Summary -->
             <div class="step" id="step3">
                 <div class="step-header">
                     <div class="step-number">3</div>
@@ -765,7 +757,6 @@
                 </div>
             </div>
 
-            <!-- Step 4: Success -->
             <div class="step" id="step4">
                 <div class="success-animation">
                     <div class="success-icon">🎉</div>
@@ -799,7 +790,6 @@
             </div>
         </div>
 
-        <!-- Order Status Check -->
         <div class="main-card" style="margin-top: 20px;">
             <h3 style="text-align: center; margin-bottom: 20px; color: #4a5568;">
                 🔍 Проверить статус заказа
@@ -821,65 +811,62 @@
         </div>
     </div>
 
-    <!-- Notification -->
     <div id="notification" class="notification"></div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // --- Перенесено из правки.html ---
-        function showNotification(message, type = 'info') {
-            const telegramApp = window.Telegram && window.Telegram.WebApp;
-
-            if (telegramApp) {
-                try {
-                    if (type === 'error' || !telegramApp.showPopup) {
-                        telegramApp.showAlert(message);
-                    } else {
-                        telegramApp.showPopup({
-                            title: type === 'success' ? '✅ Успех' : 'ℹ️ Уведомление',
-                            message: message,
-                            buttons: [{ type: 'ok' }]
-                        });
-                    }
-                } catch (e) {
-                    telegramApp.showAlert(message);
-                }
-                return;
+        async function findRowByValue(sheetName, searchValue) {
+            try {
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'find', sheetName, searchValue })
+                });
+                const data = await response.json();
+                return data.found ? { rowIndex: data.rowIndex, rowData: data.rowData } : null;
+            } catch (error) {
+                console.error('Ошибка в findRowByValue:', error);
+                return null;
             }
+        }
 
-            // Фолбек для браузеров
-            alert(message);
+        async function updateSheetRow(sheetName, rowIndex, updates) {
+            try {
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'updateRow', sheetName, rowIndex, updates })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Ошибка в updateSheetRow:', error);
+                return null;
+            }
         }
 
         async function validatePromoCode(promoCode) {
-            const result = await findRowByValue(this.sheets.PROMO_CODES, promoCode);
+            const result = await findRowByValue('PromoCodes', promoCode);
             if (!result) {
                 return { valid: false, message: 'Промокод не найден' };
             }
-
             const [code, status = '', description = '', uses = '0', maxUses = '1'] = result.rowData;
-
             if (status.trim().toLowerCase() !== 'active') {
                 return { valid: false, message: 'Промокод неактивен' };
             }
-
             const currentUses = parseInt(uses || '0', 10);
             const maxUsesLimit = parseInt(maxUses || '1', 10);
-
             if (currentUses >= maxUsesLimit) {
                 return { valid: false, message: 'Промокод уже использован' };
             }
-
             return { valid: true, description, rowIndex: result.rowIndex, currentUses, maxUsesLimit };
         }
 
         async function markPromoCodeAsUsed(rowIndex, currentUses) {
-            await updateSheetRow(this.sheets.PROMO_CODES, rowIndex, {
-                3: (currentUses + 1).toString(),
-            });
+            await updateSheetRow('PromoCodes', rowIndex, { 3: (currentUses + 1).toString() });
         }
         // --- Конец вставки из правки.html ---
-        // Здесь начинается JavaScript код, который был в начале файла
+
         // Add connection status indicator
         function addConnectionStatus() {
             const statusDiv = document.createElement('div');
@@ -898,24 +885,17 @@
             }
         }
 
-        // Initialize connection status
-        // setTimeout(addConnectionStatus, 2000); // Этот вызов перенесен в DOMContentLoaded
-
         // Telegram Web App Integration
         function initTelegramWebApp() {
             if (window.Telegram && window.Telegram.WebApp) {
                 const tg = window.Telegram.WebApp;
                 
                 console.log('📱 Telegram Web App обнаружен');
-                
-                // Расширяем на полный экран
                 tg.expand();
                 
-                // Применяем тему Telegram
                 document.documentElement.style.setProperty('--tg-theme-bg-color', tg.backgroundColor);
                 document.documentElement.style.setProperty('--tg-theme-text-color', tg.textColor);
                 
-                // Получаем данные пользователя
                 const user = tg.initDataUnsafe?.user;
                 if (user) {
                     console.log('👤 Пользователь Telegram:', user);
@@ -926,7 +906,6 @@
                         username: user.username
                     }));
                 }
-                
                 return tg;
             }
             console.log('🌐 Запуск в обычном браузере');
@@ -943,7 +922,6 @@
             async makeRequest(action, params) {
                 try {
                     console.log(`📡 API запрос: ${action}`, params);
-                    
                     const response = await fetch(this.baseUrl, {
                         method: 'POST',
                         headers: {
@@ -954,17 +932,13 @@
                             ...params
                         })
                     });
-
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-
                     const data = await response.json();
-                    
                     if (data.error) {
                         throw new Error(data.error);
                     }
-                    
                     console.log(`✅ API ответ:`, data);
                     return data;
                 } catch (error) {
@@ -1001,23 +975,18 @@
             async validatePromoCode(promoCode) {
                 try {
                     const result = await this.findRowByValue(this.sheets.PROMO_CODES, promoCode);
-                    
                     if (!result) {
                         return { valid: false, message: 'Промокод не найден' };
                     }
-
                     const [code, status, description, uses, maxUses] = result.rowData;
                     const currentUses = parseInt(uses) || 0;
                     const maxUsesLimit = parseInt(maxUses) || 1;
-
                     if (status !== 'active') {
                         return { valid: false, message: 'Промокод неактивен' };
                     }
-
                     if (currentUses >= maxUsesLimit) {
                         return { valid: false, message: 'Промокод уже использован' };
                     }
-
                     return { 
                         valid: true, 
                         message: 'Промокод действителен',
@@ -1033,31 +1002,26 @@
             async markPromoCodeAsUsed(promoCode, userInfo) {
                 try {
                     const validation = await this.validatePromoCode(promoCode);
-                    
                     if (!validation.valid) {
                         return validation;
                     }
-
                     const newUseCount = validation.currentUses + 1;
                     await this.updateCell(
                         this.sheets.PROMO_CODES, 
                         `D${validation.rowIndex}`, 
                         newUseCount
                     );
-
                     const timestamp = new Date().toISOString();
                     await this.updateCell(
                         this.sheets.PROMO_CODES, 
                         `F${validation.rowIndex}`, 
                         timestamp
                     );
-
                     await this.updateCell(
                         this.sheets.PROMO_CODES, 
                         `G${validation.rowIndex}`, 
                         `${userInfo.name || 'Аноним'} (${userInfo.contact || 'Не указан'})`
                     );
-
                     return { success: true, message: 'Промокод успешно активирован' };
                 } catch (error) {
                     console.error('Ошибка обновления промокода:', error);
@@ -1068,7 +1032,6 @@
             async saveUser(userInfo) {
                 try {
                     const existingUser = await this.findRowByValue(this.sheets.USERS, userInfo.contact);
-                    
                     if (existingUser) {
                         const timestamp = new Date().toISOString();
                         await this.updateCell(
@@ -1076,7 +1039,6 @@
                             `D${existingUser.rowIndex}`, 
                             timestamp
                         );
-                        
                         return { userId: existingUser.rowIndex, isNew: false };
                     } else {
                         const userData = [
@@ -1086,12 +1048,9 @@
                             new Date().toISOString(),
                             userInfo.source || 'telegram'
                         ];
-
                         await this.appendToSheet(this.sheets.USERS, userData);
-                        
                         const allUsers = await this.getSheetData(this.sheets.USERS);
                         const userId = allUsers.length;
-                        
                         return { userId: userId, isNew: true };
                     }
                 } catch (error) {
@@ -1118,7 +1077,6 @@
                         '',
                         ''
                     ];
-
                     const result = await this.appendToSheet(this.sheets.ORDERS, orderRow);
                     return { success: true, data: result };
                 } catch (error) {
@@ -1131,7 +1089,6 @@
                 try {
                     const orders = await this.getSheetData(this.sheets.ORDERS);
                     const userOrders = orders.filter(order => order[2] === userContact);
-                    
                     return userOrders.map((order, index) => ({
                         id: order[0],
                         userId: order[1],
@@ -1170,9 +1127,7 @@
         let currentOrderId = null;
         let telegramApp = null;
 
-        // Enhanced getUserContact for Telegram
         function getUserContact() {
-            // Сначала пытаемся получить данные из Telegram
             const tgUser = localStorage.getItem('tg_user');
             if (tgUser) {
                 const user = JSON.parse(tgUser);
@@ -1186,35 +1141,10 @@
                 return contact;
             }
             
-            // Fallback для обычного браузера
             let contact = localStorage.getItem('userContact');
-            
             if (!contact) {
-                if (telegramApp) {
-                    // Показываем через Telegram API
-                    telegramApp.showPopup({
-                        title: 'Контакт для связи',
-                        message: 'Укажите ваш Telegram, email или телефон',
-                        buttons: [
-                            {type: 'cancel'},
-                            {type: 'ok', text: 'Ввести'}
-                        ]
-                    }, (buttonId) => {
-                        if (buttonId === 'ok') {
-                            // В реальном приложении здесь будет ввод через форму
-                            contact = prompt('Укажите контакт:') || 'anonymous_' + Date.now();
-                            localStorage.setItem('userContact', contact);
-                        }
-                    });
-                } else {
-                    contact = prompt('Для завершения заказа укажите ваш Telegram, email или телефон:');
-                    
-                    if (contact) {
-                        localStorage.setItem('userContact', contact);
-                    } else {
-                        contact = 'anonymous_' + Date.now();
-                    }
-                }
+                contact = prompt('Для завершения заказа укажите ваш Telegram, email или телефон:') || 'anonymous_' + Date.now();
+                localStorage.setItem('userContact', contact);
             }
             
             return contact;
@@ -1224,9 +1154,8 @@
         function showNotification(message, type = 'success') {
             console.log(`${type.toUpperCase()}: ${message}`);
             
-            // Показываем через Telegram API если доступно
             if (telegramApp) {
-                if (type === 'error') {
+                if (type === 'error' || !telegramApp.showPopup) {
                     telegramApp.showAlert(message);
                 } else {
                     telegramApp.showPopup({
@@ -1238,7 +1167,6 @@
                 return;
             }
             
-            // Обычное уведомление как fallback
             const notification = document.getElementById('notification');
             if (notification) {
                 notification.textContent = message;
@@ -1255,20 +1183,13 @@
         async function testGoogleSheetsConnection() {
             try {
                 console.log('🔍 Тестируем подключение к Google Sheets через прокси...');
-                
                 await sheetsAPI.getSheetData('PromoCodes', 'A1:A1');
                 console.log('✅ Подключение к Google Sheets успешно');
-                
                 showNotification('📊 Подключение к базе данных установлено', 'success');
-                
-                // Показываем индикатор подключения
                 updateConnectionStatus(true);
-                
             } catch (error) {
                 console.error('❌ Ошибка подключения к Google Sheets:', error);
-                
                 let errorMessage = 'Ошибка подключения к базе данных';
-                
                 if (error.message.includes('404')) {
                     errorMessage = 'API функция не найдена. Проверьте деплой.';
                 } else if (error.message.includes('500')) {
@@ -1276,18 +1197,15 @@
                 } else if (error.message.includes('Failed to fetch')) {
                     errorMessage = 'Проблемы с сетью. Проверьте интернет.';
                 }
-                
                 showNotification(errorMessage, 'error');
                 updateConnectionStatus(false);
-                
-                // Показываем помощь по отладке
                 showDebugInfo(error);
             }
         }
 
         // Debug information for developers
         function showDebugInfo(error) {
-            if (!telegramApp) { // Показываем только в браузере, не в Telegram
+            if (!telegramApp) {
                 console.log('🔧 Отладочная информация:');
                 console.log('- URL:', window.location.href);
                 console.log('- User Agent:', navigator.userAgent);
@@ -1297,44 +1215,83 @@
             }
         }
 
+        // Setup floating musical notes animation
+        function setupFloatingNotes() {
+            const notesContainer = document.getElementById('floatingNotes');
+            const notes = ['♪', '♫', '♬', '♩', '♭', '♯', '𝄞'];
+            function createNote() {
+                const note = document.createElement('div');
+                note.className = 'note';
+                note.textContent = notes[Math.floor(Math.random() * notes.length)];
+                note.style.left = Math.random() * 100 + '%';
+                note.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                note.style.animationDelay = Math.random() * 5 + 's';
+                notesContainer.appendChild(note);
+                setTimeout(() => {
+                    note.remove();
+                }, 20000);
+            }
+            setInterval(createNote, 3000);
+            for (let i = 0; i < 5; i++) {
+                setTimeout(createNote, i * 1000);
+            }
+        }
+
+        // Add tooltips for better UX
+        function addTooltip(elementId, text) {
+            const element = document.getElementById(elementId);
+            element.title = text;
+            element.style.cursor = 'help';
+        }
+
+        // Add helpful tooltips
+        function addTooltips() {
+            addTooltip('promoCode', 'Промокод состоит из букв и цифр, обычно 4-20 символов');
+            addTooltip('songGenre', 'Например: поп, рок, рэп, баллада, джаз, классика');
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('promoForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitPromoCode();
+            });
+            document.getElementById('songRequestForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitSongRequest();
+            });
+            document.getElementById('promoCode').addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
+            });
+            document.querySelectorAll('textarea').forEach(textarea => {
+                textarea.addEventListener('input', function() {
+                });
+            });
+        }
+
         // Initialize app with Telegram Web App support
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Инициализация приложения...');
-            
-            // Initialize Telegram Web App first
             telegramApp = initTelegramWebApp();
             
-            // Continue with normal initialization
             setupFloatingNotes();
             setupEventListeners();
             updateProgress();
             
-            // Test Google Sheets connection
             testGoogleSheetsConnection();
-            
-            // Auto-restore form data
             setTimeout(restoreFormData, 1000);
-            
-            // Initialize tooltips
             setTimeout(addTooltips, 2000);
-            
-            // Add connection status indicator
             setTimeout(addConnectionStatus, 2000);
-            
-            // Add settings button
             setTimeout(addSettingsButton, 1000);
             
             console.log('✅ Приложение инициализировано');
             
-            // Special handling for Telegram
             if (telegramApp) {
                 console.log('📱 Telegram Web App режим активен');
                 
-                // Configure main button
                 telegramApp.MainButton.setText('Продолжить');
                 telegramApp.MainButton.show();
                 telegramApp.MainButton.onClick(() => {
-                    // Handle main button click based on current step
                     if (currentStep === 1) {
                         submitPromoCode();
                     } else if (currentStep === 2) {
@@ -1344,24 +1301,18 @@
                     }
                 });
                 
-                // Handle back button
                 telegramApp.BackButton.onClick(() => {
                     if (currentStep > 1) {
                         goToStep(currentStep - 1);
                     }
                 });
-                
-                // Try to sync any pending orders
-                setTimeout(syncPendingOrders, 3000);
             }
         });
 
-        // Update goToStep function to handle Telegram buttons
         const originalGoToStep = goToStep;
         goToStep = function(step) {
             originalGoToStep(step);
             
-            // Update Telegram buttons
             if (telegramApp) {
                 if (step === 1) {
                     telegramApp.BackButton.hide();
@@ -1378,199 +1329,8 @@
                     telegramApp.MainButton.color = '#28a745';
                 }
             }
-            
             smoothScrollToTop();
         };
-
-        // Enhanced connection monitoring for Telegram
-        async function syncPendingOrders() {
-            const pendingOrders = JSON.parse(localStorage.getItem('pendingOrders') || '[]');
-            
-            if (pendingOrders.length === 0) return;
-            
-            console.log(`🔄 Синхронизируем ${pendingOrders.length} заказов...`);
-            showNotification(`🔄 Синхронизируем ${pendingOrders.length} заказов...`, 'success');
-            
-            let syncedCount = 0;
-            
-            for (const order of pendingOrders) {
-                try {
-                    // Prepare order data
-                    const orderInfo = {
-                        id: order.id,
-                        userId: 1, // Will be updated when user is saved
-                        userContact: order.userContact,
-                        userName: order.recipient || 'Не указано',
-                        promoCode: order.promoCode,
-                        recipient: order.recipient,
-                        genre: order.genre,
-                        theme: order.theme,
-                        wishes: order.wishes
-                    };
-                    
-                    const result = await sheetsAPI.saveOrder(orderInfo);
-                    
-                    if (result.success) {
-                        console.log(`✅ Заказ ${order.id} синхронизирован`);
-                        syncedCount++;
-                    }
-                } catch (error) {
-                    console.error(`❌ Ошибка синхронизации заказа ${order.id}:`, error);
-                    break; // Stop syncing if there's an error
-                }
-            }
-            
-            if (syncedCount > 0) {
-                // Remove synced orders
-                const remainingOrders = pendingOrders.slice(syncedCount);
-                localStorage.setItem('pendingOrders', JSON.stringify(remainingOrders));
-                
-                showNotification(`✅ Синхронизировано ${syncedCount} заказов`, 'success');
-                
-                // Notify Telegram bot about synced orders
-                if (telegramApp && syncedCount === pendingOrders.length) {
-                    telegramApp.sendData(JSON.stringify({
-                        action: 'orders_synced',
-                        count: syncedCount
-                    }));
-                }
-            }
-        }
-
-        // Enhanced error handling with better user feedback
-        function handleAPIError(error, context = '') {
-            console.error(`API Error in ${context}:`, error);
-            
-            let userMessage = 'Произошла ошибка';
-            let isDevelopmentError = false;
-            
-            if (error.message.includes('404')) {
-                userMessage = 'Сервис временно недоступен';
-                isDevelopmentError = true;
-            } else if (error.message.includes('403')) {
-                userMessage = 'Ошибка доступа к данным';
-                isDevelopmentError = true;
-            } else if (error.message.includes('500')) {
-                userMessage = 'Ошибка сервера';
-                isDevelopmentError = true;
-            } else if (error.message.includes('Failed to fetch')) {
-                userMessage = 'Проблемы с интернет-соединением';
-            } else {
-                userMessage = `Ошибка: ${error.message}`;
-            }
-            
-            showNotification(userMessage, 'error');
-            
-            // Log development errors for debugging
-            if (isDevelopmentError && !telegramApp) {
-                console.group('🔧 Информация для разработчика:');
-                console.log('Контекст:', context);
-                console.log('Ошибка:', error.message);
-                console.log('URL:', window.location.href);
-                console.log('Проверьте:');
-                console.log('- API функция /api/sheets.js существует?');
-                console.log('- Переменные окружения настроены в Vercel?');
-                console.log('- Google Sheets API ключ действителен?');
-                console.groupEnd();
-            }
-            
-            return userMessage;
-        }
-
-        // Monitor connection status
-        let isOnline = navigator.onLine;
-        
-        window.addEventListener('online', () => {
-            isOnline = true;
-            updateConnectionStatus(true);
-            showNotification('🌐 Интернет подключение восстановлено', 'success');
-            
-            // Try to sync pending orders
-            setTimeout(syncPendingOrders, 1000);
-        });
-        
-        window.addEventListener('offline', () => {
-            isOnline = false;
-            updateConnectionStatus(false);
-            showNotification('📵 Нет интернет подключения', 'error');
-        });
-
-        // Periodically check connection and sync
-        setInterval(async () => {
-            if (isOnline) {
-                try {
-                    await sheetsAPI.getSheetData('PromoCodes', 'A1:A1');
-                    updateConnectionStatus(true);
-                    
-                    // Try to sync any pending orders
-                    const pendingCount = JSON.parse(localStorage.getItem('pendingOrders') || '[]').length;
-                    if (pendingCount > 0) {
-                        await syncPendingOrders();
-                    }
-                    
-                } catch (error) {
-                    updateConnectionStatus(false);
-                    console.warn('Потеряно соединение с сервисом');
-                }
-            }
-        }, 30000); // Check every 30 seconds
-
-        // Setup floating musical notes animation
-        function setupFloatingNotes() {
-            const notesContainer = document.getElementById('floatingNotes');
-            const notes = ['♪', '♫', '♬', '♩', '♭', '♯', '𝄞'];
-            
-            function createNote() {
-                const note = document.createElement('div');
-                note.className = 'note';
-                note.textContent = notes[Math.floor(Math.random() * notes.length)];
-                note.style.left = Math.random() * 100 + '%';
-                note.style.animationDuration = (Math.random() * 10 + 10) + 's';
-                note.style.animationDelay = Math.random() * 5 + 's';
-                
-                notesContainer.appendChild(note);
-                
-                setTimeout(() => {
-                    note.remove();
-                }, 20000);
-            }
-            
-            // Create notes periodically
-            setInterval(createNote, 3000);
-            
-            // Create initial notes
-            for (let i = 0; i < 5; i++) {
-                setTimeout(createNote, i * 1000);
-            }
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Promo form
-            document.getElementById('promoForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                submitPromoCode();
-            });
-
-            // Song request form
-            document.getElementById('songRequestForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                submitSongRequest();
-            });
-
-            // Auto-uppercase promo code
-            document.getElementById('promoCode').addEventListener('input', function(e) {
-                e.target.value = e.target.value.toUpperCase();
-            });
-
-            // Character counter for textareas
-            const textareas = document.querySelectorAll('textarea');
-            textareas.forEach(textarea => {
-                textarea.addEventListener('input', function() {
-                    // Add character counter if needed
-                });
-            });
-        }
 
         // Enhanced promo code submission for Telegram
         async function submitPromoCode() {
@@ -1581,19 +1341,14 @@
                 showNotification('Введите промокод', 'error');
                 return;
             }
-
-            // Show loading
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<span class="loading"></span>Проверяем в базе...';
             submitBtn.disabled = true;
 
             try {
                 console.log('🎟️ Проверяем промокод:', promoCode);
-                
-                // Validate promo code through our proxy API
                 const validation = await sheetsAPI.validatePromoCode(promoCode);
                 console.log('📝 Результат валидации:', validation);
-
                 if (validation.valid) {
                     orderData.promoCode = promoCode;
                     orderData.promoValidation = validation;
@@ -1601,12 +1356,9 @@
                     goToStep(2);
                 } else {
                     showNotification(`❌ ${validation.message}`, 'error');
-                    
-                    // Add visual feedback for invalid code
                     const promoInput = document.getElementById('promoCode');
                     promoInput.style.borderColor = '#f56565';
                     promoInput.style.animation = 'shake 0.5s ease-in-out';
-                    
                     setTimeout(() => {
                         promoInput.style.borderColor = '#e2e8f0';
                         promoInput.style.animation = '';
@@ -1614,21 +1366,13 @@
                 }
             } catch (error) {
                 console.error('❌ Ошибка проверки промокода:', error);
-                
                 let errorMsg = '🔌 Ошибка связи с сервером';
                 if (error.message.includes('404')) {
                     errorMsg = '⚙️ Сервис временно недоступен';
                 } else if (error.message.includes('500')) {
                     errorMsg = '🔧 Ошибка конфигурации сервера';
                 }
-                
                 showNotification(errorMsg, 'error');
-                
-                // Показываем дополнительную информацию для отладки
-                if (telegramApp) {
-                    console.log('Telegram Web App - сохраняем промокод локально для повтора');
-                    localStorage.setItem('pendingPromoCode', promoCode);
-                }
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -1639,42 +1383,28 @@
         async function confirmOrder() {
             try {
                 console.log('📋 Начинаем создание заказа...');
-                
                 const confirmBtn = event.target;
                 const originalText = confirmBtn.innerHTML;
                 confirmBtn.innerHTML = '<span class="loading"></span>Сохраняем в базу данных...';
                 confirmBtn.disabled = true;
-
-                // Generate order ID
                 currentOrderId = 'ORD' + Date.now().toString().slice(-6);
                 console.log('🆔 ID заказа:', currentOrderId);
-                
-                // Get user contact (enhanced for Telegram)
                 const userContact = getUserContact();
                 const userName = localStorage.getItem('userName') || orderData.recipient || 'Не указано';
-                
                 console.log('👤 Данные пользователя:', { userContact, userName });
-                
-                // Prepare user info
                 const userInfo = {
                     name: userName,
                     contact: userContact,
                     source: telegramApp ? 'telegram' : 'web'
                 };
-
-                // Step 1: Save user to Google Sheets
                 console.log('1️⃣ Сохраняем пользователя...');
                 showNotification('📝 Сохраняем информацию о пользователе...', 'success');
                 const userResult = await sheetsAPI.saveUser(userInfo);
                 console.log('✅ Пользователь сохранен:', userResult);
-                
-                // Step 2: Mark promo code as used
                 console.log('2️⃣ Отмечаем промокод как использованный...');
                 showNotification('🎟️ Активируем промокод...', 'success');
                 const promoResult = await sheetsAPI.markPromoCodeAsUsed(orderData.promoCode, userInfo);
                 console.log('✅ Промокод обновлен:', promoResult);
-
-                // Step 3: Create order in Google Sheets
                 console.log('3️⃣ Создаем заказ...');
                 showNotification('📋 Создаем заказ в системе...', 'success');
                 const orderInfo = {
@@ -1688,39 +1418,29 @@
                     theme: orderData.theme,
                     wishes: orderData.wishes
                 };
-
                 const orderResult = await sheetsAPI.saveOrder(orderInfo);
-
                 if (orderResult.success) {
                     document.getElementById('orderNumber').textContent = '#' + currentOrderId;
-                    
-                    // Save order locally as backup
                     const localOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
                     localOrders.push(orderInfo);
                     localStorage.setItem('userOrders', JSON.stringify(localOrders));
-                    
                     showNotification('🎉 Заказ успешно создан и сохранен в базе!', 'success');
                     goToStep(4);
                 } else {
                     throw new Error(orderResult.error);
                 }
-
             } catch (error) {
                 console.error('Ошибка создания заказа:', error);
                 showNotification('❌ Ошибка создания заказа. Попробуйте позже.', 'error');
-                
-                // Fallback to local storage
                 const fallbackOrder = {
                     id: currentOrderId,
                     ...orderData,
                     status: 'pending_sync',
                     createdAt: new Date().toISOString()
                 };
-                
                 const localOrders = JSON.parse(localStorage.getItem('pendingOrders') || '[]');
                 localOrders.push(fallbackOrder);
                 localStorage.setItem('pendingOrders', JSON.stringify(localOrders));
-                
                 showNotification('💾 Заказ сохранен локально. Будет синхронизирован позже.', 'success');
             } finally {
                 if (event.target) {
@@ -1733,38 +1453,27 @@
         // Enhanced check order status with Google Sheets
         async function checkOrderStatus() {
             const orderId = document.getElementById('orderCheckId').value.trim();
-            
             if (!orderId) {
                 showNotification('Введите номер заказа', 'error');
                 return;
             }
-
-            // Show loading
             const originalBtn = event.target;
             const originalText = originalBtn.innerHTML;
             originalBtn.innerHTML = '<span class="loading"></span>Проверяем...';
             originalBtn.disabled = true;
-
             try {
-                // Get user contact
                 const userContact = localStorage.getItem('userContact');
-                
                 if (!userContact) {
                     showNotification('Сначала укажите ваш контакт в настройках', 'error');
                     return;
                 }
-
-                // Get orders from Google Sheets
                 const userOrders = await sheetsAPI.getUserOrders(userContact);
                 const order = userOrders.find(o => o.id === orderId);
-
                 if (order) {
                     showEnhancedOrderStatusModal(order);
                 } else {
-                    // Check local storage as fallback
                     const localOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
                     const localOrder = localOrders.find(o => o.id === orderId);
-                    
                     if (localOrder) {
                         showEnhancedOrderStatusModal({...localOrder, status: 'pending'});
                         showNotification('ℹ️ Заказ найден в локальном хранилище', 'success');
@@ -1815,9 +1524,7 @@
                     description: 'Заказ сохранен локально, будет синхронизирован'
                 }
             };
-
             const status = statusInfo[order.status] || statusInfo['pending'];
-
             const modal = document.createElement('div');
             modal.className = 'modal active';
             modal.innerHTML = `
@@ -1834,7 +1541,6 @@
                             <h3 style="color: ${status.color}; margin-bottom: 10px;">${status.text}</h3>
                             <p style="color: #718096;">${status.description}</p>
                         </div>
-                        
                         <div class="order-summary">
                             <div class="order-detail">
                                 <strong>Дата создания:</strong> 
@@ -1862,7 +1568,6 @@
                                 </div>
                             ` : ''}
                         </div>
-                        
                         ${order.status === 'pending' || order.status === 'pending_sync' ? `
                             <div style="text-align: center; margin-top: 20px; padding: 15px; background: #f0f4ff; border-radius: 10px;">
                                 <p style="color: #4a5568; margin-bottom: 10px;">📅 <strong>Ожидаемые сроки:</strong></p>
@@ -1870,7 +1575,6 @@
                                 <p style="color: #718096;">Мы уведомим вас о готовности</p>
                             </div>
                         ` : ''}
-                        
                         ${order.status === 'completed' ? `
                             <div style="text-align: center; margin-top: 20px;">
                                 <button class="btn btn-success" onclick="simulateDownload('${order.id}')">
@@ -1881,7 +1585,6 @@
                                 </p>
                             </div>
                         ` : ''}
-                        
                         <div style="text-align: center; margin-top: 20px;">
                             <button type="button" class="btn btn-secondary" onclick="refreshOrderStatus('${order.id}')">
                                 🔄 Обновить статус
@@ -1890,7 +1593,6 @@
                     </div>
                 </div>
             `;
-            
             document.body.appendChild(modal);
         }
 
@@ -1898,13 +1600,10 @@
         async function refreshOrderStatus(orderId) {
             try {
                 showNotification('🔄 Обновляем статус заказа...', 'success');
-                
                 const userContact = localStorage.getItem('userContact');
                 const userOrders = await sheetsAPI.getUserOrders(userContact);
                 const order = userOrders.find(o => o.id === orderId);
-                
                 if (order) {
-                    // Close current modal and show updated one
                     document.querySelector('.modal').remove();
                     showEnhancedOrderStatusModal(order);
                     showNotification('✅ Статус обновлен', 'success');
@@ -1924,19 +1623,14 @@
             const theme = document.getElementById('songTheme').value.trim();
             const wishes = document.getElementById('songWishes').value.trim();
             const submitBtn = document.getElementById('songSubmitBtn');
-
             if (!recipient || !genre || !theme) {
                 showNotification('Заполните все обязательные поля', 'error');
                 return;
             }
-
-            // Save order data
             orderData.recipient = recipient;
             orderData.genre = genre;
             orderData.theme = theme;
             orderData.wishes = wishes;
-
-            // Show order summary
             showOrderSummary();
             goToStep(3);
         }
@@ -1952,48 +1646,10 @@
                 orderData.theme;
         }
 
-        // Confirm order
-        // NOTE: This function is duplicated and enhanced above for Google Sheets integration.
-        // The one above will be used if sheetsAPI is properly configured.
-        // This simplified version is kept for local-only testing if sheetsAPI is not used.
-        /*
-        async function confirmOrder() {
-            try {
-                // Simulate API call to create order
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Generate order ID
-                currentOrderId = 'ORD' + Date.now().toString().slice(-6);
-                document.getElementById('orderNumber').textContent = '#' + currentOrderId;
-                
-                // Save order to localStorage for demo
-                const orders = JSON.parse(localStorage.getItem('userOrders') || '[]');
-                const newOrder = {
-                    id: currentOrderId,
-                    ...orderData,
-                    status: 'pending',
-                    createdAt: new Date().toISOString(),
-                    estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('ru')
-                };
-                orders.push(newOrder);
-                localStorage.setItem('userOrders', JSON.stringify(orders));
-                
-                showNotification('Заказ успешно создан!', 'success');
-                goToStep(4);
-            } catch (error) {
-                showNotification('Ошибка создания заказа', 'error');
-            }
-        }
-        */
-
         // Go to specific step
         function goToStep(step) {
-            // Hide current step
             document.querySelector('.step.active').classList.remove('active');
-            
-            // Show target step
             document.getElementById(`step${step}`).classList.add('active');
-            
             currentStep = step;
             updateProgress();
         }
@@ -2006,190 +1662,35 @@
 
         // Create new order
         function createNewOrder() {
-            // Reset data
             orderData = {};
             currentOrderId = null;
             currentStep = 1;
-            
-            // Reset forms
             document.getElementById('promoForm').reset();
             document.getElementById('songRequestForm').reset();
-            
-            // Go to first step
             goToStep(1);
-            
             showNotification('Готов к новому заказу!', 'success');
         }
-
-        // Check order status
-        // NOTE: This function is duplicated and enhanced above for Google Sheets integration.
-        // The one above will be used if sheetsAPI is properly configured.
-        // This simplified version is kept for local-only testing if sheetsAPI is not used.
-        /*
-        function checkOrderStatus() {
-            const orderId = document.getElementById('orderCheckId').value.trim();
-            
-            if (!orderId) {
-                showNotification('Введите номер заказа', 'error');
-                return;
-            }
-
-            // Get orders from localStorage
-            const orders = JSON.parse(localStorage.getItem('userOrders') || '[]');
-            const order = orders.find(o => o.id === orderId);
-
-            if (order) {
-                showOrderStatusModal(order);
-            } else {
-                showNotification('Заказ не найден', 'error');
-            }
-        }
-        */
-
-        // Show order status modal
-        // NOTE: This function is duplicated and enhanced above for Google Sheets integration.
-        // The one above will be used if sheetsAPI is properly configured.
-        // This simplified version is kept for local-only testing if sheetsAPI is not used.
-        /*
-        function showOrderStatusModal(order) {
-            const statusText = {
-                'pending': 'В обработке',
-                'in_progress': 'Создается',
-                'completed': 'Готов',
-                'delivered': 'Доставлен'
-            };
-
-            const statusColor = {
-                'pending': '#d69e2e',
-                'in_progress': '#3182ce',
-                'completed': '#38a169',
-                'delivered': '#38a169'
-            };
-
-            const modal = document.createElement('div');
-            modal.className = 'modal active';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title">Статус заказа #${order.id}</h3>
-                        <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
-                    </div>
-                    <div style="padding: 20px;">
-                        <div class="order-summary">
-                            <div class="order-detail">
-                                <strong>Статус:</strong> 
-                                <span style="color: ${statusColor[order.status]}; font-weight: bold;">
-                                    ${statusText[order.status]}
-                                </span>
-                            </div>
-                            <div class="order-detail">
-                                <strong>Дата создания:</strong> ${new Date(order.createdAt).toLocaleDateString('ru')}
-                            </div>
-                            <div class="order-detail">
-                                <strong>Получатель:</strong> ${order.recipient}
-                            </div>
-                            <div class="order-detail">
-                                <strong>Жанр:</strong> ${order.genre}
-                            </div>
-                            ${order.status === 'pending' ? `
-                                <div class="order-detail">
-                                    <strong>Ожидаемая готовность:</strong> ${order.estimatedDelivery}
-                                </div>
-                            ` : ''}
-                        </div>
-                        
-                        ${order.status === 'pending' ? `
-                            <div style="text-align: center; margin-top: 20px; color: #718096;">
-                                <p>⏳ Ваш заказ обрабатывается</p>
-                                <p>Мы уведомим вас, когда песня будет готова</p>
-                            </div>
-                        ` : ''}
-                        
-                        ${order.status === 'completed' ? `
-                            <div style="text-align: center; margin-top: 20px;">
-                                <button class="btn btn-success" onclick="simulateDownload('${order.id}')">
-                                    🎵 Скачать песню
-                                </button>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-        }
-        */
 
         // Simulate song download
         function simulateDownload(orderId) {
             showNotification('Песня скачивается...', 'success');
-            
-            // In real app, this would download the actual file
             setTimeout(() => {
                 showNotification('Песня сохранена в загрузки!', 'success');
             }, 2000);
         }
 
-        // Show notification
-        // NOTE: This function is duplicated and enhanced above for Telegram integration.
-        // The one above will be used if telegramApp is available.
-        // This simplified version is kept for local-only testing if telegramApp is not used.
-        /*
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.classList.add('show');
-
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-        */
-
-        // Demo: Simulate order status updates
-        function simulateOrderProgress() {
-            const orders = JSON.parse(localStorage.getItem('userOrders') || '[]');
-            
-            orders.forEach(order => {
-                if (order.status === 'pending' && Math.random() > 0.7) {
-                    order.status = 'in_progress';
-                } else if (order.status === 'in_progress' && Math.random() > 0.8) {
-                    order.status = 'completed';
-                }
+        // Smooth scroll to top
+        function smoothScrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
             });
-            
-            localStorage.setItem('userOrders', JSON.stringify(orders));
         }
-
-        // Run demo simulation every 30 seconds
-        setInterval(simulateOrderProgress, 30000);
-
-        // Add some interactive features
-        document.addEventListener('keydown', function(e) {
-            // Enter key navigation
-            if (e.key === 'Enter' && !e.shiftKey) {
-                const activeElement = document.activeElement;
-                
-                if (activeElement.id === 'promoCode') {
-                    e.preventDefault();
-                    document.getElementById('promoForm').dispatchEvent(new Event('submit'));
-                }
-            }
-        });
-
-        // Add input validation and formatting
-        document.getElementById('promoCode').addEventListener('input', function(e) {
-            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-            if (value.length > 20) value = value.slice(0, 20);
-            e.target.value = value;
-        });
-
+        
         // Add real-time character counting for textareas
         function addCharacterCounter(textareaId, maxLength = 500) {
             const textarea = document.getElementById(textareaId);
             const container = textarea.parentNode;
-            
             const counter = document.createElement('div');
             counter.style.cssText = `
                 text-align: right;
@@ -2198,11 +1699,9 @@
                 margin-top: 5px;
             `;
             container.appendChild(counter);
-            
             function updateCounter() {
                 const remaining = maxLength - textarea.value.length;
                 counter.textContent = `${textarea.value.length}/${maxLength}`;
-                
                 if (remaining < 50) {
                     counter.style.color = '#f56565';
                 } else if (remaining < 100) {
@@ -2211,62 +1710,24 @@
                     counter.style.color = '#a0aec0';
                 }
             }
-            
             textarea.addEventListener('input', updateCounter);
             updateCounter();
         }
 
-        // Add character counters
         setTimeout(() => {
             addCharacterCounter('songTheme', 1000);
             addCharacterCounter('songWishes', 500);
         }, 1000);
 
-        // Add smooth scrolling for better UX
-        function smoothScrollToTop() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        }
-
-        // Scroll to top when changing steps
-        // This line was already present, but now the `goToStep` it modifies
-        // is the one defined earlier in this script block.
-        // const originalGoToStep = goToStep; // This line is not needed here as goToStep is already reassigned above
-        // goToStep = function(step) {
-        //     originalGoToStep(step);
-        //     smoothScrollToTop();
-        // };
-
-        // Add tooltips for better UX
-        function addTooltip(elementId, text) {
-            const element = document.getElementById(elementId);
-            element.title = text;
-            element.style.cursor = 'help';
-        }
-
-        // Add helpful tooltips
-        setTimeout(() => {
-            addTooltip('promoCode', 'Промокод состоит из букв и цифр, обычно 4-20 символов');
-            addTooltip('songGenre', 'Например: поп, рок, рэп, баллада, джаз, классика');
-        }, 2000);
-
-        // Add form validation styling
         function validateField(fieldId, isValid, message = '') {
             const field = document.getElementById(fieldId);
             const container = field.parentNode;
-            
-            // Remove existing validation message
             const existingMsg = container.querySelector('.validation-message');
             if (existingMsg) existingMsg.remove();
-            
-            // Update field styling
             if (isValid) {
                 field.style.borderColor = '#48bb78';
             } else {
                 field.style.borderColor = '#f56565';
-                
                 if (message) {
                     const msg = document.createElement('div');
                     msg.className = 'validation-message';
@@ -2281,7 +1742,6 @@
             }
         };
 
-        // Enhanced form validation
         document.getElementById('songTheme').addEventListener('blur', function() {
             const value = this.value.trim();
             if (value.length < 10) {
@@ -2300,22 +1760,16 @@
             }
         });
 
-        // Add easter egg for fun
         let konamiCode = [];
         const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight'];
-
         document.addEventListener('keydown', function(e) {
             konamiCode.push(e.code);
-            
             if (konamiCode.length > konamiSequence.length) {
                 konamiCode.shift();
             }
-            
             if (konamiCode.join(',') === konamiSequence.join(',')) {
                 showNotification('🎉 Секретный код активирован! Скидка 50% на следующий заказ!', 'success');
                 konamiCode = [];
-                
-                // Add some fun visual effects
                 document.body.style.animation = 'rainbow 2s linear';
                 setTimeout(() => {
                     document.body.style.animation = '';
@@ -2323,18 +1777,6 @@
             }
         });
 
-        // Add rainbow animation for easter egg
-        // This part dynamically creates a style tag. It's fine here.
-        // const style = document.createElement('style'); // This line is not needed as it's already defined above
-        // style.textContent = `
-        //     @keyframes rainbow {
-        //         0% { filter: hue-rotate(0deg); }
-        //         100% { filter: hue-rotate(360deg); }
-        //     }
-        // `;
-        // document.head.appendChild(style); // This line is not needed as the style is already in the head
-        
-        // Function to restore form data from localStorage
         function restoreFormData() {
             const savedData = JSON.parse(localStorage.getItem('formDataDraft') || '{}');
             if (Object.keys(savedData).length > 0) {
@@ -2343,8 +1785,6 @@
                 document.getElementById('songGenre').value = savedData.genre || '';
                 document.getElementById('songTheme').value = savedData.theme || '';
                 document.getElementById('songWishes').value = savedData.wishes || '';
-                
-                // Restore current step
                 if (savedData.currentStep) {
                     goToStep(savedData.currentStep);
                 }
@@ -2352,7 +1792,6 @@
             }
         }
 
-        // Function to save form data to localStorage as draft
         function saveFormDraft() {
             const formData = {
                 promoCode: document.getElementById('promoCode').value,
@@ -2365,18 +1804,11 @@
             localStorage.setItem('formDataDraft', JSON.stringify(formData));
         }
 
-        // Save draft on input change and before unload
         document.querySelectorAll('input, textarea').forEach(element => {
             element.addEventListener('input', saveFormDraft);
         });
         window.addEventListener('beforeunload', saveFormDraft);
 
-        // Clear form draft
-        function clearFormDraft() {
-            localStorage.removeItem('formDataDraft');
-        }
-
-        // Add settings button (example)
         function addSettingsButton() {
             const settingsBtn = document.createElement('button');
             settingsBtn.textContent = '⚙️ Настройки';
@@ -2389,7 +1821,6 @@
             document.body.appendChild(settingsBtn);
         }
 
-        // Show settings modal (example)
         function showSettingsModal() {
             const modal = document.createElement('div');
             modal.className = 'modal active';
@@ -2416,7 +1847,6 @@
             document.body.appendChild(modal);
         }
 
-        // Save settings (example)
         function saveSettings() {
             const contactInput = document.getElementById('settingsContact');
             const contact = contactInput.value.trim();

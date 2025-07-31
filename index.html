@@ -968,14 +968,25 @@
             // Проверяем Telegram WebApp
             if (window.Telegram && window.Telegram.WebApp) {
                 const tg = window.Telegram.WebApp;
-                try {
-                    // Используем только showAlert для совместимости с версией 6.0
-                    tg.showAlert(message);
-                } catch (e) {
-                    console.warn('Telegram WebApp ошибка:', e);
-                    // Fallback к обычному уведомлению
-                    showBrowserNotification(message, type);
+                
+                // Проверяем версию и доступные методы
+                const version = parseFloat(tg.version || '6.0');
+                
+                // Для критических ошибок всегда показываем alert
+                if (type === 'error') {
+                    try {
+                        tg.showAlert(message);
+                    } catch (e) {
+                        console.warn('Telegram showAlert ошибка:', e);
+                        showBrowserNotification(message, type);
+                    }
+                    return;
                 }
+                
+                // Для обычных уведомлений используем только браузерные уведомления
+                // чтобы избежать ошибок с неподдерживаемыми методами
+                console.log(`📱 Telegram уведомление (версия ${version}): ${message}`);
+                showBrowserNotification(message, type);
                 return;
             }
 
@@ -999,6 +1010,34 @@
         let currentOrderId = null;
         let telegramApp = null;
 
+        // Функция для проверки поддерживаемых методов Telegram
+        function checkTelegramSupport() {
+            if (!window.Telegram || !window.Telegram.WebApp) {
+                return { supported: false, version: null, methods: [] };
+            }
+            
+            const tg = window.Telegram.WebApp;
+            const version = parseFloat(tg.version || '6.0');
+            const supportedMethods = [];
+            
+            // Проверяем доступные методы
+            if (typeof tg.showAlert === 'function') supportedMethods.push('showAlert');
+            if (typeof tg.showPopup === 'function') supportedMethods.push('showPopup');
+            if (typeof tg.showConfirm === 'function') supportedMethods.push('showConfirm');
+            if (typeof tg.showScanQrPopup === 'function') supportedMethods.push('showScanQrPopup');
+            
+            console.log(`📱 Telegram WebApp поддержка:`, {
+                version: version,
+                supportedMethods: supportedMethods
+            });
+            
+            return {
+                supported: true,
+                version: version,
+                methods: supportedMethods
+            };
+        }
+
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Инициализация приложения...');
@@ -1007,7 +1046,11 @@
             if (window.Telegram && window.Telegram.WebApp) {
                 telegramApp = window.Telegram.WebApp;
                 telegramApp.expand();
-                console.log('📱 Telegram Web App обнаружен, версия:', telegramApp.version);
+                
+                // Проверяем поддерживаемые методы
+                const support = checkTelegramSupport();
+                console.log(`📱 Telegram Web App обнаружен, версия: ${support.version}`);
+                console.log(`🔧 Поддерживаемые методы: ${support.methods.join(', ')}`);
             }
             
             setupFloatingNotes();
@@ -1064,10 +1107,14 @@
                 console.log('🔍 Тестируем подключение к Google Sheets...');
                 await makeAPIRequest('get', { sheetName: 'PromoCodes', range: 'A1:A1' });
                 console.log('✅ Подключение к Google Sheets успешно');
-                showNotification('📊 Подключение к базе данных установлено', 'success');
+                
+                // Показываем только браузерное уведомление для подключения
+                showBrowserNotification('📊 Подключение к базе данных установлено', 'success');
                 updateConnectionStatus(true);
             } catch (error) {
                 console.error('❌ Ошибка подключения к Google Sheets:', error);
+                
+                // Для ошибок подключения показываем через Telegram
                 showNotification('Ошибка подключения к базе данных', 'error');
                 updateConnectionStatus(false);
             }
@@ -1427,7 +1474,12 @@
                 if (savedData.currentStep) {
                     goToStep(savedData.currentStep);
                 }
-                showNotification('Данные формы восстановлены из черновика', 'info');
+                
+                // Просто логируем восстановление, без уведомления в Telegram
+                console.log('💾 Данные формы восстановлены из черновика');
+                
+                // Показываем только браузерное уведомление
+                showBrowserNotification('Данные формы восстановлены из черновика', 'info');
             }
         }
 

@@ -1,4 +1,10 @@
-// api/sheets.js - Улучшенная версия с обработкой ошибки 401
+// api/sheets.js - Улучшенная версия с аутентификацией через Сервисный аккаунт
+// Для работы требуется установить пакеты: google-auth-library и googleapis
+// npm install google-auth-library googleapis
+
+import { GoogleAuth } from 'google-auth-library';
+import { google } from 'googleapis';
+
 export default async function handler(req, res) {
   // Разрешаем CORS для всех источников (включая Telegram)
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,196 +25,118 @@ export default async function handler(req, res) {
   try {
     const { action, sheetName, range, values, searchValue, updateRange, updateValue } = req.body;
     
-    // Получаем переменные окружения
-    const API_KEY = process.env.GOOGLE_SHEETS_API_KEY;
+    // Получаем переменные окружения для СЕРВИСНОГО АККАУНТА
+    const CLIENT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY; // Приватный ключ из JSON-файла
     const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
     
     console.log('📝 API Request:', { 
       action, 
       sheetName, 
-      hasApiKey: !!API_KEY, 
+      hasClientEmail: !!CLIENT_EMAIL, 
+      hasPrivateKey: !!PRIVATE_KEY,
       hasSpreadsheetId: !!SPREADSHEET_ID,
       timestamp: new Date().toISOString()
     });
     
-    if (!API_KEY || !SPREADSHEET_ID) {
-      console.error('❌ Missing environment variables');
+    if (!CLIENT_EMAIL || !PRIVATE_KEY || !SPREADSHEET_ID) {
+      console.error('❌ Missing environment variables for Service Account');
       return res.status(500).json({ 
         error: 'Server configuration error',
-        details: 'Missing GOOGLE_SHEETS_API_KEY or GOOGLE_SPREADSHEET_ID',
-        solution: 'Add environment variables in Vercel Dashboard'
+        details: 'Missing GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, or GOOGLE_SPREADSHEET_ID',
+        solution: 'Add environment variables in Vercel Dashboard for Service Account authentication'
       });
     }
 
-    const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
+    // Инициализация аутентификации через Сервисный аккаунт
+    const auth = new GoogleAuth({
+      credentials: {
+        client_email: CLIENT_EMAIL,
+        // Важно: приватный ключ может содержать символы новой строки (\n),
+        // которые в переменных окружения Vercel могут быть экранированы как \\n.
+        // Поэтому заменяем \\n на \n.
+        private_key: PRIVATE_KEY.replace(/\\n/g, '\n'), 
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'], // Область доступа для чтения и записи
+    });
+
+    const authClient = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
 
     switch (action) {
       case 'get':
         try {
-          const getUrl = `${baseUrl}/values/${sheetName}${range ? '!' + range : ''}?key=${API_KEY}`;
-          console.log('📡 GET request to:', getUrl);
-          
-          const getResponse = await fetch(getUrl);
-          
-          if (!getResponse.ok) {
-            const errorText = await getResponse.text();
-            console.error('Google Sheets API Error:', getResponse.status, errorText);
-            
-            // Подробная обработка ошибок
-            if (getResponse.status === 401) {
-              return res.status(401).json({
-                error: 'API key authentication failed',
-                details: 'The API key is invalid or expired',
-                solutions: [
-                  'Check if the API key is correct in Vercel environment variables',
-                  'Verify that Google Sheets API is enabled in Google Cloud Console',
-                  'Make sure the API key has proper restrictions set'
-                ]
-              });
-            } else if (getResponse.status === 403) {
-              return res.status(403).json({
-                error: 'Access forbidden to Google Sheets',
-                details: 'No permission to access the spreadsheet',
-                solutions: [
-                  'Make the spreadsheet publicly readable',
-                  'Share the spreadsheet with the service account email',
-                  'Check API key restrictions in Google Cloud Console'
-                ]
-              });
-            } else if (getResponse.status === 404) {
-              return res.status(404).json({
-                error: 'Spreadsheet or sheet not found',
-                details: `Sheet "${sheetName}" not found in spreadsheet`,
-                solutions: [
-                  'Check if SPREADSHEET_ID is correct',
-                  'Verify that the sheet name exists in your spreadsheet',
-                  'Make sure the spreadsheet is not deleted'
-                ]
-              });
-            }
-            
-            throw new Error(`Google Sheets API error: ${getResponse.status}`);
-          }
-          
-          const getData = await getResponse.json();
-          console.log('✅ GET response successful:', { 
-            range: getData.range, 
-            rowCount: getData.values ? getData.values.length : 0 
+          const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${sheetName}${range ? '!' + range : ''}`,
           });
-          return res.json(getData);
+          
+          console.log('✅ GET response successful:', { 
+            range: response.data.range, 
+            rowCount: response.data.values ? response.data.values.length : 0 
+          });
+          return res.json(response.data);
           
         } catch (error) {
           console.error('GET Error:', error);
-          throw error;
+          // Детальная обработка ошибок Google Sheets API
+          return handleGoogleApiError(error, res);
         }
 
       case 'append':
         try {
-          const appendUrl = `${baseUrl}/values/${sheetName}:append?valueInputOption=RAW&key=${API_KEY}`;
-          console.log('📡 APPEND request to:', appendUrl);
-          console.log('📝 APPEND data:', values);
-          
-          const appendResponse = await fetch(appendUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ values: [values] })
+          const response = await sheets.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: sheetName,
+            valueInputOption: 'RAW',
+            resource: {
+              values: [values],
+            },
           });
           
-          if (!appendResponse.ok) {
-            const errorText = await appendResponse.text();
-            console.error('Google Sheets API Error:', appendResponse.status, errorText);
-            
-            // Специальная обработка ошибки 401 для записи
-            if (appendResponse.status === 401) {
-              return res.status(401).json({
-                error: 'API key has no write permissions',
-                details: 'The API key can read but cannot write to Google Sheets',
-                solutions: [
-                  'Make the spreadsheet publicly editable (Anyone with link can edit)',
-                  'Use a Service Account instead of API key for write operations',
-                  'Share the spreadsheet with edit permissions',
-                  'Check if the API key has proper scopes for writing'
-                ],
-                readOnlyMode: true
-              });
-            }
-            
-            throw new Error(`Google Sheets API error: ${appendResponse.status}`);
-          }
-          
-          const appendData = await appendResponse.json();
-          console.log('✅ APPEND response successful:', appendData);
-          return res.json(appendData);
+          console.log('✅ APPEND response successful:', response.data);
+          return res.json(response.data);
           
         } catch (error) {
           console.error('APPEND Error:', error);
-          throw error;
+          return handleGoogleApiError(error, res);
         }
 
       case 'update':
         try {
-          const updateUrl = `${baseUrl}/values/${sheetName}!${updateRange}?valueInputOption=RAW&key=${API_KEY}`;
-          console.log('📡 UPDATE request to:', updateUrl);
-          console.log('📝 UPDATE data:', updateValue);
-          
-          const updateResponse = await fetch(updateUrl, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ values: [[updateValue]] })
+          const response = await sheets.spreadsheets.values.update({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${sheetName}!${updateRange}`,
+            valueInputOption: 'RAW',
+            resource: {
+              values: [[updateValue]],
+            },
           });
           
-          if (!updateResponse.ok) {
-            const errorText = await updateResponse.text();
-            console.error('Google Sheets API Error:', updateResponse.status, errorText);
-            
-            if (updateResponse.status === 401) {
-              return res.status(401).json({
-                error: 'API key has no write permissions',
-                details: 'Cannot update cells - write access required',
-                solutions: [
-                  'Enable edit permissions for the spreadsheet',
-                  'Use Service Account authentication',
-                  'Grant write access to the API key'
-                ]
-              });
-            }
-            
-            throw new Error(`Google Sheets API error: ${updateResponse.status}`);
-          }
-          
-          const updateData = await updateResponse.json();
-          console.log('✅ UPDATE response successful:', updateData);
-          return res.json(updateData);
+          console.log('✅ UPDATE response successful:', response.data);
+          return res.json(response.data);
           
         } catch (error) {
           console.error('UPDATE Error:', error);
-          throw error;
+          return handleGoogleApiError(error, res);
         }
 
       case 'find':
         try {
-          const findUrl = `${baseUrl}/values/${sheetName}?key=${API_KEY}`;
-          console.log('📡 FIND request to:', findUrl);
-          console.log('🔍 Searching for:', searchValue);
+          const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: sheetName, // Получаем все данные с листа для поиска
+          });
           
-          const findResponse = await fetch(findUrl);
-          
-          if (!findResponse.ok) {
-            const errorText = await findResponse.text();
-            console.error('Google Sheets API Error:', findResponse.status, errorText);
-            throw new Error(`Google Sheets API error: ${findResponse.status}`);
-          }
-          
-          const findData = await findResponse.json();
-          
-          if (findData.values) {
-            for (let i = 0; i < findData.values.length; i++) {
-              if (findData.values[i][0] === searchValue) {
+          const rows = response.data.values;
+          if (rows) {
+            for (let i = 0; i < rows.length; i++) {
+              if (rows[i][0] === searchValue) { // Ищем только в первом столбце
                 console.log('✅ FIND result: found at row', i + 1);
                 return res.json({
                   found: true,
                   rowIndex: i + 1,
-                  rowData: findData.values[i]
+                  rowData: rows[i]
                 });
               }
             }
@@ -219,52 +147,52 @@ export default async function handler(req, res) {
           
         } catch (error) {
           console.error('FIND Error:', error);
-          throw error;
+          return handleGoogleApiError(error, res);
         }
 
-      // Специальный action для проверки прав записи
       case 'test-write-permissions':
         try {
-          // Пытаемся прочитать небольшой диапазон
-          const testReadUrl = `${baseUrl}/values/${sheetName || 'Users'}!A1:A1?key=${API_KEY}`;
-          const readResponse = await fetch(testReadUrl);
-          
-          if (!readResponse.ok) {
-            throw new Error(`Read test failed: ${readResponse.status}`);
-          }
-
-          // Пытаемся записать тестовое значение (которое сразу же удалим)
-          const testWriteUrl = `${baseUrl}/values/${sheetName || 'Users'}!Z1000?valueInputOption=RAW&key=${API_KEY}`;
-          const writeResponse = await fetch(testWriteUrl, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ values: [['test']] })
+          // Пытаемся записать тестовое значение в фиктивную ячейку
+          const testRange = `${sheetName || 'Users'}!Z1000`; // Используем лист Users или любой другой
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SPREADSHEET_ID,
+            range: testRange,
+            valueInputOption: 'RAW',
+            resource: {
+              values: [['test_write_permission']],
+            },
           });
 
-          const canWrite = writeResponse.ok;
+          // Очищаем тестовую ячейку (опционально, но хорошая практика)
+          await sheets.spreadsheets.values.clear({
+            spreadsheetId: SPREADSHEET_ID,
+            range: testRange,
+          });
           
           return res.json({
-            canRead: true,
-            canWrite: canWrite,
-            writeError: canWrite ? null : writeResponse.status,
-            recommendations: canWrite ? 
-              ['Write permissions are working correctly'] : 
-              [
-                'Enable public edit access for the spreadsheet',
-                'Share spreadsheet with edit permissions',
-                'Consider using Service Account authentication'
-              ]
+            canRead: true, // Если можем записать, то и читать можем
+            canWrite: true,
+            writeError: null,
+            recommendations: ['Write permissions are working correctly with Service Account.']
           });
 
         } catch (error) {
+          console.error('TEST-WRITE-PERMISSIONS Error:', error);
+          let writeErrorDetails = 'Unknown error';
+          if (error.response && error.response.data && error.response.data.error) {
+            writeErrorDetails = error.response.data.error.message;
+          } else if (error.message) {
+            writeErrorDetails = error.message;
+          }
+          
           return res.json({
-            canRead: false,
+            canRead: true, // Предполагаем, что чтение работает, т.к. ошибка только при записи
             canWrite: false,
-            error: error.message,
+            writeError: writeErrorDetails,
             recommendations: [
-              'Check API key validity',
-              'Verify spreadsheet exists and is accessible',
-              'Ensure Google Sheets API is enabled'
+              'Share the Google Sheet with the Service Account email (Editor role).',
+              'Ensure Google Sheets API is enabled in Google Cloud Console.',
+              'Check GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY in Vercel environment variables.'
             ]
           });
         }
@@ -279,34 +207,36 @@ export default async function handler(req, res) {
     }
     
   } catch (error) {
-    console.error('❌ General API Error:', error);
+    console.error('❌ General API Error in handler:', error);
     
     // Определяем тип ошибки для пользователя
     let userError = 'Internal server error';
     let statusCode = 500;
     let solutions = [];
     
-    if (error.message.includes('401')) {
-      userError = 'Authentication failed with Google Sheets API';
+    if (error.message.includes('GOOGLE_PRIVATE_KEY') || error.message.includes('GOOGLE_SERVICE_ACCOUNT_EMAIL')) {
+      userError = 'Server configuration error: Service Account credentials missing';
+      solutions = ['Ensure GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY are set correctly in Vercel Environment Variables.'];
+    } else if (error.message.includes('401')) { // Это уже не должно происходить с SA, но на всякий случай
+      userError = 'Authentication failed with Google Sheets API (Service Account)';
       statusCode = 401;
       solutions = [
-        'Check if API key is valid and not expired',
-        'Verify Google Sheets API is enabled',
-        'For write operations, ensure proper permissions are set'
+        'Check if Service Account email is correct',
+        'Verify private key is correctly formatted (especially newlines)',
+        'Ensure Google Sheets API is enabled'
       ];
     } else if (error.message.includes('403')) {
-      userError = 'Access denied to Google Sheets';
+      userError = 'Access denied to Google Sheets (Service Account)';
       statusCode = 403;
       solutions = [
-        'Make spreadsheet publicly accessible',
-        'Share spreadsheet with appropriate permissions',
-        'Check API key restrictions'
+        'Share the spreadsheet with the Service Account email (Editor role)',
+        'Check if Google Sheets API is enabled in Google Cloud Console'
       ];
     } else if (error.message.includes('404')) {
       userError = 'Spreadsheet or sheet not found';
       statusCode = 404;
       solutions = [
-        'Verify SPREADSHEET_ID is correct',
+        'Verify SPREADSHEET_ID is correct in Vercel',
         'Check if sheet names exist in spreadsheet',
         'Ensure spreadsheet is not deleted'
       ];
@@ -314,7 +244,7 @@ export default async function handler(req, res) {
       userError = 'Cannot connect to Google Sheets API';
       statusCode = 502;
       solutions = [
-        'Check internet connectivity',
+        'Check internet connectivity from Vercel environment (less likely for Vercel)',
         'Verify Google Sheets API endpoint is accessible',
         'Try again in a few moments'
       ];
@@ -327,4 +257,49 @@ export default async function handler(req, res) {
       timestamp: new Date().toISOString()
     });
   }
+}
+
+// Вспомогательная функция для обработки ошибок Google API
+function handleGoogleApiError(error, res) {
+  let statusCode = 500;
+  let userError = 'Internal Google Sheets API error';
+  let details = error.message;
+  let solutions = [];
+
+  if (error.response && error.response.status) {
+    statusCode = error.response.status;
+    if (error.response.data && error.response.data.error) {
+      details = error.response.data.error.message;
+    }
+  }
+
+  if (statusCode === 401) {
+    userError = 'Authentication failed with Service Account';
+    solutions = [
+      'Check GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY in Vercel variables.',
+      'Ensure private key is correctly formatted (especially newlines).'
+    ];
+  } else if (statusCode === 403) {
+    userError = 'Access denied to Google Sheet';
+    solutions = [
+      'Share the Google Sheet with the Service Account email (Editor role).',
+      'Ensure Google Sheets API is enabled in Google Cloud Console.'
+    ];
+  } else if (statusCode === 404) {
+    userError = 'Spreadsheet or sheet not found';
+    solutions = [
+      'Verify SPREADSHEET_ID in Vercel is correct.',
+      'Check if sheet name exists in your spreadsheet.'
+    ];
+  } else if (statusCode === 429) {
+    userError = 'Too many requests to Google Sheets API';
+    solutions = ['Reduce request frequency or increase Google Cloud quota.'];
+  }
+
+  return res.status(statusCode).json({
+    error: userError,
+    details: details,
+    solutions: solutions,
+    timestamp: new Date().toISOString()
+  });
 }

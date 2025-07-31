@@ -7,20 +7,14 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { action, sheetName, range, values, searchValue } = req.body;
+    const { action, sheetName, range, values, searchValue, newValue } = req.body;
 
-    // Парсим JSON из GOOGLE_PRIVATE_KEY_BASE64
+    // Парсим JSON ключа
     const serviceAccount = JSON.parse(process.env.GOOGLE_PRIVATE_KEY_BASE64);
-
     const CLIENT_EMAIL = serviceAccount.client_email;
     const PRIVATE_KEY = serviceAccount.private_key.replace(/\\n/g, '\n');
     const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
@@ -35,14 +29,14 @@ export default async function handler(req, res) {
     let response;
 
     switch (action) {
-      case 'read':
+      case 'get': // Чтение диапазона
         response = await sheets.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
           range: `${sheetName}!${range}`,
         });
         break;
 
-      case 'find':
+      case 'find': // Поиск первой строки по значению в первом столбце
         const findResponse = await sheets.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
           range: sheetName,
@@ -51,12 +45,21 @@ export default async function handler(req, res) {
         response = { data: row || null };
         break;
 
-      case 'append':
+      case 'append': // Добавление строки
         response = await sheets.spreadsheets.values.append({
           spreadsheetId: SPREADSHEET_ID,
           range: sheetName,
           valueInputOption: 'RAW',
           requestBody: { values: [Array.isArray(values) ? values : values.split(',')] },
+        });
+        break;
+
+      case 'update': // Обновление ячейки
+        response = await sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${sheetName}!${range}`,
+          valueInputOption: 'RAW',
+          requestBody: { values: [[newValue]] },
         });
         break;
 

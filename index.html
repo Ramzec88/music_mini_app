@@ -1088,6 +1088,18 @@
                 const support = checkTelegramSupport();
                 console.log(`📱 Telegram Web App обнаружен, версия: ${support.version}`);
                 console.log(`🔧 Поддерживаемые методы: ${support.methods.join(', ')}`);
+                
+                // Получаем данные пользователя из Telegram
+                const user = telegramApp.initDataUnsafe?.user;
+                if (user) {
+                    console.log('👤 Пользователь Telegram:', user);
+                    localStorage.setItem('tg_user', JSON.stringify({
+                        id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        username: user.username
+                    }));
+                }
             }
             
             setupFloatingNotes();
@@ -1095,10 +1107,11 @@
             updateProgress();
             testGoogleSheetsConnection();
             
+            // Восстанавливаем данные без уведомлений
             setTimeout(restoreFormData, 1000);
-            setTimeout(addTooltips, 2000);
+            
+            // Добавляем только статус подключения (без настроек)
             setTimeout(addConnectionStatus, 2000);
-            setTimeout(addSettingsButton, 1000);
             
             console.log('✅ Приложение инициализировано');
         });
@@ -1147,8 +1160,6 @@
                 const isInTelegram = window.Telegram && window.Telegram.WebApp;
                 if (isInTelegram) {
                     console.log('📱 Тестирование в Telegram WebApp');
-                    console.log('🌐 User Agent:', navigator.userAgent);
-                    console.log('🔗 Location:', window.location.href);
                 }
                 
                 const startTime = performance.now();
@@ -1158,11 +1169,10 @@
                 const responseTime = Math.round(endTime - startTime);
                 console.log(`✅ Подключение к Google Sheets успешно (${responseTime}ms)`);
                 
-                // Показываем только браузерное уведомление для подключения
-                showBrowserNotification(`📊 Подключение к базе данных установлено (${responseTime}ms)`, 'success');
+                // Не показываем техническое уведомление пользователю
                 updateConnectionStatus(true);
                 
-                // В Telegram показываем дополнительную информацию
+                // В Telegram показываем дополнительную информацию только в консоли
                 if (isInTelegram) {
                     console.log(`⚡ Скорость подключения: ${responseTime < 1000 ? 'Быстрая' : responseTime < 3000 ? 'Средняя' : 'Медленная'}`);
                 }
@@ -1170,24 +1180,16 @@
             } catch (error) {
                 console.error('❌ Ошибка подключения к Google Sheets:', error);
                 
-                // Для ошибок подключения показываем через Telegram
-                const isInTelegram = window.Telegram && window.Telegram.WebApp;
-                
-                let errorMessage = 'Ошибка подключения к базе данных';
-                if (isInTelegram) {
-                    errorMessage = 'Ошибка подключения в Telegram. Проверьте интернет.';
-                }
-                
-                showNotification(errorMessage, 'error');
+                // Показываем только критичные ошибки пользователю
                 updateConnectionStatus(false);
                 
-                // Дополнительная диагностика для Telegram
+                // Системную информацию только в консоль
+                const isInTelegram = window.Telegram && window.Telegram.WebApp;
                 if (isInTelegram) {
                     console.group('🔧 Диагностика Telegram WebApp:');
                     console.log('📱 Версия:', window.Telegram.WebApp.version);
                     console.log('🌍 Платформа:', window.Telegram.WebApp.platform);
                     console.log('🎨 Тема:', window.Telegram.WebApp.colorScheme);
-                    console.log('🔗 URL приложения:', window.location.href);
                     console.groupEnd();
                 }
             }
@@ -1294,6 +1296,15 @@
 
                 // Получаем контакт пользователя
                 const userContact = getUserContact();
+                
+                // Если контакт не готов, ждем ввода
+                if (userContact === 'pending') {
+                    orderCreationPending = true;
+                    confirmBtn.innerHTML = originalText;
+                    confirmBtn.disabled = false;
+                    return;
+                }
+                
                 const userName = orderData.recipient || 'Не указано';
 
                 console.log('👤 Данные пользователя:', { userContact, userName });
@@ -1446,20 +1457,189 @@
         }
 
         function getUserContact() {
-            let contact = localStorage.getItem('userContact');
-            
-            if (!contact) {
-                // Простой prompt для получения контакта
-                contact = prompt('Для завершения заказа укажите ваш Telegram, email или телефон:');
-                
-                if (contact) {
-                    localStorage.setItem('userContact', contact);
-                } else {
-                    contact = 'anonymous_' + Date.now();
-                }
+            // Сначала пытаемся получить данные из Telegram
+            const tgUser = localStorage.getItem('tg_user');
+            if (tgUser) {
+                const user = JSON.parse(tgUser);
+                const contact = user.username ? `@${user.username}` : `tg_${user.id}`;
+                localStorage.setItem('userContact', contact);
+                console.log('👤 Используем Telegram контакт:', contact);
+                return contact;
             }
             
-            return contact;
+            // Проверяем сохраненный контакт
+            let contact = localStorage.getItem('userContact');
+            if (contact) {
+                console.log('👤 Используем сохраненный контакт:', contact);
+                return contact;
+            }
+            
+            // Если ничего нет, показываем форму ввода контакта
+            showContactInputModal();
+            return 'pending'; // Временное значение
+        }
+
+        function showContactInputModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.zIndex = '10000';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">📱 Контакт для связи</h3>
+                    </div>
+                    <div style="padding: 30px;">
+                        <p style="margin-bottom: 25px; color: #718096; line-height: 1.6;">
+                            Для завершения заказа нам нужен способ связи с вами, чтобы отправить готовую песню:
+                        </p>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Выберите удобный способ:</label>
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                <label style="display: flex; align-items: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
+                                    <input type="radio" name="contactType" value="telegram" style="margin-right: 12px; transform: scale(1.2);">
+                                    <div>
+                                        <div style="font-weight: 600; color: #4a5568;">📱 Telegram</div>
+                                        <div style="font-size: 0.9rem; color: #718096;">Укажите ваш @username</div>
+                                    </div>
+                                </label>
+                                
+                                <label style="display: flex; align-items: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
+                                    <input type="radio" name="contactType" value="email" style="margin-right: 12px; transform: scale(1.2);">
+                                    <div>
+                                        <div style="font-weight: 600; color: #4a5568;">📧 Email</div>
+                                        <div style="font-size: 0.9rem; color: #718096;">Ваша электронная почта</div>
+                                    </div>
+                                </label>
+                                
+                                <label style="display: flex; align-items: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
+                                    <input type="radio" name="contactType" value="phone" style="margin-right: 12px; transform: scale(1.2);">
+                                    <div>
+                                        <div style="font-weight: 600; color: #4a5568;">📞 Телефон</div>
+                                        <div style="font-size: 0.9rem; color: #718096;">Номер для WhatsApp или звонков</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="contactInputGroup" style="display: none;">
+                            <label class="form-label" id="contactInputLabel">Введите контакт:</label>
+                            <input type="text" class="form-input" id="contactInput" placeholder="">
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-primary" id="saveContactBtn" disabled>
+                                Сохранить контакт
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Обработчики для радиокнопок
+            const radioButtons = modal.querySelectorAll('input[name="contactType"]');
+            const inputGroup = document.getElementById('contactInputGroup');
+            const inputLabel = document.getElementById('contactInputLabel');
+            const contactInput = document.getElementById('contactInput');
+            const saveBtn = document.getElementById('saveContactBtn');
+            
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    // Обновляем стили для выбранной опции
+                    radioButtons.forEach(r => {
+                        r.closest('label').style.borderColor = '#e2e8f0';
+                        r.closest('label').style.backgroundColor = 'transparent';
+                    });
+                    
+                    this.closest('label').style.borderColor = '#667eea';
+                    this.closest('label').style.backgroundColor = 'rgba(102, 126, 234, 0.05)';
+                    
+                    // Показываем поле ввода
+                    inputGroup.style.display = 'block';
+                    
+                    if (this.value === 'telegram') {
+                        inputLabel.textContent = '📱 Telegram username:';
+                        contactInput.placeholder = '@username';
+                        contactInput.value = '';
+                    } else if (this.value === 'email') {
+                        inputLabel.textContent = '📧 Email адрес:';
+                        contactInput.placeholder = 'example@email.com';
+                        contactInput.value = '';
+                    } else if (this.value === 'phone') {
+                        inputLabel.textContent = '📞 Номер телефона:';
+                        contactInput.placeholder = '+7 900 123-45-67';
+                        contactInput.value = '';
+                    }
+                    
+                    contactInput.focus();
+                    checkSaveButton();
+                });
+            });
+            
+            contactInput.addEventListener('input', checkSaveButton);
+            
+            function checkSaveButton() {
+                const selectedType = modal.querySelector('input[name="contactType"]:checked');
+                const inputValue = contactInput.value.trim();
+                saveBtn.disabled = !selectedType || !inputValue;
+            }
+            
+            saveBtn.addEventListener('click', function() {
+                const selectedType = modal.querySelector('input[name="contactType"]:checked');
+                const inputValue = contactInput.value.trim();
+                
+                if (!selectedType || !inputValue) {
+                    showNotification('Выберите способ связи и введите контакт', 'error');
+                    return;
+                }
+                
+                // Валидация
+                let isValid = false;
+                let formattedContact = inputValue;
+                
+                if (selectedType.value === 'telegram') {
+                    if (inputValue.startsWith('@') && inputValue.length > 1) {
+                        isValid = true;
+                    } else if (!inputValue.startsWith('@') && inputValue.length > 0) {
+                        formattedContact = '@' + inputValue;
+                        isValid = true;
+                    }
+                } else if (selectedType.value === 'email') {
+                    isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputValue);
+                } else if (selectedType.value === 'phone') {
+                    isValid = /^[\+]?[0-9\s\-\(\)]{10,}$/.test(inputValue);
+                }
+                
+                if (!isValid) {
+                    let errorMsg = 'Некорректный формат';
+                    if (selectedType.value === 'telegram') errorMsg = 'Введите корректный @username';
+                    else if (selectedType.value === 'email') errorMsg = 'Введите корректный email';
+                    else if (selectedType.value === 'phone') errorMsg = 'Введите корректный номер телефона';
+                    
+                    showNotification(errorMsg, 'error');
+                    return;
+                }
+                
+                localStorage.setItem('userContact', formattedContact);
+                localStorage.setItem('contactType', selectedType.value);
+                modal.remove();
+                
+                console.log('👤 Контакт сохранен:', formattedContact);
+                
+                // Продолжаем создание заказа
+                continueOrderCreation();
+            });
+        }
+
+        let orderCreationPending = false;
+
+        function continueOrderCreation() {
+            if (orderCreationPending) {
+                // Запускаем отложенное создание заказа
+                confirmOrder();
+            }
         }
 
         async function saveUser(userInfo) {
@@ -1650,11 +1830,8 @@
                     goToStep(savedData.currentStep);
                 }
                 
-                // Просто логируем восстановление, без уведомления в Telegram
+                // Просто логируем восстановление без уведомления пользователю
                 console.log('💾 Данные формы восстановлены из черновика');
-                
-                // Показываем только браузерное уведомление
-                showBrowserNotification('Данные формы восстановлены из черновика', 'info');
             }
         }
 

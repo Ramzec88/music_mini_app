@@ -17,38 +17,41 @@ export default function handler(req, res) {
   }
 
   try {
-    // Проверяем наличие переменных окружения
-    const apiKey = process.env.GOOGLE_SHEETS_API_KEY;
+    // Проверяем наличие переменных окружения для Сервисного Аккаунта
+    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const privateKeyBase64 = process.env.GOOGLE_PRIVATE_KEY_BASE64;
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
-    if (!apiKey || !spreadsheetId) {
-      console.error('Missing environment variables:', {
-        hasApiKey: !!apiKey,
+    if (!clientEmail || !privateKeyBase64 || !spreadsheetId) {
+      console.error('Missing environment variables for Service Account:', {
+        hasClientEmail: !!clientEmail,
+        hasPrivateKeyBase64: !!privateKeyBase64,
         hasSpreadsheetId: !!spreadsheetId
       });
       
       res.status(500).json({ 
-        error: 'Configuration error: Missing environment variables',
-        GOOGLE_SHEETS_API_KEY: '',
+        error: 'Configuration error: Missing Service Account environment variables',
+        GOOGLE_SERVICE_ACCOUNT_EMAIL: '',
+        GOOGLE_PRIVATE_KEY_BASE64: '', // Пустое значение, чтобы не раскрывать ключ
         GOOGLE_SPREADSHEET_ID: ''
       });
       return;
     }
 
-    // Возвращаем конфигурацию
+    // Возвращаем конфигурацию (без приватного ключа для безопасности)
     res.status(200).json({
-      GOOGLE_SHEETS_API_KEY: apiKey,
+      GOOGLE_SERVICE_ACCOUNT_EMAIL: clientEmail,
       GOOGLE_SPREADSHEET_ID: spreadsheetId,
-      status: 'success'
+      status: 'success',
+      message: 'Service Account configuration found'
     });
 
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('API Error in env.js:', error);
     
     res.status(500).json({ 
-      error: 'Internal server error',
-      GOOGLE_SHEETS_API_KEY: '',
-      GOOGLE_SPREADSHEET_ID: ''
+      error: 'Internal server error in env.js',
+      details: error.message
     });
   }
 }

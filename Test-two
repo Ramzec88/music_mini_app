@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест Google Sheets API</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #333; margin-bottom: 20px; }
+        .section { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .section h2 { margin-top: 0; color: #555; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; }
+        button:hover { background-color: #0056b3; }
+        input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px; margin-right: 10px; }
+        textarea { width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 10px; }
+        pre { background-color: #eee; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
+        .status { margin-top: 10px; font-weight: bold; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Тестирование Google Sheets API</h1>
+        <p>Этот инструмент поможет проверить чтение и запись данных в Google Таблицы через ваш Vercel API.</p>
+        <p>Убедитесь, что ваш API развернут на Vercel и доступен по адресу <code>/api/sheets</code>.</p>
+
+        <div class="section">
+            <h2>1. Проверить чтение данных (Get)</h2>
+            <p>Прочитает данные из указанного листа и диапазона (например, "PromoCodes", "A1:C10").</p>
+            Лист: <input type="text" id="getSheetName" value="PromoCodes">
+            Диапазон: <input type="text" id="getRange" value="A1:A1">
+            <button onclick="testGetData()">Прочитать</button>
+            <div class="status" id="getStatus"></div>
+            <pre id="getResponse"></pre>
+        </div>
+
+        <div class="section">
+            <h2>2. Проверить поиск данных (Find)</h2>
+            <p>Найдет строку по значению в первом столбце (например, "PromoCodes", "TESTCODE").</p>
+            Лист: <input type="text" id="findSheetName" value="PromoCodes">
+            Значение для поиска: <input type="text" id="searchValue" value="TESTCODE">
+            <button onclick="testFindData()">Найти</button>
+            <div class="status" id="findStatus"></div>
+            <pre id="findResponse"></pre>
+        </div>
+
+        <div class="section">
+            <h2>3. Проверить добавление данных (Append)</h2>
+            <p>Добавит новую строку в конец указанного листа. Введите данные через запятую (например, "Orders", "ORD123,user@example.com,Test User,TESTCODE,Song for Mom").</p>
+            Лист: <input type="text" id="appendSheetName" value="Orders">
+            Данные (через запятую): <input type="text" id="appendValues" value="TEST_ORDER_ID,12345,test@example.com,Test Name,PROMO123,Recipient,Genre,Theme,Wishes,pending,2025-07-31 12:00:00,,," style="width: calc(100% - 10px);">
+            <button onclick="testAppendData()">Добавить</button>
+            <div class="status" id="appendStatus"></div>
+            <pre id="appendResponse"></pre>
+        </div>
+
+        <div class="section">
+            <h2>4. Проверить обновление ячейки (Update)</h2>
+            <p>Обновит значение в указанной ячейке (например, "PromoCodes", "B2", "Да").</p>
+            Лист: <input type="text" id="updateSheetName" value="PromoCodes">
+            Ячейка (диапазон): <input type="text" id="updateRange" value="B2">
+            Новое значение: <input type="text" id="updateValue" value="Да">
+            <button onclick="testUpdateData()">Обновить</button>
+            <div class="status" id="updateStatus"></div>
+            <pre id="updateResponse"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = '/api/sheets'; // Ваш эндпоинт на Vercel
+
+        async function makeApiRequest(action, params, statusElementId, responseElementId) {
+            const statusDiv = document.getElementById(statusElementId);
+            const responsePre = document.getElementById(responseElementId);
+            
+            statusDiv.className = 'status';
+            statusDiv.textContent = 'Отправка запроса...';
+            responsePre.textContent = '';
+
+            try {
+                const response = await fetch(API_BASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action, ...params })
+                });
+
+                const data = await response.json();
+                responsePre.textContent = JSON.stringify(data, null, 2);
+
+                if (response.ok && !data.error) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = `Успех! Статус: ${response.status}`;
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = `Ошибка! Статус: ${response.status}. Сообщение: ${data.error || 'Неизвестная ошибка'}`;
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `Ошибка сети или сервера: ${error.message}`;
+                responsePre.textContent = error.stack;
+                console.error('API Request Error:', error);
+            }
+        }
+
+        function testGetData() {
+            const sheetName = document.getElementById('getSheetName').value;
+            const range = document.getElementById('getRange').value;
+            makeApiRequest('get', { sheetName, range }, 'getStatus', 'getResponse');
+        }
+
+        function testFindData() {
+            const sheetName = document.getElementById('findSheetName').value;
+            const searchValue = document.getElementById('searchValue').value;
+            makeApiRequest('find', { sheetName, searchValue }, 'findStatus', 'findResponse');
+        }
+
+        function testAppendData() {
+            const sheetName = document.getElementById('appendSheetName').value;
+            const values = document.getElementById('appendValues').value.split(',').map(s => s.trim());
+            makeApiRequest('append', { sheetName, values }, 'appendStatus', 'appendResponse');
+        }
+
+        function testUpdateData() {
+            const sheetName = document.getElementById('updateSheetName').value;
+            const updateRange = document.getElementById('updateRange').value;
+            const updateValue = document.getElementById('updateValue').value;
+            makeApiRequest('update', { sheetName, updateRange, updateValue }, 'updateStatus', 'updateResponse');
+        }
+    </script>
+</body>
+</html>

@@ -826,6 +826,59 @@
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
+        // --- Перенесено из правки.html ---
+        function showNotification(message, type = 'info') {
+            const telegramApp = window.Telegram && window.Telegram.WebApp;
+
+            if (telegramApp) {
+                try {
+                    if (type === 'error' || !telegramApp.showPopup) {
+                        telegramApp.showAlert(message);
+                    } else {
+                        telegramApp.showPopup({
+                            title: type === 'success' ? '✅ Успех' : 'ℹ️ Уведомление',
+                            message: message,
+                            buttons: [{ type: 'ok' }]
+                        });
+                    }
+                } catch (e) {
+                    telegramApp.showAlert(message);
+                }
+                return;
+            }
+
+            // Фолбек для браузеров
+            alert(message);
+        }
+
+        async function validatePromoCode(promoCode) {
+            const result = await findRowByValue(this.sheets.PROMO_CODES, promoCode);
+            if (!result) {
+                return { valid: false, message: 'Промокод не найден' };
+            }
+
+            const [code, status = '', description = '', uses = '0', maxUses = '1'] = result.rowData;
+
+            if (status.trim().toLowerCase() !== 'active') {
+                return { valid: false, message: 'Промокод неактивен' };
+            }
+
+            const currentUses = parseInt(uses || '0', 10);
+            const maxUsesLimit = parseInt(maxUses || '1', 10);
+
+            if (currentUses >= maxUsesLimit) {
+                return { valid: false, message: 'Промокод уже использован' };
+            }
+
+            return { valid: true, description, rowIndex: result.rowIndex, currentUses, maxUsesLimit };
+        }
+
+        async function markPromoCodeAsUsed(rowIndex, currentUses) {
+            await updateSheetRow(this.sheets.PROMO_CODES, rowIndex, {
+                3: (currentUses + 1).toString(),
+            });
+        }
+        // --- Конец вставки из правки.html ---
         // Здесь начинается JavaScript код, который был в начале файла
         // Add connection status indicator
         function addConnectionStatus() {

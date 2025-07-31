@@ -103,7 +103,12 @@ export default async function handler(req, res) {
           });
           
           const rows = response.data.values || [];
-          const foundRow = rows.find((row) => row[0] === searchValue);
+          // Нормализуем searchValue для поиска (убираем пробелы, приводим к нижнему регистру)
+          const normalizedSearchValue = String(searchValue).trim().toLowerCase();
+
+          const foundRow = rows.find((row) => 
+            row[0] && String(row[0]).trim().toLowerCase() === normalizedSearchValue
+          );
           
           if (foundRow) {
             const rowIndex = rows.indexOf(foundRow) + 1; // Получаем 1-основанный индекс строки
@@ -190,7 +195,7 @@ export default async function handler(req, res) {
 
           // Очищаем тестовую ячейку (опционально, но хорошая практика)
           await sheets.spreadsheets.values.clear({
-            spreadsheetId: SPREADSHEET_ID,
+            spreadsheetId: SREPRADSHEET_ID,
             range: testRange,
           });
           

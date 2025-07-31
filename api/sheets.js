@@ -8,8 +8,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
@@ -27,10 +26,7 @@ export default async function handler(req, res) {
     const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
 
     const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: CLIENT_EMAIL,
-        private_key: PRIVATE_KEY,
-      },
+      credentials: { client_email: CLIENT_EMAIL, private_key: PRIVATE_KEY },
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
@@ -47,11 +43,11 @@ export default async function handler(req, res) {
         break;
 
       case 'find':
-        response = await sheets.spreadsheets.values.get({
+        const findResponse = await sheets.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
           range: sheetName,
         });
-        const row = (response.data.values || []).find(r => r[0] === searchValue);
+        const row = (findResponse.data.values || []).find(r => r[0] === searchValue);
         response = { data: row || null };
         break;
 
@@ -60,20 +56,20 @@ export default async function handler(req, res) {
           spreadsheetId: SPREADSHEET_ID,
           range: sheetName,
           valueInputOption: 'RAW',
-          requestBody: { values: [values.split(',')] },
+          requestBody: { values: [Array.isArray(values) ? values : values.split(',')] },
         });
         break;
 
       default:
-        return res.status(400).json({ error: 'Unknown action' });
+        return res.status(400).json({ error: `Unknown action: ${action}` });
     }
 
-    res.status(200).json(response.data || response);
+    return res.status(200).json(response.data || response);
   } catch (err) {
     console.error('❌ Google Sheets API error:', err);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Internal Google Sheets API error',
-      details: err.message,
+      details: err.message || err,
     });
   }
 }

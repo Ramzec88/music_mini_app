@@ -10,8 +10,8 @@
       "author": "",
       "license": "ISC",
       "dependencies": {
-        "google-auth-library": "^9.10.0",  // Убедитесь, что версии актуальны
-        "googleapis": "^128.0.0"          // Эти строки должны быть добавлены
+        "google-auth-library": "^9.10.0",
+        "googleapis": "^128.0.0"
       }
     }
     

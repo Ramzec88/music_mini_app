@@ -780,7 +780,7 @@
                 <div class="order-summary">
                     <h3>📋 Детали заказа</h3>
                     <div class="order-detail">
-                        <strong>Номер заказа:</strong> <span id="orderNumber"></span>
+                        <strong>Номер заказа:</strong> <span id="orderNumberPreview">Будет сгенерирован</span>
                     </div>
                     <div class="order-detail">
                         <strong>Промокод:</strong> <span id="summaryPromo"></span>
@@ -859,36 +859,38 @@
     </div>
 
     <!-- Независимый блок проверки статуса заказа -->
-    <div class="main-card" style="margin-top: 20px;">
-        <h3 style="text-align: center; margin-bottom: 20px; color: #4a5568;">
-            🔍 Проверить статус заказа
-        </h3>
-        <p style="text-align: center; margin-bottom: 25px; color: #718096; line-height: 1.5;">
-            Введите номер заказа, полученный после оформления, чтобы узнать статус выполнения
-        </p>
-        <div class="form-group">
-            <label class="form-label" style="text-align: center;">Номер заказа (например: ORD123456)</label>
-            <input 
-                type="text" 
-                class="form-input" 
-                id="orderCheckId" 
-                placeholder="ORD123456"
-                style="text-align: center; font-family: monospace; font-weight: bold; letter-spacing: 1px;"
-                maxlength="12"
-            >
-        </div>
-        <div class="btn-group">
-            <button type="button" class="btn btn-secondary" onclick="checkOrderStatus()">
-                🔍 Проверить статус
-            </button>
-        </div>
-        
-        <!-- Подсказка для пользователей -->
-        <div style="margin-top: 20px; padding: 15px; background: #f8f9ff; border-radius: 10px; border-left: 4px solid #667eea;">
-            <p style="margin: 0; color: #4a5568; font-size: 0.95rem;">
-                <strong>💡 Где найти номер заказа?</strong><br>
-                Номер заказа отображается на экране успешного оформления и имеет формат ORD + 6 цифр
+    <div class="container">
+        <div class="main-card" style="margin-top: 20px;">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #4a5568;">
+                🔍 Проверить статус заказа
+            </h3>
+            <p style="text-align: center; margin-bottom: 25px; color: #718096; line-height: 1.5;">
+                Введите номер заказа, полученный после оформления, чтобы узнать статус выполнения
             </p>
+            <div class="form-group">
+                <label class="form-label" style="text-align: center;">Номер заказа (например: ORD123456)</label>
+                <input 
+                    type="text" 
+                    class="form-input" 
+                    id="orderCheckId" 
+                    placeholder="ORD123456"
+                    style="text-align: center; font-family: monospace; font-weight: bold; letter-spacing: 1px;"
+                    maxlength="12"
+                >
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" onclick="checkOrderStatus()">
+                    🔍 Проверить статус
+                </button>
+            </div>
+            
+            <!-- Подсказка для пользователей -->
+            <div style="margin-top: 20px; padding: 15px; background: #f8f9ff; border-radius: 10px; border-left: 4px solid #667eea;">
+                <p style="margin: 0; color: #4a5568; font-size: 0.95rem;">
+                    <strong>💡 Где найти номер заказа?</strong><br>
+                    Номер заказа отображается на экране успешного оформления и имеет формат ORD + 6 цифр
+                </p>
+            </div>
         </div>
     </div>
 
@@ -1466,6 +1468,11 @@
         }
 
         function showOrderSummary() {
+            // Устанавливаем номер заказа в превью (если уже сгенерирован)
+            if (currentOrderId) {
+                document.getElementById('orderNumberPreview').textContent = '#' + currentOrderId;
+            }
+            
             document.getElementById('summaryPromo').textContent = orderData.promoCode;
             document.getElementById('summaryRecipient').textContent = orderData.recipient;
             document.getElementById('summaryGenre').textContent = orderData.genre;
@@ -1486,9 +1493,19 @@
                 currentOrderId = 'ORD' + Date.now().toString().slice(-6);
                 console.log('🆔 ID заказа:', currentOrderId);
                 
+                // КРИТИЧНО: Сразу проверяем существование элемента
+                const orderNumberElement = document.getElementById('orderNumber');
+                console.log('🔍 Элемент orderNumber найден:', !!orderNumberElement);
+                console.log('🔍 Текущее содержимое элемента:', orderNumberElement ? orderNumberElement.textContent : 'ЭЛЕМЕНТ НЕ НАЙДЕН');
+                
                 // СРАЗУ устанавливаем номер заказа в интерфейсе
-                document.getElementById('orderNumber').textContent = '#' + currentOrderId;
-                console.log('🎯 Номер заказа установлен в интерфейс:', currentOrderId);
+                if (orderNumberElement) {
+                    orderNumberElement.textContent = '#' + currentOrderId;
+                    console.log('🎯 Номер заказа установлен в интерфейс:', currentOrderId);
+                    console.log('🔍 Проверка установки:', orderNumberElement.textContent);
+                } else {
+                    console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Элемент orderNumber не найден!');
+                }
 
                 // Проверяем, работаем ли мы в Telegram
                 const isInTelegram = window.Telegram && window.Telegram.WebApp;
@@ -1577,81 +1594,47 @@
                             // Уведомляем о успехе
                             showNotification('🎉 Заказ успешно создан!', 'success');
                             
-                            // Специальная обработка для Telegram
-                            if (isInTelegram && telegramApp) {
-                                try {
-                                    console.log('📱 Начинаем обработку Telegram WebApp...');
-                                    
-                                    // Haptic feedback
-                                    if (telegramApp.HapticFeedback && telegramApp.HapticFeedback.impactOccurred) {
-                                        telegramApp.HapticFeedback.impactOccurred('medium');
-                                        console.log('📳 Haptic feedback активирован');
+                            // Отправка в Telegram бота (упрощенная версия)
+                            if (isInTelegram) {
+                                console.log('📱 Попытка отправки в Telegram бота...');
+                                console.log('🔍 telegramApp доступен:', !!telegramApp);
+                                console.log('🔍 telegramApp.sendData доступен:', !!(telegramApp && telegramApp.sendData));
+                                
+                                if (telegramApp && telegramApp.sendData) {
+                                    try {
+                                        const botMessage = `🎵 Новый заказ!
+📋 ${currentOrderId}
+👤 ${userName}
+📱 ${userContact}
+🎟️ ${orderData.promoCode}
+🎭 ${orderData.recipient} - ${orderData.genre}`;
+
+                                        const simpleData = {
+                                            action: 'new_order',
+                                            orderId: currentOrderId,
+                                            message: botMessage
+                                        };
+                                        
+                                        console.log('📤 Отправляем упрощенные данные:', simpleData);
+                                        telegramApp.sendData(JSON.stringify(simpleData));
+                                        console.log('✅ sendData вызван успешно');
+                                        
+                                        showBrowserNotification('📤 Данные отправлены в бота', 'success');
+                                        
+                                    } catch (error) {
+                                        console.error('❌ Ошибка при sendData:', error);
+                                        showBrowserNotification('⚠️ Ошибка отправки в бота: ' + error.message, 'error');
                                     }
+                                } else {
+                                    console.warn('⚠️ Telegram sendData недоступен');
+                                    console.log('🔍 telegramApp:', telegramApp);
                                     
-                                    // Готовим сообщение для бота
-                                    const orderMessage = `🎵 Новый заказ создан!
-
-📋 Номер заказа: ${currentOrderId}
-👤 Заказчик: ${userName}
-📱 Контакт: ${userContact}
-🎟️ Промокод: ${orderData.promoCode}
-
-🎭 Детали заказа:
-• Получатель: ${orderData.recipient}
-• Жанр: ${orderData.genre}
-• Тема: ${orderData.theme.substring(0, 100)}${orderData.theme.length > 100 ? '...' : ''}
-${orderData.wishes ? `• Пожелания: ${orderData.wishes.substring(0, 100)}${orderData.wishes.length > 100 ? '...' : ''}` : ''}
-
-⏰ Дата: ${new Date().toLocaleString('ru')}
-🌐 Источник: Telegram WebApp`;
-
-                                    const botData = {
-                                        action: 'new_order',
-                                        orderId: currentOrderId,
-                                        message: orderMessage,
-                                        orderData: {
-                                            id: currentOrderId,
-                                            user: {
-                                                name: userName,
-                                                contact: userContact
-                                            },
-                                            promoCode: orderData.promoCode,
-                                            recipient: orderData.recipient,
-                                            genre: orderData.genre,
-                                            theme: orderData.theme,
-                                            wishes: orderData.wishes,
-                                            createdAt: new Date().toISOString()
-                                        }
-                                    };
-                                    
-                                    console.log('📤 Готовим данные для отправки в бота:', botData);
-                                    
-                                    // Проверяем доступность sendData
-                                    if (telegramApp.sendData) {
-                                        telegramApp.sendData(JSON.stringify(botData));
-                                        console.log('✅ Данные успешно отправлены в бота через sendData');
-                                        
-                                        // Дополнительное уведомление пользователю
-                                        setTimeout(() => {
-                                            showBrowserNotification('📤 Информация о заказе отправлена в бота', 'success');
-                                        }, 1000);
-                                        
-                                    } else {
-                                        console.warn('⚠️ telegramApp.sendData недоступен');
-                                        
-                                        // Альтернативный способ - через postEvent
-                                        if (telegramApp.postEvent) {
-                                            telegramApp.postEvent('web_app_data_send', { data: JSON.stringify(botData) });
-                                            console.log('📤 Попытка отправки через postEvent');
-                                        }
+                                    if (telegramApp) {
+                                        console.log('🔍 Доступные методы telegramApp:', Object.keys(telegramApp));
                                     }
-                                    
-                                } catch (e) {
-                                    console.error('❌ Ошибка при обработке Telegram WebApp:', e);
-                                    showBrowserNotification('⚠️ Не удалось отправить данные в бота: ' + e.message, 'error');
                                 }
                             } else {
-                                console.log('🌐 Работаем в обычном браузере, отправка в бота пропущена');
+                                console.log('🌐 Не в Telegram, пропускаем отправку в бота');
                             }
                             
                             goToStep(4);

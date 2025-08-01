@@ -6,10 +6,12 @@ body {
   color: #333;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
-  padding-top: 10vh; /* динамическое приподнятие конверта */
+  min-height: 100vh;
+  background: linear-gradient(#f9b07b, #fbc687);
+  font-family: sans-serif;
+  /* padding-top: 10vh; динамическое приподнятие конверта */
 }
 
 h1 {
@@ -19,23 +21,61 @@ h1 {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-#envelope-container {
+.container {  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  transform: translateY(-5vh); /* Чуть выше центра на всех устройствах */
+}
+
+.envelope {
+  width: clamp(160px, 50vw, 280px); /* масштабируем конверт */
+  height: auto;
+}
+
+.gift-button {
+  font-size: clamp(14px, 4vw, 18px);
+  padding: clamp(10px, 2.5vw, 14px) clamp(20px, 6vw, 28px);
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #ff6f91, #ff9671);
+  color: white;
+  cursor: pointer;
+}
+
+/* Для маленьких экранов (мобильных) */
+@media (max-width: 768px) {
+  .container {
+    transform: translateY(-10vh); /* На мобильных поднимаем выше */
+  }
+
+  .envelope {
+    width: clamp(180px, 65vw, 280px); /* Чуть больше конверт на телефоне */
+  }
+
+  .gift-button {
+    font-size: clamp(16px, 5vw, 20px);
+  }
+}
+
+/* #envelope-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
   transform: translateY(-40px); /* Поднимаем блок на 40px */
-  transition: transform 0.3s ease;
+/*  transition: transform 0.3s ease;
 }
 
-#envelope {
+/* #envelope {
   width: 500px;  /* Увеличили размер конверта */
-  height: 500px;
+ /*  height: 500px;
   transition: width 0.3s ease, height 0.3s ease;
 }
 
 /* Адаптивность для планшетов */
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
   #envelope {
     width: 200px;
     height: 200px;
@@ -43,14 +83,14 @@ h1 {
 }
 
 /* Адаптивность для телефонов */
-@media (max-width: 480px) {
+/*  @media (max-width: 480px) {
   #envelope {
     width: 150px;
     height: 150px;
   }
 }
 
-button {
+/* button {
   background: linear-gradient(135deg, #f46b8a, #e64d6e);
   color: white;
   border: none;

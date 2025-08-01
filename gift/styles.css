@@ -1,5 +1,5 @@
 body {
-  margin: 0;
+ margin: 0;
   font-family: 'Arial', sans-serif;
   text-align: center;
   background: linear-gradient(180deg, #fdd39e, #fbb47a);
@@ -7,7 +7,9 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
+  padding-top: 10vh; /* динамическое приподнятие конверта */
 }
 
 h1 {
@@ -18,17 +20,35 @@ h1 {
 }
 
 #envelope-container {
-  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
 #envelope {
-  width: 600px;  /* Увеличили размер */
-  height: 600px;
-  margin: 0 auto;
+  width: 250px;  /* Увеличили размер конверта */
+  height: 250px;
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+/* Адаптивность для планшетов */
+@media (max-width: 768px) {
+  #envelope {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+/* Адаптивность для телефонов */
+@media (max-width: 480px) {
+  #envelope {
+    width: 150px;
+    height: 150px;
+  }
 }
 
 button {
-  margin-top: 15px;
   background: linear-gradient(135deg, #f46b8a, #e64d6e);
   color: white;
   border: none;

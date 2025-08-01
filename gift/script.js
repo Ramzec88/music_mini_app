@@ -5,6 +5,12 @@ let envelope = lottie.loadAnimation({
   autoplay: false,
   path: 'assets/envelope_open.json'
 });
+window.addEventListener('load', () => {
+  document.getElementById('envelope').style.transform = 'scale(0.95)';
+  setTimeout(() => {
+    document.getElementById('envelope').style.transform = 'scale(1)';
+  }, 400);
+});
 
 let isOpen = false;
 const songCard = document.getElementById('song-card');

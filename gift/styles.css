@@ -88,7 +88,7 @@ h1 {
     width: 150px;
     height: 150px;
   }
-}
+} */
 
 /* button {
   background: linear-gradient(135deg, #f46b8a, #e64d6e);
@@ -100,7 +100,7 @@ h1 {
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
-}
+} */
 
 button:hover {
   background: linear-gradient(135deg, #e64d6e, #d63d5d);

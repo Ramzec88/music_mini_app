@@ -3,27 +3,257 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Музыкальный подарок</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>🎁 Музыкальный подарок</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.9.6/lottie.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'SF Pro Display', sans-serif;
+      background: linear-gradient(180deg, #fdd39e, #fbb47a);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: clamp(24px, 6vw, 36px);
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: clamp(14px, 3vw, 18px);
+      margin-bottom: 30px;
+    }
+
+    #envelope-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #envelope {
+      width: clamp(200px, 60vw, 350px);
+      height: clamp(200px, 60vw, 350px);
+      filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.15));
+      animation: float 3s ease-in-out infinite;
+      transition: transform 0.3s ease;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .open-btn {
+      background: linear-gradient(135deg, #f46b8a, #e64d6e);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 14px 32px;
+      font-size: clamp(16px, 4vw, 20px);
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(244, 107, 138, 0.3);
+    }
+
+    .open-btn:hover {
+      background: linear-gradient(135deg, #e64d6e, #d63d5d);
+      box-shadow: 0 10px 25px rgba(230, 77, 110, 0.4);
+      transform: translateY(-2px);
+    }
+
+    #song-card {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      width: clamp(320px, 85vw, 450px);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(25px);
+      border-radius: 25px;
+      padding: 40px 30px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 10;
+      text-align: center;
+    }
+
+    #song-card.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    #song-card h2 {
+      font-size: clamp(20px, 5vw, 28px);
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    #song-card p {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .play-btn {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .play-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .download-btn {
+      display: inline-block;
+      text-decoration: none;
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(17, 153, 142, 0.3);
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(17, 153, 142, 0.4);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .close-btn:hover {
+      color: #333;
+    }
+
+    @media (max-width: 480px) {
+      #envelope {
+        width: clamp(180px, 65vw, 300px);
+        height: auto;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>🎁 Для тебя, Алексей!</h1>
+  <h1>🎁 Для тебя особенный подарок!</h1>
+  <p class="subtitle">Открой и послушай свою персональную песню ✨</p>
 
   <div id="envelope-container">
     <div id="envelope"></div>
-    <button id="open-btn">Открыть подарок</button>
+    <button id="open-btn" class="open-btn">🎵 Открыть подарок</button>
   </div>
 
   <div id="song-card" class="hidden">
-    <h2>🎶 С Днём Рождения!</h2>
-    <p>Вот твоя персональная песня 🎵</p>
-    <button id="play-btn">▶️ Слушать песню</button>
-    <audio id="audio" src="assets/song.mp3"></audio>
-    <a href="assets/song.mp3" download class="download-btn">⬇️ Скачать песню</a>
+    <button class="close-btn" id="close-btn">×</button>
+    <h2>С Днём Рождения!</h2>
+    <p>Эта песня создана специально для тебя 🎶</p>
+    <div class="controls">
+      <button id="play-btn" class="play-btn">▶️ Слушать песню</button>
+      <a href="assets/song.mp3" class="download-btn" download>⬇ Скачать песню</a>
+    </div>
+    <audio id="audio" preload="auto">
+      <source src="assets/song.mp3" type="audio/mpeg">
+    </audio>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    // Lottie envelope animation
+    const envelope = lottie.loadAnimation({
+      container: document.getElementById('envelope'),
+      renderer: 'svg',
+      loop: false,
+      autoplay: false,
+      path: 'assets/envelope_open.json'
+    });
+
+    const openBtn = document.getElementById('open-btn');
+    const songCard = document.getElementById('song-card');
+    const closeBtn = document.getElementById('close-btn');
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('play-btn');
+    let isOpen = false;
+    let isPlaying = false;
+
+    openBtn.addEventListener('click', () => {
+      if (!isOpen) {
+        envelope.play();
+        envelope.addEventListener('complete', () => {
+          songCard.classList.add('show');
+          confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        }, { once: true });
+        isOpen = true;
+      }
+    });
+
+    closeBtn.addEventListener('click', () => {
+      songCard.classList.remove('show');
+      envelope.goToAndStop(0, true);
+      isOpen = false;
+      if (isPlaying) {
+        audio.pause();
+        isPlaying = false;
+        playBtn.textContent = '▶️ Слушать песню';
+      }
+    });
+
+    playBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        isPlaying = true;
+        playBtn.textContent = '⏸ Пауза';
+      } else {
+        audio.pause();
+        isPlaying = false;
+        playBtn.textContent = '▶️ Слушать песню';
+      }
+    });
+  </script>
 </body>
 </html>

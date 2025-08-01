@@ -24,6 +24,8 @@ h1 {
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  transform: translateY(-40px); /* Поднимаем блок на 40px */
+  transition: transform 0.3s ease;
 }
 
 #envelope {

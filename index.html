@@ -2284,7 +2284,7 @@
                         
                         ${order.status === 'completed' ? `
                             <div style="text-align: center; margin-top: 25px;">
-                                <button class="btn btn-success" onclick="simulateDownload('${order.orderId}')">
+                                <button class="btn btn-success" id="downloadBtn-${order.orderId}">
                                     🎵 Получить песню
                                 </button>
                                 <p style="color: #718096; margin-top: 10px; font-size: 0.9rem;">
@@ -2294,7 +2294,7 @@
                         ` : ''}
                         
                         <div style="text-align: center; margin-top: 25px;">
-                            <button class="btn btn-secondary" onclick="refreshOrderStatus('${order.orderId}')">
+                            <button class="btn btn-secondary" id="refreshBtn-${order.orderId}">
                                 🔄 Обновить статус
                             </button>
                         </div>
@@ -2303,6 +2303,23 @@
             `;
             
             document.body.appendChild(modal);
+            
+            // Добавляем обработчики событий после создания модального окна
+            const refreshBtn = document.getElementById(`refreshBtn-${order.orderId}`);
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    console.log('🔄 Кнопка обновления статуса нажата для заказа:', order.orderId);
+                    refreshOrderStatus(order.orderId);
+                });
+            }
+            
+            const downloadBtn = document.getElementById(`downloadBtn-${order.orderId}`);
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', () => {
+                    console.log('🎵 Кнопка получения песни нажата для заказа:', order.orderId);
+                    simulateDownload(order.orderId);
+                });
+            }
         }
 
         function restoreFormData() {

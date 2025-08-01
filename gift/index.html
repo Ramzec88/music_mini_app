@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🎁 Музыкальный подарок</title>
+  <title>🎁 Музыкальный подарок для тебя!</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.9.6/lottie.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <style>
@@ -14,8 +14,8 @@
     }
 
     body {
-      font-family: 'SF Pro Display', sans-serif;
-      background: linear-gradient(180deg, #fdd39e, #fbb47a);
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(180deg, #fdd39e 0%, #fbb47a 50%, #f46b8a 100%);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -26,38 +26,93 @@
       text-align: center;
     }
 
+    /* Floating particles background */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      animation: float-particle 8s infinite ease-in-out;
+    }
+
+    @keyframes float-particle {
+      0%, 100% { 
+        transform: translateY(0px) translateX(0px) rotate(0deg); 
+        opacity: 0.2; 
+      }
+      25% { 
+        transform: translateY(-30px) translateX(20px) rotate(90deg); 
+        opacity: 0.6; 
+      }
+      50% { 
+        transform: translateY(-60px) translateX(-10px) rotate(180deg); 
+        opacity: 0.8; 
+      }
+      75% { 
+        transform: translateY(-30px) translateX(-20px) rotate(270deg); 
+        opacity: 0.6; 
+      }
+    }
+
+    .main-content {
+      position: relative;
+      z-index: 1;
+      animation: fadeInUp 1.2s ease-out;
+    }
+
     h1 {
-      font-size: clamp(24px, 6vw, 36px);
+      font-size: clamp(28px, 7vw, 42px);
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
       color: #fff;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      animation: fadeInUp 1s ease-out;
     }
 
     .subtitle {
-      color: rgba(255, 255, 255, 0.9);
-      font-size: clamp(14px, 3vw, 18px);
-      margin-bottom: 30px;
+      color: rgba(255, 255, 255, 0.95);
+      font-size: clamp(16px, 4vw, 20px);
+      margin-bottom: 40px;
+      font-weight: 500;
+      animation: fadeInUp 1s ease-out 0.3s both;
     }
 
     #envelope-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 30px;
+      animation: fadeInUp 1s ease-out 0.6s both;
     }
 
     #envelope {
-      width: clamp(200px, 60vw, 350px);
-      height: clamp(200px, 60vw, 350px);
-      filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.15));
-      animation: float 3s ease-in-out infinite;
-      transition: transform 0.3s ease;
+      width: clamp(250px, 55vw, 380px);
+      height: clamp(250px, 55vw, 380px);
+      filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.2));
+      animation: float 4s ease-in-out infinite;
+      transition: transform 0.4s ease;
+      cursor: pointer;
+    }
+
+    #envelope:hover {
+      transform: scale(1.05) translateY(-5px);
+      filter: drop-shadow(0 20px 45px rgba(0, 0, 0, 0.25));
     }
 
     @keyframes float {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+      50% { transform: translateY(-15px); }
     }
 
     .open-btn {
@@ -65,18 +120,41 @@
       color: white;
       border: none;
       border-radius: 50px;
-      padding: 14px 32px;
+      padding: 18px 36px;
       font-size: clamp(16px, 4vw, 20px);
-      font-weight: bold;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 6px 20px rgba(244, 107, 138, 0.3);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 8px 25px rgba(244, 107, 138, 0.4);
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .open-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.6s;
+    }
+
+    .open-btn:hover::before {
+      left: 100%;
     }
 
     .open-btn:hover {
       background: linear-gradient(135deg, #e64d6e, #d63d5d);
-      box-shadow: 0 10px 25px rgba(230, 77, 110, 0.4);
-      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(230, 77, 110, 0.5);
+      transform: translateY(-3px) scale(1.05);
+    }
+
+    .open-btn:active {
+      transform: translateY(-1px) scale(1.02);
     }
 
     #song-card {
@@ -84,14 +162,15 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%) scale(0);
-      width: clamp(320px, 85vw, 450px);
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(25px);
-      border-radius: 25px;
-      padding: 40px 30px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+      width: clamp(340px, 90vw, 480px);
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(30px);
+      border-radius: 30px;
+      padding: 45px 35px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.4);
       opacity: 0;
-      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 10;
       text-align: center;
     }
@@ -102,158 +181,765 @@
     }
 
     #song-card h2 {
-      font-size: clamp(20px, 5vw, 28px);
-      margin-bottom: 10px;
-      color: #333;
+      font-size: clamp(24px, 6vw, 32px);
+      margin-bottom: 15px;
+      background: linear-gradient(135deg, #f46b8a, #e64d6e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
     }
 
     #song-card p {
       color: #666;
-      font-size: 14px;
-      margin-bottom: 20px;
+      font-size: clamp(14px, 3.5vw, 16px);
+      margin-bottom: 25px;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    .song-info {
+      background: linear-gradient(135deg, #fdd39e20, #fbb47a20);
+      border-radius: 20px;
+      padding: 25px;
+      margin: 25px 0;
+      border-left: 5px solid #f46b8a;
+      backdrop-filter: blur(10px);
+    }
+
+    .song-title {
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 8px;
+      font-size: clamp(16px, 4vw, 18px);
+    }
+
+    .song-artist {
+      color: #666;
+      font-size: clamp(12px, 3vw, 14px);
+      font-weight: 500;
     }
 
     .controls {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 15px;
       align-items: center;
-      margin-top: 20px;
+      margin-top: 25px;
     }
 
     .play-btn {
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      background: linear-gradient(135deg, #f46b8a, #e64d6e);
       color: white;
       border: none;
       border-radius: 50px;
-      padding: 14px 28px;
-      font-size: 16px;
-      font-weight: bold;
+      padding: 16px 32px;
+      font-size: clamp(14px, 4vw, 16px);
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+      transition: all 0.4s ease;
+      box-shadow: 0 8px 25px rgba(244, 107, 138, 0.4);
+      width: 100%;
+      max-width: 280px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .play-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .play-btn:hover::before {
+      left: 100%;
     }
 
     .play-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 12px 35px rgba(244, 107, 138, 0.5);
     }
 
     .download-btn {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
       text-decoration: none;
-      background: linear-gradient(135deg, #11998e, #38ef7d);
+      background: linear-gradient(135deg, #fbb47a, #f46b8a);
       color: white;
-      padding: 12px 24px;
+      padding: 14px 28px;
       border-radius: 50px;
-      font-size: 14px;
-      font-weight: bold;
-      transition: all 0.3s ease;
-      box-shadow: 0 6px 20px rgba(17, 153, 142, 0.3);
+      font-size: clamp(12px, 3.5vw, 14px);
+      font-weight: 700;
+      transition: all 0.4s ease;
+      box-shadow: 0 6px 20px rgba(251, 180, 122, 0.4);
+      width: 100%;
+      max-width: 280px;
     }
 
     .download-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(17, 153, 142, 0.4);
+      box-shadow: 0 10px 30px rgba(251, 180, 122, 0.5);
+      background: linear-gradient(135deg, #f46b8a, #e64d6e);
+    }
+
+    .share-section {
+      margin-top: 30px;
+      padding-top: 25px;
+      border-top: 1px solid rgba(244, 107, 138, 0.2);
+    }
+
+    .share-text {
+      color: #666;
+      font-size: clamp(12px, 3vw, 14px);
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    .share-btn {
+      background: linear-gradient(135deg, #fdd39e, #fbb47a);
+      color: #333;
+      border: none;
+      border-radius: 50px;
+      padding: 14px 28px;
+      font-size: clamp(12px, 3.5vw, 14px);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      box-shadow: 0 6px 20px rgba(253, 211, 158, 0.4);
+      width: 100%;
+      max-width: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 0 auto;
+    }
+
+    .share-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(253, 211, 158, 0.5);
+      background: linear-gradient(135deg, #fbb47a, #f46b8a);
+      color: white;
     }
 
     .close-btn {
       position: absolute;
-      top: 15px;
-      right: 15px;
+      top: 20px;
+      right: 25px;
       background: none;
       border: none;
-      font-size: 24px;
+      font-size: 28px;
       color: #999;
       cursor: pointer;
-      transition: color 0.3s ease;
+      transition: all 0.3s ease;
+      width: 35px;
+      height: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
     }
 
     .close-btn:hover {
       color: #333;
+      background: rgba(244, 107, 138, 0.1);
+      transform: rotate(90deg);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .audio-visualizer {
+      width: 100%;
+      height: 70px;
+      background: linear-gradient(135deg, #f46b8a, #e64d6e);
+      border-radius: 15px;
+      margin: 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wave-animation {
+      position: absolute;
+      width: 200%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.1) 0px,
+        rgba(255, 255, 255, 0.3) 15px,
+        rgba(255, 255, 255, 0.1) 30px
+      );
+      animation: wave 3s linear infinite;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .wave-animation.playing {
+      opacity: 1;
+    }
+
+    @keyframes wave {
+      0% { transform: translateX(-50%); }
+      100% { transform: translateX(0%); }
+    }
+
+    .visualizer-text {
+      color: white;
+      font-weight: 700;
+      z-index: 1;
+      font-size: clamp(12px, 3vw, 14px);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Enhanced responsive design */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 0 20px;
+      }
+
+      #song-card {
+        margin: 20px;
+        width: calc(100vw - 40px);
+        max-width: 420px;
+        padding: 35px 25px;
+      }
+
+      .controls {
+        gap: 12px;
+      }
     }
 
     @media (max-width: 480px) {
       #envelope {
-        width: clamp(180px, 65vw, 300px);
-        height: auto;
+        width: clamp(200px, 70vw, 300px);
+        height: clamp(200px, 70vw, 300px);
       }
+
+      .open-btn {
+        padding: 16px 28px;
+        font-size: 16px;
+      }
+
+      #song-card {
+        padding: 30px 20px;
+      }
+    }
+
+    /* Loading state */
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid transparent;
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <h1>🎁 Для тебя особенный подарок!</h1>
-  <p class="subtitle">Открой и послушай свою персональную песню ✨</p>
+  <div class="particles" id="particles"></div>
+  
+  <div class="main-content">
+    <h1>🎁 Для тебя особенный подарок!</h1>
+    <p class="subtitle">Открой и послушай свою персональную песню ✨</p>
 
-  <div id="envelope-container">
-    <div id="envelope"></div>
-    <button id="open-btn" class="open-btn">🎵 Открыть подарок</button>
+    <div id="envelope-container">
+      <div id="envelope"></div>
+      <button id="open-btn" class="open-btn">🎵 Открыть подарок</button>
+    </div>
   </div>
 
   <div id="song-card" class="hidden">
     <button class="close-btn" id="close-btn">×</button>
-    <h2>С Днём Рождения!</h2>
-    <p>Эта песня создана специально для тебя 🎶</p>
-    <div class="controls">
-      <button id="play-btn" class="play-btn">▶️ Слушать песню</button>
-      <a href="assets/song.mp3" class="download-btn" download>⬇ Скачать песню</a>
+    <h2>🎉 С Днём Рождения, Алексей!</h2>
+    <p>Эта песня создана специально для тебя! Насладись уникальной композицией 🎶</p>
+    
+    <div class="song-info">
+      <div class="song-title">🎵 "Happy Birthday Alexey"</div>
+      <div class="song-artist">Персональная композиция • Эксклюзивно для тебя</div>
     </div>
+
+    <div class="audio-visualizer">
+      <div class="wave-animation" id="wave-animation"></div>
+      <span class="visualizer-text">🎵 Твоя песня готова к прослушиванию</span>
+    </div>
+
+    <div class="controls">
+      <button id="play-btn" class="play-btn">▶️ Слушать мою песню</button>
+      <a href="#" class="download-btn" id="download-link">
+        <span>💾</span>
+        <span>Скачать песню</span>
+      </a>
+    </div>
+
+    <div class="share-section">
+      <p class="share-text">Понравился подарок? Поделись с друзьями! 🎁</p>
+      <button class="share-btn" id="share-btn">
+        <span>📤</span>
+        <span>Поделиться подарком</span>
+      </button>
+    </div>
+
     <audio id="audio" preload="auto">
       <source src="assets/song.mp3" type="audio/mpeg">
+      Ваш браузер не поддерживает аудио элемент.
     </audio>
   </div>
 
   <script>
-    // Lottie envelope animation
-    const envelope = lottie.loadAnimation({
-      container: document.getElementById('envelope'),
-      renderer: 'svg',
-      loop: false,
-      autoplay: false,
-      path: 'assets/envelope_open.json'
-    });
+    // Create enhanced floating particles
+    function createParticles() {
+      const particles = document.getElementById('particles');
+      for (let i = 0; i < 60; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 8 + 's';
+        particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+        particles.appendChild(particle);
+      }
+    }
 
-    const openBtn = document.getElementById('open-btn');
-    const songCard = document.getElementById('song-card');
-    const closeBtn = document.getElementById('close-btn');
-    const audio = document.getElementById('audio');
-    const playBtn = document.getElementById('play-btn');
+    // Initialize Lottie animation with fallback
+    let envelope;
+    try {
+      envelope = lottie.loadAnimation({
+        container: document.getElementById('envelope'),
+        renderer: 'svg',
+        loop: false,
+        autoplay: false,
+        path: 'assets/envelope_open.json'
+      });
+    } catch (error) {
+      console.log('Lottie failed to load, using fallback');
+      document.getElementById('envelope').innerHTML = `
+        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 120px; background: linear-gradient(135deg, #fdd39e, #fbb47a); border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+          💌
+        </div>
+      `;
+    }
+
+    // State variables
     let isOpen = false;
     let isPlaying = false;
+    const songCard = document.getElementById('song-card');
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('play-btn');
+    const waveAnimation = document.getElementById('wave-animation');
+    const openBtn = document.getElementById('open-btn');
+    const closeBtn = document.getElementById('close-btn');
 
+    // Enhanced confetti celebration
+    function celebrationEffect() {
+      const duration = 4000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { 
+        startVelocity: 35, 
+        spread: 360, 
+        ticks: 80, 
+        zIndex: 0,
+        colors: ['#fdd39e', '#fbb47a', '#f46b8a', '#e64d6e', '#ffffff']
+      };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 60 * (timeLeft / duration);
+
+        // Multiple confetti bursts
+        confetti(Object.assign({}, defaults, {
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        }));
+        confetti(Object.assign({}, defaults, {
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        }));
+        
+        // Center burst
+        if (timeLeft > duration * 0.8) {
+          confetti(Object.assign({}, defaults, {
+            particleCount: particleCount * 1.5,
+            origin: { x: 0.5, y: 0.5 }
+          }));
+        }
+      }, 250);
+    }
+
+    // Open envelope with enhanced animation
     openBtn.addEventListener('click', () => {
       if (!isOpen) {
-        envelope.play();
-        envelope.addEventListener('complete', () => {
-          songCard.classList.add('show');
-          confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-        }, { once: true });
-        isOpen = true;
+        openBtn.classList.add('loading');
+        openBtn.textContent = '✨ Загружается...';
+        openBtn.disabled = true;
+
+        if (envelope && envelope.totalFrames) {
+          envelope.play();
+          envelope.addEventListener('complete', showSongCard, { once: true });
+        } else {
+          // Fallback animation
+          const envelopeEl = document.getElementById('envelope');
+          envelopeEl.style.transform = 'rotateY(180deg) scale(1.1)';
+          setTimeout(showSongCard, 800);
+        }
       }
     });
 
-    closeBtn.addEventListener('click', () => {
+    function showSongCard() {
+      isOpen = true;
+      songCard.classList.remove('hidden');
+      setTimeout(() => songCard.classList.add('show'), 100);
+      celebrationEffect();
+      
+      // Reset button with delay
+      setTimeout(() => {
+        openBtn.classList.remove('loading');
+        openBtn.textContent = '🔒 Закрыть подарок';
+        openBtn.disabled = false;
+      }, 1500);
+    }
+
+    // Close song card with cleanup
+    closeBtn.addEventListener('click', closeSongCard);
+
+    function closeSongCard() {
       songCard.classList.remove('show');
-      envelope.goToAndStop(0, true);
-      isOpen = false;
-      if (isPlaying) {
-        audio.pause();
-        isPlaying = false;
-        playBtn.textContent = '▶️ Слушать песню';
-      }
-    });
+      setTimeout(() => {
+        songCard.classList.add('hidden');
+        isOpen = false;
+        openBtn.textContent = '🎵 Открыть подарок';
+        
+        if (envelope && envelope.totalFrames) {
+          envelope.goToAndStop(0, true);
+        } else {
+          document.getElementById('envelope').style.transform = 'rotateY(0deg) scale(1)';
+        }
+        
+        // Stop audio if playing
+        if (isPlaying) {
+          audio.pause();
+          audio.currentTime = 0;
+          isPlaying = false;
+          playBtn.textContent = '▶️ Слушать мою песню';
+          waveAnimation.classList.remove('playing');
+        }
+      }, 500);
+    }
 
+    // Enhanced play/pause functionality
     playBtn.addEventListener('click', () => {
       if (audio.paused) {
-        audio.play();
-        isPlaying = true;
-        playBtn.textContent = '⏸ Пауза';
+        audio.play().then(() => {
+          isPlaying = true;
+          playBtn.textContent = '⏸️ Поставить на паузу';
+          waveAnimation.classList.add('playing');
+        }).catch(error => {
+          console.log('Audio play failed:', error);
+          playBtn.textContent = '❌ Ошибка воспроизведения';
+          setTimeout(() => {
+            playBtn.textContent = '▶️ Попробовать снова';
+          }, 2000);
+        });
       } else {
         audio.pause();
         isPlaying = false;
-        playBtn.textContent = '▶️ Слушать песню';
+        playBtn.textContent = '▶️ Продолжить слушать';
+        waveAnimation.classList.remove('playing');
       }
     });
+
+    // Audio event handlers
+    audio.addEventListener('ended', () => {
+      isPlaying = false;
+      playBtn.textContent = '🔁 Слушать ещё раз';
+      waveAnimation.classList.remove('playing');
+    });
+
+    audio.addEventListener('loadstart', () => {
+      console.log('Audio loading started');
+    });
+
+    audio.addEventListener('canplaythrough', () => {
+      console.log('Audio can play through');
+    });
+
+    // Enhanced share functionality
+    document.getElementById('share-btn').addEventListener('click', async () => {
+      const shareData = {
+        title: '🎁 Персональный музыкальный подарок!',
+        text: 'Посмотри, какой невероятный персональный подарок я получил! Это моя собственная песня! 🎵✨',
+        url: window.location.href
+      };
+
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        try {
+          await navigator.share(shareData);
+          // Success feedback
+          const btn = document.getElementById('share-btn');
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<span>✅</span><span>Поделился!</span>';
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+          }, 2000);
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.log('Share failed:', err);
+            fallbackShare();
+          }
+        }
+      } else {
+        fallbackShare();
+      }
+    });
+
+    function fallbackShare() {
+      const url = encodeURIComponent(window.location.href);
+      const text = encodeURIComponent('Посмотри, какой невероятный персональный музыкальный подарок я получил! Это моя собственная песня! 🎵✨');
+      
+      const shareOptions = [
+        { name: '📱 WhatsApp', url: `https://wa.me/?text=${text}%20${url}` },
+        { name: '✈️ Telegram', url: `https://telegram.me/share/url?url=${url}&text=${text}` },
+        { name: '🔵 VKontakte', url: `https://vk.com/share.php?url=${url}&title=${text}` },
+        { name: '📋 Скопировать ссылку', action: 'copy' }
+      ];
+
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); z-index: 1000; display: flex;
+        align-items: center; justify-content: center; backdrop-filter: blur(10px);
+      `;
+
+      const content = document.createElement('div');
+      content.style.cssText = `
+        background: white; border-radius: 20px; padding: 30px; max-width: 350px;
+        width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+      `;
+
+      content.innerHTML = `
+        <h3 style="margin: 0 0 20px 0; color: #333; text-align: center; font-size: 20px;">Поделиться подарком</h3>
+        ${shareOptions.map(option => `
+          <div style="margin-bottom: 10px;">
+            <a href="${option.url || '#'}" 
+               data-action="${option.action || 'link'}"
+               style="display: block; padding: 15px; text-decoration: none; 
+                      color: #333; border: 2px solid #f46b8a; border-radius: 15px;
+                      text-align: center; transition: all 0.3s ease; font-weight: 600;"
+               onmouseover="this.style.background='#f46b8a'; this.style.color='white';"
+               onmouseout="this.style.background='transparent'; this.style.color='#333';">
+              ${option.name}
+            </a>
+          </div>
+        `).join('')}
+        <button onclick="this.closest('.share-modal').remove()" 
+                style="width: 100%; padding: 15px; margin-top: 20px; background: #ddd; 
+                       border: none; border-radius: 15px; cursor: pointer; font-weight: 600;">
+          Закрыть
+        </button>
+      `;
+
+      modal.className = 'share-modal';
+      modal.appendChild(content);
+      document.body.appendChild(modal);
+
+      // Handle copy link
+      content.addEventListener('click', (e) => {
+        if (e.target.dataset.action === 'copy') {
+          e.preventDefault();
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            e.target.textContent = '✅ Скопировано!';
+            setTimeout(() => {
+              e.target.textContent = '📋 Скопировать ссылку';
+            }, 2000);
+          });
+        }
+      });
+
+      // Close on backdrop click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+        }
+      });
+    }
+
+    // Enhanced download functionality
+    document.getElementById('download-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      const a = document.createElement('a');
+      a.href = 'assets/song.mp3';
+      a.download = 'my_personalized_birthday_song.mp3';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Success feedback
+      const btn = e.target.closest('.download-btn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>✅</span><span>Загружено!</span>';
+      btn.style.background = 'linear-gradient(135deg, #11998e, #38ef7d)';
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.background = 'linear-gradient(135deg, #fbb47a, #f46b8a)';
+      }, 3000);
+    });
+
+    // Initialize particles
+    createParticles();
+
+    // Keyboard shortcuts for better UX
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && isOpen) {
+        e.preventDefault();
+        playBtn.click();
+      }
+      if (e.code === 'Escape' && isOpen) {
+        closeSongCard();
+      }
+      if (e.code === 'Enter' && !isOpen) {
+        openBtn.click();
+      }
+    });
+
+    // Add click to envelope for better UX
+    document.getElementById('envelope').addEventListener('click', () => {
+      if (!isOpen) {
+        openBtn.click();
+      }
+    });
+
+    // Prevent audio context issues on mobile
+    document.addEventListener('touchstart', function() {
+      if (audio.paused) {
+        audio.play().then(() => {
+          audio.pause();
+        }).catch(() => {
+          // Ignore errors on this initialization attempt
+        });
+      }
+    }, { once: true });
+
+    // Service Worker registration for better caching (optional)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+          // Service worker registration failed, but app still works
+        });
+      });
+    }
+
+    // Add preload for better performance
+    window.addEventListener('load', () => {
+      // Preload audio
+      if (audio.readyState < 3) {
+        audio.load();
+      }
+      
+      // Add slight delay to envelope animation start
+      setTimeout(() => {
+        document.getElementById('envelope').style.animationPlayState = 'running';
+      }, 500);
+    });
+
+    // Error handling for audio
+    audio.addEventListener('error', (e) => {
+      console.error('Audio error:', e);
+      playBtn.textContent = '❌ Файл недоступен';
+      playBtn.disabled = true;
+      
+      // Hide download button if audio fails
+      document.getElementById('download-link').style.display = 'none';
+    });
+
+    // Progress indicator for audio loading
+    audio.addEventListener('progress', () => {
+      if (audio.buffered.length > 0) {
+        const loaded = audio.buffered.end(0);
+        const total = audio.duration;
+        if (total > 0) {
+          const progress = (loaded / total) * 100;
+          if (progress < 100) {
+            playBtn.textContent = `⏳ Загрузка ${Math.round(progress)}%`;
+          } else {
+            playBtn.textContent = '▶️ Слушать мою песню';
+          }
+        }
+      }
+    });
+
+    // Add visual feedback for button interactions
+    [openBtn, playBtn, closeBtn].forEach(btn => {
+      btn.addEventListener('mousedown', () => {
+        btn.style.transform = btn.style.transform.replace('scale(1.05)', 'scale(0.98)');
+      });
+      
+      btn.addEventListener('mouseup', () => {
+        btn.style.transform = btn.style.transform.replace('scale(0.98)', 'scale(1.05)');
+      });
+    });
+
+    // Analytics tracking (optional - remove if not needed)
+    function trackEvent(action, category = 'Gift App') {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', action, {
+          'event_category': category,
+          'event_label': window.location.pathname
+        });
+      }
+    }
+
+    // Track important user interactions
+    openBtn.addEventListener('click', () => trackEvent('envelope_opened'));
+    playBtn.addEventListener('click', () => trackEvent('song_played'));
+    document.getElementById('download-link').addEventListener('click', () => trackEvent('song_downloaded'));
+    document.getElementById('share-btn').addEventListener('click', () => trackEvent('gift_shared'));
   </script>
 </body>
 </html>

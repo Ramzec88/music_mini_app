@@ -27,8 +27,8 @@ h1 {
 }
 
 #envelope {
-  width: 250px;  /* Увеличили размер конверта */
-  height: 250px;
+  width: 500px;  /* Увеличили размер конверта */
+  height: 500px;
   transition: width 0.3s ease, height 0.3s ease;
 }
 

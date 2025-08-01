@@ -1,16 +1,14 @@
 body {
- margin: 0;
+margin: 0;
   font-family: 'Arial', sans-serif;
   text-align: center;
-  background: linear-gradient(180deg, #fdd39e, #fbb47a);
+  background: linear-gradient(#f9b07b, #fbc687);
   color: #333;
   min-height: 100vh;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(#f9b07b, #fbc687);
-  font-family: sans-serif;
   /* padding-top: 10vh; динамическое приподнятие конверта */
 }
 
@@ -30,7 +28,7 @@ h1 {
 }
 
 .envelope {
-  width: clamp(160px, 50vw, 280px); /* масштабируем конверт */
+  width: clamp(180px, 65vw, 300px); /* больше на телефонах */
   height: auto;
 }
 

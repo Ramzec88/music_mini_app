@@ -1485,6 +1485,10 @@
                 // Генерируем ID заказа
                 currentOrderId = 'ORD' + Date.now().toString().slice(-6);
                 console.log('🆔 ID заказа:', currentOrderId);
+                
+                // СРАЗУ устанавливаем номер заказа в интерфейсе
+                document.getElementById('orderNumber').textContent = '#' + currentOrderId;
+                console.log('🎯 Номер заказа установлен в интерфейс:', currentOrderId);
 
                 // Проверяем, работаем ли мы в Telegram
                 const isInTelegram = window.Telegram && window.Telegram.WebApp;
@@ -1576,12 +1580,15 @@
                             // Специальная обработка для Telegram
                             if (isInTelegram && telegramApp) {
                                 try {
+                                    console.log('📱 Начинаем обработку Telegram WebApp...');
+                                    
                                     // Haptic feedback
-                                    if (telegramApp.HapticFeedback) {
+                                    if (telegramApp.HapticFeedback && telegramApp.HapticFeedback.impactOccurred) {
                                         telegramApp.HapticFeedback.impactOccurred('medium');
+                                        console.log('📳 Haptic feedback активирован');
                                     }
                                     
-                                    // Отправляем данные заказа в бота
+                                    // Готовим сообщение для бота
                                     const orderMessage = `🎵 Новый заказ создан!
 
 📋 Номер заказа: ${currentOrderId}
@@ -1592,14 +1599,13 @@
 🎭 Детали заказа:
 • Получатель: ${orderData.recipient}
 • Жанр: ${orderData.genre}
-• Тема: ${orderData.theme}
-${orderData.wishes ? `• Пожелания: ${orderData.wishes}` : ''}
+• Тема: ${orderData.theme.substring(0, 100)}${orderData.theme.length > 100 ? '...' : ''}
+${orderData.wishes ? `• Пожелания: ${orderData.wishes.substring(0, 100)}${orderData.wishes.length > 100 ? '...' : ''}` : ''}
 
 ⏰ Дата: ${new Date().toLocaleString('ru')}
 🌐 Источник: Telegram WebApp`;
 
-                                    // Отправляем через sendData
-                                    telegramApp.sendData(JSON.stringify({
+                                    const botData = {
                                         action: 'new_order',
                                         orderId: currentOrderId,
                                         message: orderMessage,
@@ -1616,16 +1622,66 @@ ${orderData.wishes ? `• Пожелания: ${orderData.wishes}` : ''}
                                             wishes: orderData.wishes,
                                             createdAt: new Date().toISOString()
                                         }
-                                    }));
+                                    };
                                     
-                                    console.log('📤 Данные заказа отправлены в бота');
+                                    console.log('📤 Готовим данные для отправки в бота:', botData);
+                                    
+                                    // Проверяем доступность sendData
+                                    if (telegramApp.sendData) {
+                                        telegramApp.sendData(JSON.stringify(botData));
+                                        console.log('✅ Данные успешно отправлены в бота через sendData');
+                                        
+                                        // Дополнительное уведомление пользователю
+                                        setTimeout(() => {
+                                            showBrowserNotification('📤 Информация о заказе отправлена в бота', 'success');
+                                        }, 1000);
+                                        
+                                    } else {
+                                        console.warn('⚠️ telegramApp.sendData недоступен');
+                                        
+                                        // Альтернативный способ - через postEvent
+                                        if (telegramApp.postEvent) {
+                                            telegramApp.postEvent('web_app_data_send', { data: JSON.stringify(botData) });
+                                            console.log('📤 Попытка отправки через postEvent');
+                                        }
+                                    }
                                     
                                 } catch (e) {
-                                    console.log('⚠️ Не удалось отправить данные в бота:', e);
+                                    console.error('❌ Ошибка при обработке Telegram WebApp:', e);
+                                    showBrowserNotification('⚠️ Не удалось отправить данные в бота: ' + e.message, 'error');
                                 }
+                            } else {
+                                console.log('🌐 Работаем в обычном браузере, отправка в бота пропущена');
                             }
                             
                             goToStep(4);
+                    
+                    // Дополнительная проверка для fallback
+                    setTimeout(() => {
+                        const orderNumberElement = document.getElementById('orderNumber');
+                        const currentDisplayed = orderNumberElement.textContent;
+                        console.log('🔍 Fallback проверка номера заказа:', currentDisplayed);
+                        
+                        if (currentDisplayed === '#Загружается...' || !currentDisplayed.includes(currentOrderId)) {
+                            console.log('⚠️ Fallback: номер заказа не отображается, исправляем...');
+                            orderNumberElement.textContent = '#' + currentOrderId;
+                            console.log('✅ Fallback: номер заказа принудительно установлен:', currentOrderId);
+                        }
+                    }, 500);
+                            
+                            // Дополнительная проверка после перехода к шагу 4
+                            setTimeout(() => {
+                                const orderNumberElement = document.getElementById('orderNumber');
+                                const currentDisplayed = orderNumberElement.textContent;
+                                console.log('🔍 Финальная проверка номера заказа:', currentDisplayed);
+                                
+                                if (currentDisplayed === '#Загружается...' || !currentDisplayed.includes(currentOrderId)) {
+                                    console.log('⚠️ Номер заказа не отображается, исправляем...');
+                                    orderNumberElement.textContent = '#' + currentOrderId;
+                                    console.log('✅ Номер заказа принудительно установлен:', currentOrderId);
+                                }
+                            }, 500);
+                            
                             return; // Успешно завершили
                         } else {
                             throw new Error('Пустой ответ от сервера');
@@ -1678,8 +1734,13 @@ ${orderData.wishes ? `• Пожелания: ${orderData.wishes}` : ''}
                     localOrders.push(fallbackOrder);
                     localStorage.setItem('pendingOrders', JSON.stringify(localOrders));
                     
-                    // Убеждаемся что номер заказа отображается
+                    // КРИТИЧНО: Убеждаемся что номер заказа отображается
+                    console.log('💾 Устанавливаем номер заказа для fallback:', currentOrderId);
                     document.getElementById('orderNumber').textContent = '#' + currentOrderId;
+                    
+                    // Проверяем что номер действительно установлен
+                    const displayedNumber = document.getElementById('orderNumber').textContent;
+                    console.log('🔍 Проверка отображаемого номера:', displayedNumber);
                     
                     showNotification('💾 Заказ сохранен. Будет отправлен при восстановлении связи.', 'success');
                     

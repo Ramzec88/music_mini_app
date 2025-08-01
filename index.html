@@ -680,8 +680,8 @@
                                 type="text" 
                                 class="form-input promo-input" 
                                 id="promoCode" 
-                                placeholder="MUSIC2024"
-                                maxlength="20"
+                                placeholder="MUS-RL6036"
+                                maxlength="15"
                                 required
                             >
                             <span class="promo-icon">🔑</span>
@@ -1116,6 +1116,7 @@
             console.log('✅ Приложение инициализировано');
         });
 
+        // Обработчик ввода промокода с форматированием
         function setupEventListeners() {
             document.getElementById('promoForm').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -1127,9 +1128,76 @@
                 submitSongRequest();
             });
             
+            // Улучшенный обработчик для промокодов с тире
             document.getElementById('promoCode').addEventListener('input', function(e) {
-                e.target.value = e.target.value.toUpperCase();
+                let value = e.target.value.toUpperCase();
+                
+                // Удаляем все кроме букв, цифр и тире
+                value = value.replace(/[^A-Z0-9\-]/g, '');
+                
+                // Ограничиваем длину
+                if (value.length > 15) value = value.slice(0, 15);
+                
+                // Автоматическое форматирование для формата MUS-XXXXXX
+                if (value.length >= 3 && !value.includes('-')) {
+                    // Если введено 3+ символов без тире, добавляем тире после MUS
+                    if (value.startsWith('MUS') && value.length > 3) {
+                        value = 'MUS-' + value.slice(3);
+                    }
+                }
+                
+                e.target.value = value;
+                
+                // Показываем подсказку о формате
+                updatePromoCodeHint(value);
             });
+        }
+
+        // Функция для показа подсказки о формате промокода
+        function updatePromoCodeHint(value) {
+            let hintElement = document.getElementById('promoCodeHint');
+            
+            // Создаем элемент подсказки если его нет
+            if (!hintElement) {
+                hintElement = document.createElement('div');
+                hintElement.id = 'promoCodeHint';
+                hintElement.style.cssText = `
+                    font-size: 0.9rem;
+                    margin-top: 8px;
+                    padding: 8px 12px;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                `;
+                
+                const promoContainer = document.querySelector('.promo-input-container');
+                promoContainer.parentNode.appendChild(hintElement);
+            }
+            
+            // Проверяем формат
+            const isValidFormat = /^MUS-[A-Z]{2}\d{4}$/.test(value);
+            const isPartialFormat = /^MUS(-[A-Z]{0,2}\d{0,4})?$/.test(value);
+            
+            if (value === '') {
+                hintElement.style.display = 'none';
+            } else if (isValidFormat) {
+                hintElement.innerHTML = '✅ Правильный формат промокода';
+                hintElement.style.backgroundColor = '#f0fff4';
+                hintElement.style.color = '#38a169';
+                hintElement.style.border = '1px solid #9ae6b4';
+                hintElement.style.display = 'block';
+            } else if (isPartialFormat && value.length < 10) {
+                hintElement.innerHTML = '💡 Формат: MUS-XX0000 (например, MUS-RL6036)';
+                hintElement.style.backgroundColor = '#fffbf0';
+                hintElement.style.color = '#d69e2e';
+                hintElement.style.border = '1px solid #fbd38d';
+                hintElement.style.display = 'block';
+            } else {
+                hintElement.innerHTML = '⚠️ Неправильный формат. Ожидается: MUS-XX0000';
+                hintElement.style.backgroundColor = '#fff5f5';
+                hintElement.style.color = '#e53e3e';
+                hintElement.style.border = '1px solid #feb2b2';
+                hintElement.style.display = 'block';
+            }
         }
 
         function goToStep(step) {
@@ -1204,6 +1272,24 @@
                 return;
             }
 
+            // Валидация формата промокода
+            const promoCodePattern = /^MUS-[A-Z]{2}\d{4}$/;
+            if (!promoCodePattern.test(promoCode)) {
+                showNotification('❌ Неправильный формат промокода. Ожидается: MUS-XX0000', 'error');
+                
+                // Подсветка ошибки
+                const promoInput = document.getElementById('promoCode');
+                promoInput.style.borderColor = '#f56565';
+                promoInput.style.animation = 'shake 0.5s ease-in-out';
+                
+                setTimeout(() => {
+                    promoInput.style.borderColor = '#e2e8f0';
+                    promoInput.style.animation = '';
+                }, 2000);
+                
+                return;
+            }
+
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<span class="loading"></span>Проверяем в базе...';
             submitBtn.disabled = true;
@@ -1218,6 +1304,13 @@
                     orderData.promoCode = promoCode;
                     orderData.promoValidation = validation;
                     showNotification('✅ Промокод найден и активирован!', 'success');
+                    
+                    // Скрываем подсказку при успехе
+                    const hintElement = document.getElementById('promoCodeHint');
+                    if (hintElement) {
+                        hintElement.style.display = 'none';
+                    }
+                    
                     goToStep(2);
                 } else {
                     showNotification(`❌ ${validation.message}`, 'error');
@@ -1753,17 +1846,75 @@
             originalBtn.disabled = true;
 
             try {
-                // Проверяем в локальном хранении
-                const orders = JSON.parse(localStorage.getItem('userOrders') || '[]');
-                const order = orders.find(o => o.orderId === orderId);
+                console.log('🔍 Проверяем статус заказа:', orderId);
+                
+                // Сначала ищем в Google Sheets
+                let order = null;
+                
+                try {
+                    // Получаем все заказы из Google Sheets
+                    const ordersData = await makeAPIRequest('get', { sheetName: 'Orders' });
+                    const orders = ordersData.values || [];
+                    
+                    console.log('📋 Получено заказов из Google Sheets:', orders.length);
+                    
+                    // Ищем заказ по ID (первый столбец)
+                    const foundOrderRow = orders.find(row => row[0] === orderId);
+                    
+                    if (foundOrderRow) {
+                        order = {
+                            orderId: foundOrderRow[0],
+                            userId: foundOrderRow[1],
+                            userContact: foundOrderRow[2],
+                            userName: foundOrderRow[3],
+                            promoCode: foundOrderRow[4],
+                            recipient: foundOrderRow[5],
+                            genre: foundOrderRow[6],
+                            theme: foundOrderRow[7],
+                            wishes: foundOrderRow[8],
+                            status: foundOrderRow[9] || 'pending',
+                            createdAt: foundOrderRow[10],
+                            completedAt: foundOrderRow[11],
+                            fileId: foundOrderRow[12],
+                            comment: foundOrderRow[13],
+                            source: 'sheets'
+                        };
+                        console.log('✅ Заказ найден в Google Sheets:', order);
+                    }
+                } catch (sheetsError) {
+                    console.warn('⚠️ Ошибка получения данных из Google Sheets:', sheetsError);
+                }
+                
+                // Если не найден в Sheets, ищем в локальном хранении
+                if (!order) {
+                    console.log('🔍 Ищем в локальном хранилище...');
+                    
+                    // Проверяем в userOrders
+                    const userOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
+                    let localOrder = userOrders.find(o => o.orderId === orderId);
+                    
+                    // Проверяем в pendingOrders
+                    if (!localOrder) {
+                        const pendingOrders = JSON.parse(localStorage.getItem('pendingOrders') || '[]');
+                        localOrder = pendingOrders.find(o => o.orderId === orderId);
+                    }
+                    
+                    if (localOrder) {
+                        order = { ...localOrder, source: 'local' };
+                        console.log('✅ Заказ найден в локальном хранилище:', order);
+                    }
+                }
 
                 if (order) {
+                    console.log('📊 Показываем информацию о заказе');
                     showOrderStatusModal(order);
                 } else {
-                    showNotification('❌ Заказ не найден или не принадлежит вам', 'error');
+                    console.log('❌ Заказ не найден нигде');
+                    showNotification('❌ Заказ не найден. Проверьте правильность номера.', 'error');
                 }
+                
             } catch (error) {
-                console.error('Ошибка проверки статуса:', error);
+                console.error('❌ Ошибка проверки статуса:', error);
                 showNotification('🔌 Ошибка проверки статуса. Попробуйте позже.', 'error');
             } finally {
                 originalBtn.innerHTML = originalText;
@@ -1773,14 +1924,40 @@
 
         function showOrderStatusModal(order) {
             const statusInfo = {
-                'pending': { text: 'В обработке', color: '#d69e2e', icon: '⏳' },
-                'in_progress': { text: 'Создается', color: '#3182ce', icon: '🎵' },
-                'completed': { text: 'Готов', color: '#38a169', icon: '✅' },
-                'delivered': { text: 'Доставлен', color: '#38a169', icon: '📱' },
-                'pending_sync': { text: 'Ожидает синхронизации', color: '#805ad5', icon: '🔄' }
+                'pending': { 
+                    text: 'В обработке', 
+                    color: '#d69e2e', 
+                    icon: '⏳',
+                    description: 'Ваш заказ принят и ожидает обработки композитором'
+                },
+                'in_progress': { 
+                    text: 'Создается', 
+                    color: '#3182ce', 
+                    icon: '🎵',
+                    description: 'Композитор работает над вашей песней'
+                },
+                'completed': { 
+                    text: 'Готов', 
+                    color: '#38a169', 
+                    icon: '✅',
+                    description: 'Песня готова и скоро будет отправлена вам'
+                },
+                'delivered': { 
+                    text: 'Доставлен', 
+                    color: '#38a169', 
+                    icon: '📱',
+                    description: 'Песня отправлена вам'
+                },
+                'pending_sync': {
+                    text: 'Ожидает синхронизации',
+                    color: '#805ad5',
+                    icon: '🔄',
+                    description: 'Заказ сохранен локально, ожидает отправки на сервер'
+                }
             };
 
             const status = statusInfo[order.status] || statusInfo['pending'];
+            const isFromSheets = order.source === 'sheets';
 
             const modal = document.createElement('div');
             modal.className = 'modal';
@@ -1790,25 +1967,89 @@
                         <h3 class="modal-title">${status.icon} Заказ #${order.orderId}</h3>
                         <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
                     </div>
-                    <div style="padding: 20px;">
-                        <div style="text-align: center; margin-bottom: 25px;">
-                            <div style="font-size: 3rem; margin-bottom: 10px;">${status.icon}</div>
-                            <h3 style="color: ${status.color}; margin-bottom: 10px;">${status.text}</h3>
+                    <div style="padding: 30px;">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <div style="font-size: 4rem; margin-bottom: 15px;">${status.icon}</div>
+                            <h3 style="color: ${status.color}; margin-bottom: 10px; font-size: 1.5rem;">${status.text}</h3>
+                            <p style="color: #718096; line-height: 1.5;">${status.description}</p>
                         </div>
                         
                         <div class="order-summary">
+                            <h4 style="margin-bottom: 20px; color: #4a5568;">📋 Информация о заказе</h4>
+                            
                             <div class="order-detail">
-                                <strong>Дата создания:</strong> ${new Date(order.createdAt).toLocaleDateString('ru')}
+                                <strong>Дата создания:</strong> 
+                                ${order.createdAt ? new Date(order.createdAt).toLocaleDateString('ru', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                }) : 'Не указана'}
                             </div>
-                            <div class="order-detail">
-                                <strong>Получатель:</strong> ${order.recipient}
+                            
+                            ${order.recipient ? `
+                                <div class="order-detail">
+                                    <strong>Получатель:</strong> ${order.recipient}
+                                </div>
+                            ` : ''}
+                            
+                            ${order.genre ? `
+                                <div class="order-detail">
+                                    <strong>Жанр:</strong> ${order.genre}
+                                </div>
+                            ` : ''}
+                            
+                            ${order.promoCode ? `
+                                <div class="order-detail">
+                                    <strong>Промокод:</strong> ${order.promoCode}
+                                </div>
+                            ` : ''}
+                            
+                            ${order.theme ? `
+                                <div class="order-detail">
+                                    <strong>Тема:</strong> ${order.theme.length > 100 ? order.theme.substring(0, 100) + '...' : order.theme}
+                                </div>
+                            ` : ''}
+                            
+                            ${order.completedAt ? `
+                                <div class="order-detail">
+                                    <strong>Дата готовности:</strong> 
+                                    ${new Date(order.completedAt).toLocaleDateString('ru')}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="order-detail" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                                <strong>Источник данных:</strong> 
+                                <span style="color: ${isFromSheets ? '#38a169' : '#d69e2e'};">
+                                    ${isFromSheets ? '🌐 Сервер' : '💾 Локальное хранилище'}
+                                </span>
                             </div>
-                            <div class="order-detail">
-                                <strong>Жанр:</strong> ${order.genre}
+                        </div>
+                        
+                        ${order.status === 'pending' || order.status === 'pending_sync' ? `
+                            <div style="text-align: center; margin-top: 25px; padding: 20px; background: #f0f4ff; border-radius: 10px;">
+                                <p style="color: #4a5568; margin-bottom: 10px; font-weight: 600;">📅 Ожидаемые сроки:</p>
+                                <p style="color: #718096; margin-bottom: 5px;">Создание песни: 2-5 рабочих дней</p>
+                                <p style="color: #718096;">Мы уведомим вас о готовности</p>
                             </div>
-                            <div class="order-detail">
-                                <strong>Промокод:</strong> ${order.promoCode}
+                        ` : ''}
+                        
+                        ${order.status === 'completed' ? `
+                            <div style="text-align: center; margin-top: 25px;">
+                                <button class="btn btn-success" onclick="simulateDownload('${order.orderId}')">
+                                    🎵 Получить песню
+                                </button>
+                                <p style="color: #718096; margin-top: 10px; font-size: 0.9rem;">
+                                    Свяжитесь с нами для получения файла
+                                </p>
                             </div>
+                        ` : ''}
+                        
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button class="btn btn-secondary" onclick="refreshOrderStatus('${order.orderId}')">
+                                🔄 Обновить статус
+                            </button>
                         </div>
                     </div>
                 </div>

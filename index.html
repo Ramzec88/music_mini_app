@@ -566,6 +566,8 @@
             justify-content: center;
             align-items: center;
             z-index: 2000;
+            /* Добавляем возможность закрытия по клику на фон */
+            cursor: pointer;
         }
 
         .modal-content {
@@ -573,29 +575,49 @@
             border-radius: 20px;
             max-width: 500px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 85vh; /* Уменьшили максимальную высоту */
             overflow-y: auto;
+            /* Убираем курсор pointer для содержимого */
+            cursor: default;
         }
 
         .modal-header {
-            padding: 20px;
+            padding: 15px 20px; /* Уменьшили отступы */
             border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            z-index: 1;
         }
 
         .modal-title {
             margin: 0;
             color: #4a5568;
+            font-size: 1.2rem; /* Немного уменьшили */
         }
 
         .close-btn {
-            background: none;
+            background: #f56565;
             border: none;
-            font-size: 1.5rem;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 1.2rem;
             cursor: pointer;
-            color: #a0aec0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: #e53e3e;
+            transform: scale(1.1);
         }
 
         @media (max-width: 768px) {
@@ -2170,156 +2192,168 @@
         }
 
         function showOrderStatusModal(order) {
+            console.log('📋 Показываем модальное окно для заказа:', order.orderId);
+            
             const statusInfo = {
                 'pending': { 
                     text: 'В обработке', 
                     color: '#d69e2e', 
                     icon: '⏳',
-                    description: 'Ваш заказ принят и ожидает обработки композитором'
+                    description: 'Заказ принят и ожидает обработки'
                 },
                 'in_progress': { 
                     text: 'Создается', 
                     color: '#3182ce', 
                     icon: '🎵',
-                    description: 'Композитор работает над вашей песней'
+                    description: 'Композитор работает над песней'
                 },
                 'completed': { 
                     text: 'Готов', 
                     color: '#38a169', 
                     icon: '✅',
-                    description: 'Песня готова и скоро будет отправлена вам'
+                    description: 'Песня готова для получения'
                 },
                 'delivered': { 
                     text: 'Доставлен', 
                     color: '#38a169', 
                     icon: '📱',
-                    description: 'Песня отправлена вам'
+                    description: 'Песня отправлена пользователю'
                 },
                 'pending_sync': {
                     text: 'Ожидает синхронизации',
                     color: '#805ad5',
                     icon: '🔄',
-                    description: 'Заказ сохранен локально, ожидает отправки на сервер'
+                    description: 'Заказ сохранен локально'
                 }
             };
 
             const status = statusInfo[order.status] || statusInfo['pending'];
             const isFromSheets = order.source === 'sheets';
 
+            // Создаем модальное окно
             const modal = document.createElement('div');
             modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title">${status.icon} Заказ #${order.orderId}</h3>
-                        <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+            
+            // Закрытие по клику на фон
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+
+            const modalContent = document.createElement('div');
+            modalContent.className = 'modal-content';
+            
+            // Предотвращаем закрытие при клике на содержимое
+            modalContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+
+            modalContent.innerHTML = `
+                <div class="modal-header">
+                    <h3 class="modal-title">${status.icon} Заказ #${order.orderId}</h3>
+                    <button class="close-btn" id="closeModalBtn">&times;</button>
+                </div>
+                <div style="padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">${status.icon}</div>
+                        <h3 style="color: ${status.color}; margin-bottom: 8px; font-size: 1.3rem;">${status.text}</h3>
+                        <p style="color: #718096; font-size: 0.95rem; margin: 0;">${status.description}</p>
                     </div>
-                    <div style="padding: 30px;">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <div style="font-size: 4rem; margin-bottom: 15px;">${status.icon}</div>
-                            <h3 style="color: ${status.color}; margin-bottom: 10px; font-size: 1.5rem;">${status.text}</h3>
-                            <p style="color: #718096; line-height: 1.5;">${status.description}</p>
-                        </div>
-                        
-                        <div class="order-summary">
-                            <h4 style="margin-bottom: 20px; color: #4a5568;">📋 Информация о заказе</h4>
-                            
-                            <div class="order-detail">
-                                <strong>Дата создания:</strong> 
-                                ${order.createdAt ? new Date(order.createdAt).toLocaleDateString('ru', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                }) : 'Не указана'}
-                            </div>
-                            
-                            ${order.recipient ? `
-                                <div class="order-detail">
-                                    <strong>Получатель:</strong> ${order.recipient}
-                                </div>
-                            ` : ''}
-                            
-                            ${order.genre ? `
-                                <div class="order-detail">
-                                    <strong>Жанр:</strong> ${order.genre}
-                                </div>
-                            ` : ''}
-                            
-                            ${order.promoCode ? `
-                                <div class="order-detail">
-                                    <strong>Промокод:</strong> ${order.promoCode}
-                                </div>
-                            ` : ''}
-                            
-                            ${order.theme ? `
-                                <div class="order-detail">
-                                    <strong>Тема:</strong> ${order.theme.length > 100 ? order.theme.substring(0, 100) + '...' : order.theme}
-                                </div>
-                            ` : ''}
-                            
-                            ${order.completedAt ? `
-                                <div class="order-detail">
-                                    <strong>Дата готовности:</strong> 
-                                    ${new Date(order.completedAt).toLocaleDateString('ru')}
-                                </div>
-                            ` : ''}
-                            
-                            <div class="order-detail" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
-                                <strong>Источник данных:</strong> 
-                                <span style="color: ${isFromSheets ? '#38a169' : '#d69e2e'};">
-                                    ${isFromSheets ? '🌐 Сервер' : '💾 Локальное хранилище'}
-                                </span>
+                    
+                    <div style="background: #f7fafc; border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                        <div style="display: grid; gap: 8px; font-size: 0.9rem;">
+                            <div><strong>Дата:</strong> ${order.createdAt ? new Date(order.createdAt).toLocaleDateString('ru') : 'Не указана'}</div>
+                            ${order.recipient ? `<div><strong>Получатель:</strong> ${order.recipient}</div>` : ''}
+                            ${order.genre ? `<div><strong>Жанр:</strong> ${order.genre}</div>` : ''}
+                            ${order.promoCode ? `<div><strong>Промокод:</strong> ${order.promoCode}</div>` : ''}
+                            ${order.theme ? `<div><strong>Тема:</strong> ${order.theme.length > 80 ? order.theme.substring(0, 80) + '...' : order.theme}</div>` : ''}
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
+                                <strong>Источник:</strong> <span style="color: ${isFromSheets ? '#38a169' : '#d69e2e'};">${isFromSheets ? '🌐 Сервер' : '💾 Локально'}</span>
                             </div>
                         </div>
-                        
-                        ${order.status === 'pending' || order.status === 'pending_sync' ? `
-                            <div style="text-align: center; margin-top: 25px; padding: 20px; background: #f0f4ff; border-radius: 10px;">
-                                <p style="color: #4a5568; margin-bottom: 10px; font-weight: 600;">📅 Ожидаемые сроки:</p>
-                                <p style="color: #718096; margin-bottom: 5px;">Создание песни: 2-5 рабочих дней</p>
-                                <p style="color: #718096;">Мы уведомим вас о готовности</p>
-                            </div>
-                        ` : ''}
-                        
+                    </div>
+                    
+                    ${order.status === 'pending' || order.status === 'pending_sync' ? `
+                        <div style="text-align: center; padding: 12px; background: #f0f4ff; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem;">
+                            <strong>📅 Сроки:</strong> 2-5 рабочих дней
+                        </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" id="refreshOrderBtn" style="font-size: 0.9rem; padding: 10px 15px;">
+                            🔄 Обновить
+                        </button>
                         ${order.status === 'completed' ? `
-                            <div style="text-align: center; margin-top: 25px;">
-                                <button class="btn btn-success" id="downloadBtn-${order.orderId}">
-                                    🎵 Получить песню
-                                </button>
-                                <p style="color: #718096; margin-top: 10px; font-size: 0.9rem;">
-                                    Свяжитесь с нами для получения файла
-                                </p>
-                            </div>
-                        ` : ''}
-                        
-                        <div style="text-align: center; margin-top: 25px;">
-                            <button class="btn btn-secondary" id="refreshBtn-${order.orderId}">
-                                🔄 Обновить статус
+                            <button class="btn btn-success" id="downloadOrderBtn" style="font-size: 0.9rem; padding: 10px 15px;">
+                                🎵 Получить
                             </button>
-                        </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
-            
+
+            modal.appendChild(modalContent);
             document.body.appendChild(modal);
             
-            // Добавляем обработчики событий после создания модального окна
-            const refreshBtn = document.getElementById(`refreshBtn-${order.orderId}`);
+            console.log('📋 Модальное окно создано, добавляем обработчики...');
+
+            // Обработчик закрытия
+            const closeBtn = document.getElementById('closeModalBtn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    console.log('❌ Закрытие модального окна');
+                    modal.remove();
+                });
+            }
+
+            // Обработчик обновления статуса
+            const refreshBtn = document.getElementById('refreshOrderBtn');
             if (refreshBtn) {
-                refreshBtn.addEventListener('click', () => {
-                    console.log('🔄 Кнопка обновления статуса нажата для заказа:', order.orderId);
-                    refreshOrderStatus(order.orderId);
+                console.log('🔄 Добавляем обработчик для кнопки обновления');
+                refreshBtn.addEventListener('click', async () => {
+                    console.log('🔄 НАЖАТА кнопка обновления статуса для:', order.orderId);
+                    
+                    const originalText = refreshBtn.innerHTML;
+                    refreshBtn.innerHTML = '<span class="loading"></span>Обновляем...';
+                    refreshBtn.disabled = true;
+                    
+                    try {
+                        await refreshOrderStatus(order.orderId);
+                    } catch (error) {
+                        console.error('❌ Ошибка обновления:', error);
+                    } finally {
+                        // Восстанавливаем кнопку
+                        setTimeout(() => {
+                            refreshBtn.innerHTML = originalText;
+                            refreshBtn.disabled = false;
+                        }, 1000);
+                    }
+                });
+            }
+
+            // Обработчик скачивания
+            const downloadBtn = document.getElementById('downloadOrderBtn');
+            if (downloadBtn) {
+                console.log('🎵 Добавляем обработчик для кнопки скачивания');
+                downloadBtn.addEventListener('click', () => {
+                    console.log('🎵 НАЖАТА кнопка получения песни для:', order.orderId);
+                    
+                    const originalText = downloadBtn.innerHTML;
+                    downloadBtn.innerHTML = '<span class="loading"></span>Готовим...';
+                    downloadBtn.disabled = true;
+                    
+                    simulateDownload(order.orderId);
+                    
+                    // Восстанавливаем кнопку
+                    setTimeout(() => {
+                        downloadBtn.innerHTML = originalText;
+                        downloadBtn.disabled = false;
+                    }, 2000);
                 });
             }
             
-            const downloadBtn = document.getElementById(`downloadBtn-${order.orderId}`);
-            if (downloadBtn) {
-                downloadBtn.addEventListener('click', () => {
-                    console.log('🎵 Кнопка получения песни нажата для заказа:', order.orderId);
-                    simulateDownload(order.orderId);
-                });
-            }
+            console.log('✅ Все обработчики добавлены');
         }
 
         function restoreFormData() {

@@ -15,12 +15,18 @@ fetch(`https://yourapi.com/song?id=${userId}`)
   });
 
 // Загружаем конверт (idle)
+
 let envelope = lottie.loadAnimation({
   container: document.getElementById('envelope'),
   renderer: 'svg',
   loop: false,
-  autoplay: true,
-  path: 'assets/envelope_idle.json'
+  autoplay: false,
+  path: 'assets/envelope_open.json'
+});
+
+// При клике проигрываем анимацию открытия
+document.getElementById('open-btn').addEventListener('click', () => {
+  envelope.goToAndPlay(0);
 });
 
 // Кнопка открытия

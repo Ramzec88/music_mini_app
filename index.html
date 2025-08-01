@@ -815,6 +815,21 @@
                         Ваш заказ отправлен на обработку. Мы свяжемся с вами, когда песня будет готова.
                     </p>
                     
+                    <!-- Выделяем номер заказа -->
+                    <div style="text-align: center; margin: 25px 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.1rem; opacity: 0.9;">Номер вашего заказа:</h3>
+                        <div style="font-size: 2rem; font-weight: bold; font-family: monospace; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); cursor: pointer;" 
+                             id="orderNumber" 
+                             onclick="copyOrderNumber()"
+                             title="Нажмите чтобы скопировать">
+                            #Загружается...
+                        </div>
+                        <p style="margin: 15px 0 0 0; font-size: 0.9rem; opacity: 0.8;">
+                            Сохраните этот номер для проверки статуса заказа<br>
+                            <small>👆 Нажмите на номер чтобы скопировать</small>
+                        </p>
+                    </div>
+                    
                     <div class="order-summary">
                         <h3>📧 Что дальше?</h3>
                         <div class="order-detail">
@@ -1556,14 +1571,57 @@
                             clearFormDraft();
                             
                             // Уведомляем о успехе
-                            showNotification('🎉 Заказ успешно создан и сохранен!', 'success');
+                            showNotification('🎉 Заказ успешно создан!', 'success');
                             
                             // Специальная обработка для Telegram
                             if (isInTelegram && telegramApp) {
                                 try {
-                                    telegramApp.HapticFeedback.impactOccurred('medium');
+                                    // Haptic feedback
+                                    if (telegramApp.HapticFeedback) {
+                                        telegramApp.HapticFeedback.impactOccurred('medium');
+                                    }
+                                    
+                                    // Отправляем данные заказа в бота
+                                    const orderMessage = `🎵 Новый заказ создан!
+
+📋 Номер заказа: ${currentOrderId}
+👤 Заказчик: ${userName}
+📱 Контакт: ${userContact}
+🎟️ Промокод: ${orderData.promoCode}
+
+🎭 Детали заказа:
+• Получатель: ${orderData.recipient}
+• Жанр: ${orderData.genre}
+• Тема: ${orderData.theme}
+${orderData.wishes ? `• Пожелания: ${orderData.wishes}` : ''}
+
+⏰ Дата: ${new Date().toLocaleString('ru')}
+🌐 Источник: Telegram WebApp`;
+
+                                    // Отправляем через sendData
+                                    telegramApp.sendData(JSON.stringify({
+                                        action: 'new_order',
+                                        orderId: currentOrderId,
+                                        message: orderMessage,
+                                        orderData: {
+                                            id: currentOrderId,
+                                            user: {
+                                                name: userName,
+                                                contact: userContact
+                                            },
+                                            promoCode: orderData.promoCode,
+                                            recipient: orderData.recipient,
+                                            genre: orderData.genre,
+                                            theme: orderData.theme,
+                                            wishes: orderData.wishes,
+                                            createdAt: new Date().toISOString()
+                                        }
+                                    }));
+                                    
+                                    console.log('📤 Данные заказа отправлены в бота');
+                                    
                                 } catch (e) {
-                                    console.log('Haptic feedback недоступен');
+                                    console.log('⚠️ Не удалось отправить данные в бота:', e);
                                 }
                             }
                             
@@ -1620,8 +1678,36 @@
                     localOrders.push(fallbackOrder);
                     localStorage.setItem('pendingOrders', JSON.stringify(localOrders));
                     
+                    // Убеждаемся что номер заказа отображается
                     document.getElementById('orderNumber').textContent = '#' + currentOrderId;
+                    
                     showNotification('💾 Заказ сохранен. Будет отправлен при восстановлении связи.', 'success');
+                    
+                    // Отправляем в Telegram бота если возможно
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        try {
+                            const orderMessageOffline = `📱 Заказ создан офлайн
+
+📋 Номер заказа: ${currentOrderId}
+👤 Заказчик: ${orderData.recipient || 'Не указан'}
+🎟️ Промокод: ${orderData.promoCode}
+🔄 Статус: Ожидает синхронизации
+
+⚠️ Заказ будет отправлен на сервер при восстановлении соединения`;
+
+                            window.Telegram.WebApp.sendData(JSON.stringify({
+                                action: 'offline_order',
+                                orderId: currentOrderId,
+                                message: orderMessageOffline,
+                                orderData: fallbackOrder
+                            }));
+                            
+                            console.log('📤 Офлайн заказ отправлен в бота');
+                        } catch (e) {
+                            console.log('⚠️ Не удалось отправить офлайн заказ в бота:', e);
+                        }
+                    }
+                    
                     goToStep(4);
                     
                 } else {

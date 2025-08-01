@@ -24,6 +24,35 @@ let envelope = lottie.loadAnimation({
   path: 'assets/envelope_open.json'
 });
 
+let isOpen = false; // состояние конверта
+
+document.getElementById('open-btn').addEventListener('click', () => {
+  const totalFrames = envelope.totalFrames;
+
+  if (!isOpen) {
+    // Анимация открытия от кадра 0 до конца
+    envelope.playSegments([0, totalFrames], true);
+    envelope.addEventListener('complete', () => {
+      isOpen = true;
+    }, { once: true });
+
+  } else {
+    // Анимация закрытия в обратную сторону до кадра 177
+    envelope.playSegments([totalFrames, 177], true);
+
+    const stopOn177 = () => {
+      if (envelope.currentFrame <= 177) {
+        envelope.goToAndStop(177, true);
+        isOpen = false;
+        envelope.removeEventListener('enterFrame', stopOn177);
+      }
+    };
+
+    envelope.addEventListener('enterFrame', stopOn177);
+  }
+});
+
+
 // При клике проигрываем анимацию открытия
 document.getElementById('open-btn').addEventListener('click', () => {
   envelope.goToAndPlay(0);

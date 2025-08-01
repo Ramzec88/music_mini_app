@@ -840,26 +840,43 @@
             </div>
         </div>
 
-        <!-- Order Status Check -->
-        <div class="main-card" style="margin-top: 20px;">
-            <h3 style="text-align: center; margin-bottom: 20px; color: #4a5568;">
-                🔍 Проверить статус заказа
-            </h3>
-            <div class="form-group">
-                <input 
-                    type="text" 
-                    class="form-input" 
-                    id="orderCheckId" 
-                    placeholder="Введите номер заказа"
-                    style="text-align: center;"
-                >
-            </div>
-            <div class="btn-group">
-                <button type="button" class="btn btn-secondary" onclick="checkOrderStatus()">
-                    Проверить статус
-                </button>
-            </div>
+        <!-- Order Status Check - перенесен в конец, после основного приложения -->
+    </div>
+
+    <!-- Независимый блок проверки статуса заказа -->
+    <div class="main-card" style="margin-top: 20px;">
+        <h3 style="text-align: center; margin-bottom: 20px; color: #4a5568;">
+            🔍 Проверить статус заказа
+        </h3>
+        <p style="text-align: center; margin-bottom: 25px; color: #718096; line-height: 1.5;">
+            Введите номер заказа, полученный после оформления, чтобы узнать статус выполнения
+        </p>
+        <div class="form-group">
+            <label class="form-label" style="text-align: center;">Номер заказа (например: ORD123456)</label>
+            <input 
+                type="text" 
+                class="form-input" 
+                id="orderCheckId" 
+                placeholder="ORD123456"
+                style="text-align: center; font-family: monospace; font-weight: bold; letter-spacing: 1px;"
+                maxlength="12"
+            >
         </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-secondary" onclick="checkOrderStatus()">
+                🔍 Проверить статус
+            </button>
+        </div>
+        
+        <!-- Подсказка для пользователей -->
+        <div style="margin-top: 20px; padding: 15px; background: #f8f9ff; border-radius: 10px; border-left: 4px solid #667eea;">
+            <p style="margin: 0; color: #4a5568; font-size: 0.95rem;">
+                <strong>💡 Где найти номер заказа?</strong><br>
+                Номер заказа отображается на экране успешного оформления и имеет формат ORD + 6 цифр
+            </p>
+        </div>
+    </div>
+
     </div>
 
     <!-- Notification -->
@@ -1151,6 +1168,77 @@
                 // Показываем подсказку о формате
                 updatePromoCodeHint(value);
             });
+
+            // Обработчик для номера заказа
+            document.getElementById('orderCheckId').addEventListener('input', function(e) {
+                let value = e.target.value.toUpperCase();
+                
+                // Удаляем все кроме букв и цифр
+                value = value.replace(/[^A-Z0-9]/g, '');
+                
+                // Автоматическое форматирование ORD + цифры
+                if (value.length > 0 && !value.startsWith('ORD')) {
+                    if (/^\d/.test(value)) {
+                        // Если начинается с цифры, добавляем ORD
+                        value = 'ORD' + value;
+                    }
+                }
+                
+                // Ограничиваем длину (ORD + 6 цифр = 9 символов)
+                if (value.length > 9) value = value.slice(0, 9);
+                
+                e.target.value = value;
+                
+                // Показываем подсказку
+                updateOrderIdHint(value);
+            });
+        }
+
+        // Функция для показа подсказки о формате номера заказа
+        function updateOrderIdHint(value) {
+            let hintElement = document.getElementById('orderIdHint');
+            
+            // Создаем элемент подсказки если его нет
+            if (!hintElement) {
+                hintElement = document.createElement('div');
+                hintElement.id = 'orderIdHint';
+                hintElement.style.cssText = `
+                    font-size: 0.9rem;
+                    margin-top: 8px;
+                    padding: 8px 12px;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                `;
+                
+                const orderCheckContainer = document.getElementById('orderCheckId').parentNode;
+                orderCheckContainer.appendChild(hintElement);
+            }
+            
+            // Проверяем формат ORD + 6 цифр
+            const isValidFormat = /^ORD\d{6}$/.test(value);
+            const isPartialFormat = /^ORD\d{0,6}$/.test(value);
+            
+            if (value === '') {
+                hintElement.style.display = 'none';
+            } else if (isValidFormat) {
+                hintElement.innerHTML = '✅ Правильный формат номера заказа';
+                hintElement.style.backgroundColor = '#f0fff4';
+                hintElement.style.color = '#38a169';
+                hintElement.style.border = '1px solid #9ae6b4';
+                hintElement.style.display = 'block';
+            } else if (isPartialFormat && value.length < 9) {
+                hintElement.innerHTML = '💡 Формат: ORD000000 (например, ORD123456)';
+                hintElement.style.backgroundColor = '#fffbf0';
+                hintElement.style.color = '#d69e2e';
+                hintElement.style.border = '1px solid #fbd38d';
+                hintElement.style.display = 'block';
+            } else {
+                hintElement.innerHTML = '⚠️ Неправильный формат. Ожидается: ORD000000';
+                hintElement.style.backgroundColor = '#fff5f5';
+                hintElement.style.color = '#e53e3e';
+                hintElement.style.border = '1px solid #feb2b2';
+                hintElement.style.display = 'block';
+            }
         }
 
         // Функция для показа подсказки о формате промокода
@@ -1840,6 +1928,24 @@
                 return;
             }
 
+            // Валидация формата номера заказа
+            const orderIdPattern = /^ORD\d{6}$/;
+            if (!orderIdPattern.test(orderId)) {
+                showNotification('❌ Неправильный формат номера заказа. Ожидается: ORD000000', 'error');
+                
+                // Подсветка ошибки
+                const orderInput = document.getElementById('orderCheckId');
+                orderInput.style.borderColor = '#f56565';
+                orderInput.style.animation = 'shake 0.5s ease-in-out';
+                
+                setTimeout(() => {
+                    orderInput.style.borderColor = '#e2e8f0';
+                    orderInput.style.animation = '';
+                }, 2000);
+                
+                return;
+            }
+
             const originalBtn = event.target;
             const originalText = originalBtn.innerHTML;
             originalBtn.innerHTML = '<span class="loading"></span>Проверяем...';
@@ -1908,9 +2014,20 @@
                 if (order) {
                     console.log('📊 Показываем информацию о заказе');
                     showOrderStatusModal(order);
+                    
+                    // Скрываем подсказку при успехе
+                    const hintElement = document.getElementById('orderIdHint');
+                    if (hintElement) {
+                        hintElement.style.display = 'none';
+                    }
                 } else {
                     console.log('❌ Заказ не найден нигде');
                     showNotification('❌ Заказ не найден. Проверьте правильность номера.', 'error');
+                    
+                    // Дополнительная информация для пользователя
+                    setTimeout(() => {
+                        showBrowserNotification('💡 Убедитесь что номер заказа указан правильно в формате ORD123456', 'info');
+                    }, 2000);
                 }
                 
             } catch (error) {

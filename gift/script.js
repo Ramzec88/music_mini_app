@@ -34,10 +34,10 @@ document.getElementById('open-btn').addEventListener('click', () => {
 
   } else {
     // Закрытие до кадра 177
-    envelope.playSegments([totalFrames, 177], true);
+    envelope.playSegments([totalFrames, 164], true);
 
     const stopOn177 = () => {
-      if (envelope.currentFrame <= 177) {
+      if (envelope.currentFrame <= 164) {
         envelope.goToAndStop(177, true);
         isOpen = false;
         songCard.classList.remove('show');

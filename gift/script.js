@@ -168,7 +168,7 @@ function celebrationEffect() {
   
   // Более интенсивные настройки для фейерверка
   const defaults = { 
-    startVelocity: 45, // Увеличили скорость
+    startVelocity: 35, // Увеличили скорость
     spread: 360, 
     ticks: 120, // Больше тиков = дольше летят
     zIndex: 999, // Поверх всего контента
@@ -183,7 +183,7 @@ function celebrationEffect() {
 
   // Первый мощный залп
   function initialBurst() {
-    const count = 150;
+    const count = 100;
     confetti(Object.assign({}, defaults, {
       particleCount: count,
       spread: 100,
@@ -236,8 +236,8 @@ function celebrationEffect() {
   initialBurst();
   
   // Дополнительные мощные залпы
-  setTimeout(() => initialBurst(), 800);
-  setTimeout(() => initialBurst(), 1600);
+//  setTimeout(() => initialBurst(), 800);
+//  setTimeout(() => initialBurst(), 1600);
 }
 
 // Open envelope with enhanced animation

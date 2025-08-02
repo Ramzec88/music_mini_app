@@ -1,10 +1,23 @@
-let envelope = lottie.loadAnimation({
-  container: document.getElementById('envelope'),
-  renderer: 'svg',
-  loop: false,
-  autoplay: false,
-  path: 'assets/envelope_open.json'
-});
+// Initialize Lottie animation with fallback
+let envelope;
+try {
+  envelope = lottie.loadAnimation({
+    container: document.getElementById('envelope'),
+    renderer: 'svg',
+    loop: false,
+    autoplay: false,
+    path: 'assets/envelope_open.json'
+  });
+} catch (error) {
+  console.log('Lottie failed to load, using fallback');
+  document.getElementById('envelope').innerHTML = `
+    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 120px; background: linear-gradient(135deg, #fdd39e, #fbb47a); border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+      💌
+    </div>
+  `;
+}
+
+// Window load effect
 window.addEventListener('load', () => {
   document.getElementById('envelope').style.transform = 'scale(0.95)';
   setTimeout(() => {
@@ -12,53 +25,15 @@ window.addEventListener('load', () => {
   }, 400);
 });
 
+// State variables
 let isOpen = false;
+let isPlaying = false;
 const songCard = document.getElementById('song-card');
 const audio = document.getElementById('audio');
 const playBtn = document.getElementById('play-btn');
-
-document.getElementById('open-btn').addEventListener('click', () => {
-  const totalFrames = envelope.totalFrames;
-
-  if (!isOpen) {
-    // Открытие
-    envelope.playSegments([0, totalFrames], true);
-    envelope.addEventListener('complete', () => {
-      isOpen = true;
-      songCard.classList.remove('hidden');
-      setTimeout(() => songCard.classList.add('show'), 50);
-
-      // Конфетти
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    }, { once: true });
-
-  } else {
-    // Закрытие до кадра 164
-    envelope.playSegments([totalFrames, 164], true);
-
-    const stopOn164 = () => {
-      if (envelope.currentFrame <= 164) {
-        envelope.goToAndStop(164, true);
-        isOpen = false;
-        songCard.classList.remove('show');
-        setTimeout(() => songCard.classList.add('hidden'), 400);
-        envelope.removeEventListener('enterFrame', stopOn164);
-      }
-    };
-    envelope.addEventListener('enterFrame', stopOn164);
-  }
-});
-
-// Кнопка Play
-playBtn.addEventListener('click', () => {
-  if (audio.paused) {
-    audio.play();
-    playBtn.textContent = '⏸ Пауза';
-  } else {
-    audio.pause();
-    playBtn.textContent = '▶️ Слушать песню';
-  }
-});
+const openBtn = document.getElementById('open-btn');
+const closeBtn = document.getElementById('close-btn');
+const waveAnimation = document.getElementById('wave-animation');
 
 // Theme switching functionality
 const themeToggle = document.getElementById('theme-toggle');
@@ -96,8 +71,6 @@ function applyTheme(theme) {
   }
   currentTheme = theme;
   updateThemeUI();
-  
-  // Update confetti colors
   updateConfettiColors();
 }
 
@@ -126,11 +99,8 @@ cosmicPreview.addEventListener('click', () => {
 // Apply and hide theme switcher
 applyThemeBtn.addEventListener('click', () => {
   themeSwitcher.classList.add('hidden');
-  
-  // Store theme preference
   localStorage.setItem('gift-theme', currentTheme);
   
-  // Success feedback
   const originalText = applyThemeBtn.textContent;
   applyThemeBtn.textContent = '✨ Тема сохранена!';
   setTimeout(() => {
@@ -151,11 +121,9 @@ function initializeTheme() {
   const urlTheme = urlParams.get('theme');
   const savedTheme = localStorage.getItem('gift-theme');
   
-  // Priority: URL > localStorage > default
   const initialTheme = urlTheme || savedTheme || 'peach';
   applyTheme(initialTheme);
   
-  // Auto-hide theme switcher after 10 seconds if no interaction
   setTimeout(() => {
     if (!themeSwitcher.classList.contains('hidden')) {
       themeSwitcher.style.opacity = '0.7';
@@ -176,31 +144,6 @@ function createParticles() {
     particles.appendChild(particle);
   }
 }
-
-// Initialize Lottie animation with fallback
-let envelope;
-try {
-  envelope = lottie.loadAnimation({
-    container: document.getElementById('envelope'),
-    renderer: 'svg',
-    loop: false,
-    autoplay: false,
-    path: 'assets/envelope_open.json'
-  });
-} catch (error) {
-  console.log('Lottie failed to load, using fallback');
-  document.getElementById('envelope').innerHTML = `
-    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 120px; background: linear-gradient(135deg, #fdd39e, #fbb47a); border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); transition: all 0.3s ease;">
-      💌
-    </div>
-  `;
-}
-
-// State variables
-let isPlaying = false;
-const openBtn = document.getElementById('open-btn');
-const closeBtn = document.getElementById('close-btn');
-const waveAnimation = document.getElementById('wave-animation');
 
 // Enhanced confetti celebration
 function celebrationEffect() {
@@ -228,7 +171,6 @@ function celebrationEffect() {
 
     const particleCount = 60 * (timeLeft / duration);
 
-    // Multiple confetti bursts
     confetti(Object.assign({}, defaults, {
       particleCount,
       origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
@@ -238,7 +180,6 @@ function celebrationEffect() {
       origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
     }));
     
-    // Center burst
     if (timeLeft > duration * 0.8) {
       confetti(Object.assign({}, defaults, {
         particleCount: particleCount * 1.5,
@@ -259,11 +200,13 @@ openBtn.addEventListener('click', () => {
       envelope.play();
       envelope.addEventListener('complete', showSongCard, { once: true });
     } else {
-      // Fallback animation
       const envelopeEl = document.getElementById('envelope');
       envelopeEl.style.transform = 'rotateY(180deg) scale(1.1)';
       setTimeout(showSongCard, 800);
     }
+  } else {
+    // Close envelope
+    closeSongCard();
   }
 });
 
@@ -273,7 +216,6 @@ function showSongCard() {
   setTimeout(() => songCard.classList.add('show'), 100);
   celebrationEffect();
   
-  // Reset button with delay
   setTimeout(() => {
     openBtn.classList.remove('loading');
     openBtn.textContent = '🔒 Закрыть подарок';
@@ -297,7 +239,6 @@ function closeSongCard() {
       document.getElementById('envelope').style.transform = 'rotateY(0deg) scale(1)';
     }
     
-    // Stop audio if playing
     if (isPlaying) {
       audio.pause();
       audio.currentTime = 0;
@@ -337,15 +278,7 @@ audio.addEventListener('ended', () => {
   waveAnimation.classList.remove('playing');
 });
 
-audio.addEventListener('loadstart', () => {
-  console.log('Audio loading started');
-});
-
-audio.addEventListener('canplaythrough', () => {
-  console.log('Audio can play through');
-});
-
-// Enhanced share functionality
+// Share functionality using existing modal in HTML
 const shareModal = document.getElementById('share-modal');
 const shareOptionsContainer = document.getElementById('share-options');
 const shareModalCloseBtn = document.getElementById('share-modal-close-btn');
@@ -361,15 +294,13 @@ shareBtn.addEventListener('click', async () => {
   if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
     try {
       await navigator.share(shareData);
-      const btn = shareBtn;
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<span>✅</span><span>Поделился!</span>';
+      const originalText = shareBtn.innerHTML;
+      shareBtn.innerHTML = '<span>✅</span><span>Поделился!</span>';
       setTimeout(() => {
-        btn.innerHTML = originalText;
+        shareBtn.innerHTML = originalText;
       }, 2000);
     } catch (err) {
       if (err.name !== 'AbortError') {
-        console.log('Share failed:', err);
         showFallbackShareModal();
       }
     }
@@ -379,56 +310,48 @@ shareBtn.addEventListener('click', async () => {
 });
 
 function showFallbackShareModal() {
-    const url = window.location.href;
-    const text = 'Посмотри, какой невероятный персональный музыкальный подарок я получил! Это моя собственная песня! 🎵✨';
+  const url = window.location.href;
+  const text = 'Посмотри, какой невероятный персональный музыкальный подарок я получил! Это моя собственная песня! 🎵✨';
 
-    const shareOptions = [
-        { name: '📱 WhatsApp', url: `https://wa.me/?text=${encodeURIComponent(text)}%20${encodeURIComponent(url)}` },
-        { name: '✈️ Telegram', url: `https://telegram.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}` },
-        { name: '🔵 VKontakte', url: `https://vk.com/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}` },
-        { name: '📋 Скопировать ссылку', action: 'copy', url: '#' }
-    ];
+  const shareOptions = [
+    { name: '📱 WhatsApp', url: `https://wa.me/?text=${encodeURIComponent(text)}%20${encodeURIComponent(url)}` },
+    { name: '✈️ Telegram', url: `https://telegram.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}` },
+    { name: '🔵 VKontakte', url: `https://vk.com/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}` },
+    { name: '📋 Скопировать ссылку', action: 'copy', url: '#' }
+  ];
 
-    shareOptionsContainer.innerHTML = shareOptions.map(option => `
-        <a href="${option.url}" 
-           class="share-modal-btn" 
-           data-action="${option.action || 'link'}">
-            ${option.name}
-        </a>
-    `).join('');
+  shareOptionsContainer.innerHTML = shareOptions.map(option => `
+    <a href="${option.url}" 
+       class="share-modal-btn" 
+       data-action="${option.action || 'link'}">
+      ${option.name}
+    </a>
+  `).join('');
 
-    shareModal.classList.remove('hidden');
-
-    // Add click listener for copy action
-    shareOptionsContainer.addEventListener('click', (e) => {
-        const btn = e.target.closest('.share-modal-btn');
-        if (btn && btn.dataset.action === 'copy') {
-            e.preventDefault();
-            navigator.clipboard.writeText(url).then(() => {
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<span>✅</span><span>Скопировано!</span>';
-                
-                // Temporary success background
-                btn.style.background = 'linear-gradient(135deg, #11998e, #38ef7d)';
-                btn.style.color = 'white';
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.style.background = ''; // Revert to CSS variable background
-                    btn.style.color = '';
-                }, 2500);
-            });
-        }
-    });
+  shareModal.classList.remove('hidden');
 }
 
+// Handle copy action
+shareOptionsContainer.addEventListener('click', (e) => {
+  const btn = e.target.closest('.share-modal-btn');
+  if (btn && btn.dataset.action === 'copy') {
+    e.preventDefault();
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '✅ Скопировано!';
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+      }, 2500);
+    });
+  }
+});
+
 shareModalCloseBtn.addEventListener('click', () => {
-    shareModal.classList.add('hidden');
+  shareModal.classList.add('hidden');
 });
 
 // Enhanced download functionality
-const downloadLink = document.getElementById('download-link');
-downloadLink.addEventListener('click', (e) => {
+document.getElementById('download-link').addEventListener('click', (e) => {
   e.preventDefault();
   
   const a = document.createElement('a');
@@ -438,24 +361,15 @@ downloadLink.addEventListener('click', (e) => {
   a.click();
   document.body.removeChild(a);
   
-  // Success feedback
   const btn = e.target.closest('.download-btn');
   const originalText = btn.innerHTML;
   btn.innerHTML = '<span>✅</span><span>Загружено!</span>';
-  btn.style.background = 'linear-gradient(135deg, #11998e, #38ef7d)';
   setTimeout(() => {
     btn.innerHTML = originalText;
-    btn.style.background = 'linear-gradient(135deg, #fbb47a, #f46b8a)';
   }, 3000);
 });
 
-// Initialize particles
-createParticles();
-
-// Initialize theme
-initializeTheme();
-
-// Keyboard shortcuts for better UX
+// Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Space' && isOpen) {
     e.preventDefault();
@@ -469,95 +383,13 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Add click to envelope for better UX
+// Click envelope to open
 document.getElementById('envelope').addEventListener('click', () => {
   if (!isOpen) {
     openBtn.click();
   }
 });
 
-// Prevent audio context issues on mobile
-document.addEventListener('touchstart', function() {
-  if (audio.paused) {
-    audio.play().then(() => {
-      audio.pause();
-    }).catch(() => {
-      // Ignore errors on this initialization attempt
-    });
-  }
-}, { once: true });
-
-// Service Worker registration for better caching (optional)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Service worker registration failed, but app still works
-    });
-  });
-}
-
-// Add preload for better performance
-window.addEventListener('load', () => {
-  // Preload audio
-  if (audio.readyState < 3) {
-    audio.load();
-  }
-  
-  // Add slight delay to envelope animation start
-  setTimeout(() => {
-    document.getElementById('envelope').style.animationPlayState = 'running';
-  }, 500);
-});
-
-// Error handling for audio
-audio.addEventListener('error', (e) => {
-  console.error('Audio error:', e);
-  playBtn.textContent = '❌ Файл недоступен';
-  playBtn.disabled = true;
-  
-  // Hide download button if audio fails
-  document.getElementById('download-link').style.display = 'none';
-});
-
-// Progress indicator for audio loading
-audio.addEventListener('progress', () => {
-  if (audio.buffered.length > 0) {
-    const loaded = audio.buffered.end(0);
-    const total = audio.duration;
-    if (total > 0) {
-      const progress = (loaded / total) * 100;
-      if (progress < 100) {
-        playBtn.textContent = `⏳ Загрузка ${Math.round(progress)}%`;
-      } else {
-        playBtn.textContent = '▶️ Слушать мою песню';
-      }
-    }
-  }
-});
-
-// Add visual feedback for button interactions
-[openBtn, playBtn, closeBtn].forEach(btn => {
-  btn.addEventListener('mousedown', () => {
-    btn.style.transform = btn.style.transform.replace('scale(1.05)', 'scale(0.98)');
-  });
-  
-  btn.addEventListener('mouseup', () => {
-    btn.style.transform = btn.style.transform.replace('scale(0.98)', 'scale(1.05)');
-  });
-});
-
-// Analytics tracking (optional - remove if not needed)
-function trackEvent(action, category = 'Gift App') {
-  if (typeof gtag !== 'undefined') {
-    gtag('event', action, {
-      'event_category': category,
-      'event_label': window.location.pathname
-    });
-  }
-}
-
-// Track important user interactions
-openBtn.addEventListener('click', () => trackEvent('envelope_opened'));
-playBtn.addEventListener('click', () => trackEvent('song_played'));
-document.getElementById('download-link').addEventListener('click', () => trackEvent('song_downloaded'));
-document.getElementById('share-btn').addEventListener('click', () => trackEvent('gift_shared'));
+// Initialize everything
+createParticles();
+initializeTheme();

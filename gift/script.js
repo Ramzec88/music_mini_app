@@ -160,21 +160,21 @@ function createParticles() {
   }
 }
 
-// Enhanced confetti celebration - фейерверк
+// Enhanced confetti celebration
 function celebrationEffect() {
-  const duration = 3000; // Увеличили время до 5 секунд
+  const duration = 1800; // Сократили до 1.8 секунд (чуть больше задержки окна)
   const animationEnd = Date.now() + duration;
   const colors = window.confettiColors || ['#fdd39e', '#fbb47a', '#f46b8a', '#e64d6e', '#ffffff'];
   
   // Более интенсивные настройки для фейерверка
   const defaults = { 
-    startVelocity: 35, // Скорость: 45→30 (медленнее), 45→60 (быстрее)
-    spread: 360, // Разброс: 360→180 (более направленно)
-    ticks: 80, // Время жизни: 120→80 (быстрее исчезают)
-    zIndex: 999, // Поверх всего контента
+    startVelocity: 45,
+    spread: 360, 
+    ticks: 100, // Немного сократили время жизни частиц
+    zIndex: 999,
     colors: colors,
-    gravity: 0.8, // Гравитация: 0.8→1.2 (быстрее падают)
-    scalar: 1.2 // Размер: 1.2→1.0 (мельче), 1.2→1.5 (крупнее)
+    gravity: 1.0, // Чуть быстрее падение
+    scalar: 1.2
   };
 
   function randomInRange(min, max) {
@@ -183,7 +183,7 @@ function celebrationEffect() {
 
   // Первый мощный залп
   function initialBurst() {
-    const count = 100;
+    const count = 120; // Немного уменьшили
     confetti(Object.assign({}, defaults, {
       particleCount: count,
       spread: 100,
@@ -199,7 +199,7 @@ function celebrationEffect() {
       return clearInterval(interval);
     }
 
-    const particleCount = 80 * (timeLeft / duration);
+    const particleCount = 60 * (timeLeft / duration); // Уменьшили интенсивность
 
     // Боковые залпы
     confetti(Object.assign({}, defaults, {
@@ -213,31 +213,19 @@ function celebrationEffect() {
       origin: { x: randomInRange(0.7, 0.9), y: randomInRange(0.5, 0.7) }
     }));
     
-    // Центральные взрывы (более частые в начале)
-    if (timeLeft > duration * 0.6) {
+    // Центральные взрывы (только в первую половину)
+    if (timeLeft > duration * 0.5) {
       confetti(Object.assign({}, defaults, {
-        particleCount: particleCount * 1.8,
+        particleCount: particleCount * 1.5,
         spread: 120,
         origin: { x: randomInRange(0.4, 0.6), y: randomInRange(0.4, 0.6) }
       }));
     }
+  }, 300); // Реже запускаем залпы
 
-    // Дополнительные случайные взрывы
-    if (Math.random() < 0.3) {
-      confetti(Object.assign({}, defaults, {
-        particleCount: particleCount * 0.5,
-        spread: 60,
-        origin: { x: Math.random(), y: randomInRange(0.3, 0.8) }
-      }));
-    }
-  }, 400); // Интервал в миллисекундах: 200→400 (реже), 200→100 (чаще)
-
-  // Запускаем первый мощный залп сразу
+  // Запускаем только 2 мощных залпа вместо 3
   initialBurst();
-  
-  // Дополнительные мощные залпы
-//  setTimeout(() => initialBurst(), 800);
-//  setTimeout(() => initialBurst(), 1600);
+  setTimeout(() => initialBurst(), 600);
 }
 
 // Open envelope with enhanced animation

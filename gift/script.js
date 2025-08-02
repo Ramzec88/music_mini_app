@@ -160,21 +160,21 @@ function createParticles() {
   }
 }
 
-// Enhanced confetti celebration
+// Enhanced confetti celebration - фейерверк
 function celebrationEffect() {
-  const duration = 5000; // Увеличили время до 5 секунд
+  const duration = 3000; // Увеличили время до 5 секунд
   const animationEnd = Date.now() + duration;
   const colors = window.confettiColors || ['#fdd39e', '#fbb47a', '#f46b8a', '#e64d6e', '#ffffff'];
   
   // Более интенсивные настройки для фейерверка
   const defaults = { 
-    startVelocity: 35, // Увеличили скорость
-    spread: 360, 
-    ticks: 120, // Больше тиков = дольше летят
+    startVelocity: 35, // Скорость: 45→30 (медленнее), 45→60 (быстрее)
+    spread: 360, // Разброс: 360→180 (более направленно)
+    ticks: 80, // Время жизни: 120→80 (быстрее исчезают)
     zIndex: 999, // Поверх всего контента
     colors: colors,
-    gravity: 0.8, // Медленнее падение
-    scalar: 1.2 // Крупнее частицы
+    gravity: 0.8, // Гравитация: 0.8→1.2 (быстрее падают)
+    scalar: 1.2 // Размер: 1.2→1.0 (мельче), 1.2→1.5 (крупнее)
   };
 
   function randomInRange(min, max) {
@@ -230,7 +230,7 @@ function celebrationEffect() {
         origin: { x: Math.random(), y: randomInRange(0.3, 0.8) }
       }));
     }
-  }, 200); // Чаще запускаем
+  }, 400); // Интервал в миллисекундах: 200→400 (реже), 200→100 (чаще)
 
   // Запускаем первый мощный залп сразу
   initialBurst();

@@ -921,20 +921,18 @@
     <!-- Notification -->
     <div id="notification" class="notification"></div>
 
-    <<script>
+    <script>
     // Исправленные API функции с поддержкой Telegram
     async function makeAPIRequest(action, params) {
         try {
             console.log(`📡 API запрос: ${action}`, params);
 
-            // Особая обработка для Telegram WebApp
             const isInTelegram = window.Telegram && window.Telegram.WebApp;
 
             const requestOptions = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Добавляем заголовки для Telegram
                     ...(isInTelegram && {
                         'X-Requested-With': 'TelegramWebApp',
                         'Cache-Control': 'no-cache'
@@ -946,7 +944,6 @@
                 })
             };
 
-            // Увеличиваем timeout для Telegram
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), isInTelegram ? 15000 : 10000);
 
@@ -970,7 +967,6 @@
         } catch (error) {
             console.error('❌ API ошибка:', error);
 
-            // Специальная обработка ошибок для Telegram
             if (error.name === 'AbortError') {
                 throw new Error('Превышено время ожидания ответа от сервера');
             }
@@ -1051,7 +1047,6 @@
             maxUses
         });
 
-        // Нормализуем статус
         const normalizedStatus = String(status).trim().toLowerCase();
         console.log('🔄 Нормализованный статус:', normalizedStatus);
 
@@ -1087,18 +1082,14 @@
         };
     }
 
-    // Исправленная функция показа уведомлений для совместимости с Telegram
     function showNotification(message, type = 'success') {
         console.log(`${type.toUpperCase()}: ${message}`);
 
-        // Проверяем Telegram WebApp
         if (window.Telegram && window.Telegram.WebApp) {
             const tg = window.Telegram.WebApp;
 
-            // Проверяем версию и доступные методы
             const version = parseFloat(tg.version || '6.0');
 
-            // Для критических ошибок всегда показываем alert
             if (type === 'error') {
                 try {
                     tg.showAlert(message);
@@ -1109,14 +1100,11 @@
                 return;
             }
 
-            // Для обычных уведомлений используем только браузерные уведомления
-            // чтобы избежать ошибок с неподдерживаемыми методами
             console.log(`📱 Telegram уведомление (версия ${version}): ${message}`);
             showBrowserNotification(message, type);
             return;
         }
 
-        // Обычное уведомление для браузера
         showBrowserNotification(message, type);
     }
 
@@ -1130,14 +1118,11 @@
         }
     }
 
-    // Глобальные переменные
     let currentStep = 1;
     let orderData = {};
     let currentOrderId = null;
     let telegramApp = null;
 
-    // --- НАЧАЛО ИСПРАВЛЕНИЯ ---
-    // Добавляем функцию copyOrderNumber()
     function copyOrderNumber() {
         const orderNumberToCopy = currentOrderId;
 
@@ -1150,7 +1135,6 @@
             .then(() => {
                 showNotification('Номер заказа скопирован!', 'success');
 
-                // Визуальный эффект для подтверждения
                 const orderNumberElement = document.getElementById('orderNumber');
                 orderNumberElement.style.animation = 'shake 0.5s ease-in-out';
                 setTimeout(() => orderNumberElement.style.animation = '', 500);
@@ -1160,8 +1144,6 @@
                 showNotification('Не удалось скопировать номер', 'error');
             });
     }
-    // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
-
 
     // Функция для проверки поддерживаемых методов Telegram
     function checkTelegramSupport() {
@@ -1177,7 +1159,6 @@
         const version = parseFloat(tg.version || '6.0');
         const supportedMethods = [];
 
-        // Проверяем доступные методы
         if (typeof tg.showAlert === 'function') supportedMethods.push('showAlert');
         if (typeof tg.showPopup === 'function') supportedMethods.push('showPopup');
         if (typeof tg.showConfirm === 'function') supportedMethods.push('showConfirm');
@@ -1195,21 +1176,17 @@
         };
     }
 
-    // Инициализация
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Инициализация приложения...');
 
-        // Инициализация Telegram WebApp
         if (window.Telegram && window.Telegram.WebApp) {
             telegramApp = window.Telegram.WebApp;
             telegramApp.expand();
 
-            // Проверяем поддерживаемые методы
             const support = checkTelegramSupport();
             console.log(`📱 Telegram Web App обнаружен, версия: ${support.version}`);
             console.log(`🔧 Поддерживаемые методы: ${support.methods.join(', ')}`);
 
-            // Получаем данные пользователя из Telegram
             const user = telegramApp.initDataUnsafe?.user;
             if (user) {
                 console.log('👤 Пользователь Telegram:', user);
@@ -1227,16 +1204,12 @@
         updateProgress();
         testGoogleSheetsConnection();
 
-        // Восстанавливаем данные без уведомлений
         setTimeout(restoreFormData, 1000);
-
-        // Добавляем только статус подключения (без настроек)
         setTimeout(addConnectionStatus, 2000);
 
         console.log('✅ Приложение инициализировано');
     });
 
-    // Обработчик ввода промокода с форматированием
     function setupEventListeners() {
         document.getElementById('promoForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -1248,60 +1221,36 @@
             submitSongRequest();
         });
 
-        // Улучшенный обработчик для промокодов с тире
         document.getElementById('promoCode').addEventListener('input', function(e) {
             let value = e.target.value.toUpperCase();
-
-            // Удаляем все кроме букв, цифр и тире
             value = value.replace(/[^A-Z0-9\-]/g, '');
-
-            // Ограничиваем длину
             if (value.length > 15) value = value.slice(0, 15);
-
-            // Автоматическое форматирование для формата MUS-XXXXXX
             if (value.length >= 3 && !value.includes('-')) {
-                // Если введено 3+ символов без тире, добавляем тире после MUS
                 if (value.startsWith('MUS') && value.length > 3) {
                     value = 'MUS-' + value.slice(3);
                 }
             }
-
             e.target.value = value;
-
-            // Показываем подсказку о формате
             updatePromoCodeHint(value);
         });
 
-        // Обработчик для номера заказа
         document.getElementById('orderCheckId').addEventListener('input', function(e) {
             let value = e.target.value.toUpperCase();
-
-            // Удаляем все кроме букв и цифр
             value = value.replace(/[^A-Z0-9]/g, '');
-
-            // Автоматическое форматирование ORD + цифры
             if (value.length > 0 && !value.startsWith('ORD')) {
                 if (/^\d/.test(value)) {
-                    // Если начинается с цифры, добавляем ORD
                     value = 'ORD' + value;
                 }
             }
-
-            // Ограничиваем длину (ORD + 6 цифр = 9 символов)
             if (value.length > 9) value = value.slice(0, 9);
-
             e.target.value = value;
-
-            // Показываем подсказку
             updateOrderIdHint(value);
         });
     }
 
-    // Функция для показа подсказки о формате номера заказа
     function updateOrderIdHint(value) {
         let hintElement = document.getElementById('orderIdHint');
 
-        // Создаем элемент подсказки если его нет
         if (!hintElement) {
             hintElement = document.createElement('div');
             hintElement.id = 'orderIdHint';
@@ -1317,7 +1266,6 @@
             orderCheckContainer.appendChild(hintElement);
         }
 
-        // Проверяем формат ORD + 6 цифр
         const isValidFormat = /^ORD\d{6}$/.test(value);
         const isPartialFormat = /^ORD\d{0,6}$/.test(value);
 
@@ -1344,11 +1292,9 @@
         }
     }
 
-    // Функция для показа подсказки о формате промокода
     function updatePromoCodeHint(value) {
         let hintElement = document.getElementById('promoCodeHint');
 
-        // Создаем элемент подсказки если его нет
         if (!hintElement) {
             hintElement = document.createElement('div');
             hintElement.id = 'promoCodeHint';
@@ -1364,7 +1310,6 @@
             promoContainer.parentNode.appendChild(hintElement);
         }
 
-        // Проверяем формат
         const isValidFormat = /^MUS-[A-Z]{2}\d{4}$/.test(value);
         const isPartialFormat = /^MUS(-[A-Z]{0,2}\d{0,4})?$/.test(value);
 
@@ -1417,8 +1362,6 @@
     async function testGoogleSheetsConnection() {
         try {
             console.log('🔍 Тестируем подключение к Google Sheets...');
-
-            // Специальная диагностика для Telegram
             const isInTelegram = window.Telegram && window.Telegram.WebApp;
             if (isInTelegram) {
                 console.log('📱 Тестирование в Telegram WebApp');
@@ -1430,25 +1373,16 @@
                 range: 'A1:A1'
             });
             const endTime = performance.now();
-
             const responseTime = Math.round(endTime - startTime);
             console.log(`✅ Подключение к Google Sheets успешно (${responseTime}ms)`);
-
-            // Не показываем техническое уведомление пользователю
             updateConnectionStatus(true);
 
-            // В Telegram показываем дополнительную информацию только в консоли
             if (isInTelegram) {
                 console.log(`⚡ Скорость подключения: ${responseTime < 1000 ? 'Быстрая' : responseTime < 3000 ? 'Средняя' : 'Медленная'}`);
             }
-
         } catch (error) {
             console.error('❌ Ошибка подключения к Google Sheets:', error);
-
-            // Показываем только критичные ошибки пользователю
             updateConnectionStatus(false);
-
-            // Системную информацию только в консоль
             const isInTelegram = window.Telegram && window.Telegram.WebApp;
             if (isInTelegram) {
                 console.group('🔧 Диагностика Telegram WebApp:');
@@ -1469,12 +1403,9 @@
             return;
         }
 
-        // Валидация формата промокода
         const promoCodePattern = /^MUS-[A-Z]{2}\d{4}$/;
         if (!promoCodePattern.test(promoCode)) {
             showNotification('❌ Неправильный формат промокода. Ожидается: MUS-XX0000', 'error');
-
-            // Подсветка ошибки
             const promoInput = document.getElementById('promoCode');
             promoInput.style.borderColor = '#f56565';
             promoInput.style.animation = 'shake 0.5s ease-in-out';
@@ -1493,7 +1424,6 @@
 
         try {
             console.log('🎟️ Проверяем промокод:', promoCode);
-
             const validation = await validatePromoCode(promoCode);
             console.log('📝 Результат валидации:', validation);
 
@@ -1501,18 +1431,13 @@
                 orderData.promoCode = promoCode;
                 orderData.promoValidation = validation;
                 showNotification('✅ Промокод найден и активирован!', 'success');
-
-                // Скрываем подсказку при успехе
                 const hintElement = document.getElementById('promoCodeHint');
                 if (hintElement) {
                     hintElement.style.display = 'none';
                 }
-
                 goToStep(2);
             } else {
                 showNotification(`❌ ${validation.message}`, 'error');
-
-                // Анимация ошибки
                 const promoInput = document.getElementById('promoCode');
                 promoInput.style.borderColor = '#f56565';
                 promoInput.style.animation = 'shake 0.5s ease-in-out';
@@ -1524,14 +1449,12 @@
             }
         } catch (error) {
             console.error('❌ Ошибка проверки промокода:', error);
-
             let errorMsg = '🔌 Ошибка связи с сервером';
             if (error.message.includes('404')) {
                 errorMsg = '⚙️ Сервис временно недоступен';
             } else if (error.message.includes('500')) {
                 errorMsg = '🔧 Ошибка конфигурации сервера';
             }
-
             showNotification(errorMsg, 'error');
         } finally {
             submitBtn.innerHTML = originalText;
@@ -1560,11 +1483,9 @@
     }
 
     function showOrderSummary() {
-        // Устанавливаем номер заказа в превью (если уже сгенерирован)
         if (currentOrderId) {
             document.getElementById('orderNumberPreview').textContent = '#' + currentOrderId;
         }
-
         document.getElementById('summaryPromo').textContent = orderData.promoCode;
         document.getElementById('summaryRecipient').textContent = orderData.recipient;
         document.getElementById('summaryGenre').textContent = orderData.genre;
@@ -1581,16 +1502,13 @@
             confirmBtn.innerHTML = '<span class="loading"></span>Создаем заказ...';
             confirmBtn.disabled = true;
 
-            // Генерируем ID заказа
             currentOrderId = 'ORD' + Date.now().toString().slice(-6);
             console.log('🆔 ID заказа:', currentOrderId);
 
-            // КРИТИЧНО: Сразу проверяем существование элемента
             const orderNumberElement = document.getElementById('orderNumber');
             console.log('🔍 Элемент orderNumber найден:', !!orderNumberElement);
             console.log('🔍 Текущее содержимое элемента:', orderNumberElement ? orderNumberElement.textContent : 'ЭЛЕМЕНТ НЕ НАЙДЕН');
 
-            // СРАЗУ устанавливаем номер заказа в интерфейсе
             if (orderNumberElement) {
                 orderNumberElement.textContent = '#' + currentOrderId;
                 console.log('🎯 Номер заказа установлен в интерфейс:', currentOrderId);
@@ -1599,14 +1517,11 @@
                 console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Элемент orderNumber не найден!');
             }
 
-            // Проверяем, работаем ли мы в Telegram
             const isInTelegram = window.Telegram && window.Telegram.WebApp;
             console.log(`🔧 Режим работы: ${isInTelegram ? 'Telegram WebApp' : 'Обычный браузер'}`);
 
-            // Получаем контакт пользователя
             const userContact = getUserContact();
 
-            // Если контакт не готов, ждем ввода
             if (userContact === 'pending') {
                 orderCreationPending = true;
                 confirmBtn.innerHTML = originalText;
@@ -1621,7 +1536,6 @@
                 userName
             });
 
-            // Пытаемся создать заказ с retry логикой для Telegram
             let attempts = isInTelegram ? 3 : 1;
             let lastError = null;
 
@@ -1629,7 +1543,6 @@
                 try {
                     console.log(`🔄 Попытка ${attempt}${isInTelegram ? ' (Telegram режим)' : ''}`);
 
-                    // Сохраняем пользователя
                     confirmBtn.innerHTML = '<span class="loading"></span>Сохраняем пользователя...';
                     const userResult = await saveUser({
                         name: userName,
@@ -1638,7 +1551,6 @@
                     });
                     console.log('✅ Пользователь сохранен:', userResult);
 
-                    // Отмечаем промокод как использованный
                     confirmBtn.innerHTML = '<span class="loading"></span>Активируем промокод...';
                     console.log('🎟️ Начинаем активацию промокода...');
 
@@ -1650,12 +1562,10 @@
 
                     if (!promoResult.success) {
                         console.warn('⚠️ Промокод не был обновлен:', promoResult.message);
-                        // Продолжаем выполнение, но логируем предупреждение
                     } else {
                         console.log('✅ Промокод успешно активирован');
                     }
 
-                    // Создаем заказ
                     confirmBtn.innerHTML = '<span class="loading"></span>Создаем заказ в системе...';
                     const orderInfo = [
                         currentOrderId,
@@ -1680,7 +1590,6 @@
                     if (orderResult) {
                         document.getElementById('orderNumber').textContent = '#' + currentOrderId;
 
-                        // Сохраняем локально как backup
                         const localOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
                         localOrders.push({
                             ...orderData,
@@ -1693,15 +1602,10 @@
 
                         clearFormDraft();
 
-                        // Уведомляем о успехе
                         showNotification('🎉 Заказ успешно создан!', 'success');
 
-                        // Отправка в Telegram бота (упрощенная версия)
                         if (isInTelegram) {
                             console.log('📱 Попытка отправки в Telegram бота...');
-                            console.log('🔍 telegramApp доступен:', !!telegramApp);
-                            console.log('🔍 telegramApp.sendData доступен:', !!(telegramApp && telegramApp.sendData));
-
                             if (telegramApp && telegramApp.sendData) {
                                 try {
                                     const botMessage = `🎵 Новый заказ!
@@ -1729,11 +1633,6 @@
                                 }
                             } else {
                                 console.warn('⚠️ Telegram sendData недоступен');
-                                console.log('🔍 telegramApp:', telegramApp);
-
-                                if (telegramApp) {
-                                    console.log('🔍 Доступные методы telegramApp:', Object.keys(telegramApp));
-                                }
                             }
                         } else {
                             console.log('🌐 Не в Telegram, пропускаем отправку в бота');
@@ -1741,33 +1640,23 @@
 
                         goToStep(4);
 
-                        // Дополнительная проверка для fallback
                         setTimeout(() => {
                             const orderNumberElement = document.getElementById('orderNumber');
                             const currentDisplayed = orderNumberElement.textContent;
-                            console.log('🔍 Fallback проверка номера заказа:', currentDisplayed);
-
                             if (currentDisplayed === '#Загружается...' || !currentDisplayed.includes(currentOrderId)) {
-                                console.log('⚠️ Fallback: номер заказа не отображается, исправляем...');
                                 orderNumberElement.textContent = '#' + currentOrderId;
-                                console.log('✅ Fallback: номер заказа принудительно установлен:', currentOrderId);
                             }
                         }, 500);
 
-                        // Дополнительная проверка после перехода к шагу 4
                         setTimeout(() => {
                             const orderNumberElement = document.getElementById('orderNumber');
                             const currentDisplayed = orderNumberElement.textContent;
-                            console.log('🔍 Финальная проверка номера заказа:', currentDisplayed);
-
                             if (currentDisplayed === '#Загружается...' || !currentDisplayed.includes(currentOrderId)) {
-                                console.log('⚠️ Номер заказа не отображается, исправляем...');
                                 orderNumberElement.textContent = '#' + currentOrderId;
-                                console.log('✅ Номер заказа принудительно установлен:', currentOrderId);
                             }
                         }, 500);
 
-                        return; // Успешно завершили
+                        return;
                     } else {
                         throw new Error('Пустой ответ от сервера');
                     }
@@ -1775,21 +1664,17 @@
                 } catch (attemptError) {
                     lastError = attemptError;
                     console.warn(`❌ Попытка ${attempt} неудачна:`, attemptError.message);
-
                     if (attempt < attempts) {
-                        // Пауза перед повторной попыткой
                         confirmBtn.innerHTML = `<span class="loading"></span>Повтор... (${attempt + 1}/${attempts})`;
                         await new Promise(resolve => setTimeout(resolve, 2000));
                     }
                 }
             }
 
-            // Все попытки неудачны
             throw lastError;
 
         } catch (error) {
             console.error('❌ Ошибка создания заказа:', error);
-
             let errorMessage = '❌ Ошибка создания заказа';
             let shouldSaveLocally = false;
 
@@ -1805,7 +1690,6 @@
             }
 
             if (shouldSaveLocally) {
-                // Fallback к локальному хранению
                 const fallbackOrder = {
                     orderId: currentOrderId,
                     ...orderData,
@@ -1814,53 +1698,36 @@
                     createdAt: new Date().toISOString(),
                     source: window.Telegram && window.Telegram.WebApp ? 'telegram' : 'web'
                 };
-
                 const localOrders = JSON.parse(localStorage.getItem('pendingOrders') || '[]');
                 localOrders.push(fallbackOrder);
                 localStorage.setItem('pendingOrders', JSON.stringify(localOrders));
 
-                // КРИТИЧНО: Убеждаемся что номер заказа отображается
-                console.log('💾 Устанавливаем номер заказа для fallback:', currentOrderId);
                 document.getElementById('orderNumber').textContent = '#' + currentOrderId;
-
-                // Проверяем что номер действительно установлен
-                const displayedNumber = document.getElementById('orderNumber').textContent;
-                console.log('🔍 Проверка отображаемого номера:', displayedNumber);
-
                 showNotification('💾 Заказ сохранен. Будет отправлен при восстановлении связи.', 'success');
 
-                // Отправляем в Telegram бота если возможно
                 if (window.Telegram && window.Telegram.WebApp) {
                     try {
                         const orderMessageOffline = `📱 Заказ создан офлайн
-
 📋 Номер заказа: ${currentOrderId}
 👤 Заказчик: ${orderData.recipient || 'Не указан'}
 🎟️ Промокод: ${orderData.promoCode}
 🔄 Статус: Ожидает синхронизации
-
 ⚠️ Заказ будет отправлен на сервер при восстановлении соединения`;
-
                         window.Telegram.WebApp.sendData(JSON.stringify({
                             action: 'offline_order',
                             orderId: currentOrderId,
                             message: orderMessageOffline,
                             orderData: fallbackOrder
                         }));
-
-                        console.log('📤 Офлайн заказ отправлен в бота');
                     } catch (e) {
                         console.log('⚠️ Не удалось отправить офлайн заказ в бота:', e);
                     }
                 }
-
                 goToStep(4);
-
             } else {
                 errorMessage = `❌ ${error.message}`;
                 showNotification(errorMessage, 'error');
             }
-
         } finally {
             if (event.target) {
                 event.target.innerHTML = '✅ Подтвердить заказ';
@@ -1870,7 +1737,6 @@
     }
 
     function getUserContact() {
-        // Сначала пытаемся получить данные из Telegram
         const tgUser = localStorage.getItem('tg_user');
         if (tgUser) {
             const user = JSON.parse(tgUser);
@@ -1880,16 +1746,14 @@
             return contact;
         }
 
-        // Проверяем сохраненный контакт
         let contact = localStorage.getItem('userContact');
         if (contact) {
             console.log('👤 Используем сохраненный контакт:', contact);
             return contact;
         }
 
-        // Если ничего нет, показываем форму ввода контакта
         showContactInputModal();
-        return 'pending'; // Временное значение
+        return 'pending';
     }
 
     function showContactInputModal() {
@@ -1905,7 +1769,6 @@
                     <p style="margin-bottom: 25px; color: #718096; line-height: 1.6;">
                         Для завершения заказа нам нужен способ связи с вами, чтобы отправить готовую песню:
                     </p>
-                    
                     <div class="form-group">
                         <label class="form-label">Выберите удобный способ:</label>
                         <div style="display: flex; flex-direction: column; gap: 15px;">
@@ -1916,7 +1779,6 @@
                                     <div style="font-size: 0.9rem; color: #718096;">Укажите ваш @username</div>
                                 </div>
                             </label>
-                            
                             <label style="display: flex; align-items: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
                                 <input type="radio" name="contactType" value="email" style="margin-right: 12px; transform: scale(1.2);">
                                 <div>
@@ -1924,7 +1786,6 @@
                                     <div style="font-size: 0.9rem; color: #718096;">Ваша электронная почта</div>
                                 </div>
                             </label>
-                            
                             <label style="display: flex; align-items: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.3s ease;">
                                 <input type="radio" name="contactType" value="phone" style="margin-right: 12px; transform: scale(1.2);">
                                 <div>
@@ -1934,12 +1795,10 @@
                             </label>
                         </div>
                     </div>
-                    
                     <div class="form-group" id="contactInputGroup" style="display: none;">
                         <label class="form-label" id="contactInputLabel">Введите контакт:</label>
                         <input type="text" class="form-input" id="contactInput" placeholder="">
                     </div>
-                    
                     <div class="btn-group">
                         <button class="btn btn-primary" id="saveContactBtn" disabled>
                             Сохранить контакт
@@ -1948,10 +1807,8 @@
                 </div>
             </div>
         `;
-
         document.body.appendChild(modal);
 
-        // Обработчики для радиокнопок
         const radioButtons = modal.querySelectorAll('input[name="contactType"]');
         const inputGroup = document.getElementById('contactInputGroup');
         const inputLabel = document.getElementById('contactInputLabel');
@@ -1960,18 +1817,13 @@
 
         radioButtons.forEach(radio => {
             radio.addEventListener('change', function() {
-                // Обновляем стили для выбранной опции
                 radioButtons.forEach(r => {
                     r.closest('label').style.borderColor = '#e2e8f0';
                     r.closest('label').style.backgroundColor = 'transparent';
                 });
-
                 this.closest('label').style.borderColor = '#667eea';
                 this.closest('label').style.backgroundColor = 'rgba(102, 126, 234, 0.05)';
-
-                // Показываем поле ввода
                 inputGroup.style.display = 'block';
-
                 if (this.value === 'telegram') {
                     inputLabel.textContent = '📱 Telegram username:';
                     contactInput.placeholder = '@username';
@@ -1985,7 +1837,6 @@
                     contactInput.placeholder = '+7 900 123-45-67';
                     contactInput.value = '';
                 }
-
                 contactInput.focus();
                 checkSaveButton();
             });
@@ -2002,16 +1853,12 @@
         saveBtn.addEventListener('click', function() {
             const selectedType = modal.querySelector('input[name="contactType"]:checked');
             const inputValue = contactInput.value.trim();
-
             if (!selectedType || !inputValue) {
                 showNotification('Выберите способ связи и введите контакт', 'error');
                 return;
             }
-
-            // Валидация
             let isValid = false;
             let formattedContact = inputValue;
-
             if (selectedType.value === 'telegram') {
                 if (inputValue.startsWith('@') && inputValue.length > 1) {
                     isValid = true;
@@ -2024,24 +1871,18 @@
             } else if (selectedType.value === 'phone') {
                 isValid = /^[\+]?[0-9\s\-\(\)]{10,}$/.test(inputValue);
             }
-
             if (!isValid) {
                 let errorMsg = 'Некорректный формат';
                 if (selectedType.value === 'telegram') errorMsg = 'Введите корректный @username';
                 else if (selectedType.value === 'email') errorMsg = 'Введите корректный email';
                 else if (selectedType.value === 'phone') errorMsg = 'Введите корректный номер телефона';
-
                 showNotification(errorMsg, 'error');
                 return;
             }
-
             localStorage.setItem('userContact', formattedContact);
             localStorage.setItem('contactType', selectedType.value);
             modal.remove();
-
             console.log('👤 Контакт сохранен:', formattedContact);
-
-            // Продолжаем создание заказа
             continueOrderCreation();
         });
     }
@@ -2050,7 +1891,6 @@
 
     function continueOrderCreation() {
         if (orderCreationPending) {
-            // Запускаем отложенное создание заказа
             confirmOrder();
         }
     }
@@ -2058,14 +1898,10 @@
     async function saveUser(userInfo) {
         try {
             console.log('👤 Попытка сохранить пользователя:', userInfo);
-
-            // Сначала проверяем, существует ли пользователь
             const existingUser = await findRowByValue('Users', userInfo.contact);
             console.log('🔍 Поиск существующего пользователя:', existingUser);
-
             if (existingUser) {
                 console.log('📝 Пользователь найден, обновляем последний вход');
-                // Обновляем время последнего входа (столбец D)
                 const timestamp = new Date().toISOString();
                 await updateCell('Users', `D${existingUser.rowIndex}`, timestamp);
                 return {
@@ -2074,25 +1910,20 @@
                 };
             } else {
                 console.log('➕ Создаем нового пользователя');
-                // Создаем нового пользователя
                 const userData = [
-                    userInfo.contact || '', // A: Контакт
-                    userInfo.name || '', // B: Имя
-                    new Date().toISOString(), // C: Дата регистрации
-                    new Date().toISOString(), // D: Последний вход
-                    userInfo.source || 'web' // E: Источник
+                    userInfo.contact || '',
+                    userInfo.name || '',
+                    new Date().toISOString(),
+                    new Date().toISOString(),
+                    userInfo.source || 'web'
                 ];
-
                 console.log('📤 Данные для добавления:', userData);
                 const result = await appendToSheet('Users', userData);
                 console.log('✅ Результат добавления пользователя:', result);
-
-                // Получаем все записи чтобы определить ID
                 const allUsers = await makeAPIRequest('get', {
                     sheetName: 'Users'
                 });
                 const userId = allUsers.values ? allUsers.values.length : 1;
-
                 console.log('🆔 Присвоен ID пользователя:', userId);
                 return {
                     userId: userId,
@@ -2101,7 +1932,6 @@
             }
         } catch (error) {
             console.error('❌ Ошибка сохранения пользователя:', error);
-            // Возвращаем фолбэк ID чтобы не прерывать процесс
             return {
                 userId: Date.now(),
                 isNew: true
@@ -2112,42 +1942,29 @@
     async function markPromoCodeAsUsed(promoCode, userInfo) {
         try {
             console.log('🎟️ Отмечаем промокод как использованный:', promoCode);
-
             const validation = orderData.promoValidation;
             if (!validation || !validation.valid) {
                 throw new Error('Промокод не валиден для обновления');
             }
-
             console.log('📊 Данные валидации:', validation);
             console.log('📍 Обновляем строку:', validation.rowIndex);
-
-            // Увеличиваем счетчик использований (столбец D)
             const newUseCount = validation.currentUses + 1;
             console.log(`🔢 Обновляем использования: ${validation.currentUses} → ${newUseCount}`);
-
             const updateUsesResult = await updateCell('PromoCodes', `D${validation.rowIndex}`, newUseCount);
             console.log('✅ Обновление использований:', updateUsesResult);
-
-            // Записываем дату использования (столбец F)
             const timestamp = new Date().toISOString();
             console.log('📅 Записываем дату использования:', timestamp);
-
             const updateDateResult = await updateCell('PromoCodes', `F${validation.rowIndex}`, timestamp);
             console.log('✅ Обновление даты:', updateDateResult);
-
-            // Записываем информацию о пользователе (столбец G)
             const userDescription = `${userInfo.name || 'Аноним'} (${userInfo.contact || 'Не указан'})`;
             console.log('👤 Записываем пользователя:', userDescription);
-
             const updateUserResult = await updateCell('PromoCodes', `G${validation.rowIndex}`, userDescription);
             console.log('✅ Обновление пользователя:', updateUserResult);
-
             console.log('🎉 Промокод успешно отмечен как использованный');
             return {
                 success: true,
                 message: 'Промокод успешно активирован'
             };
-
         } catch (error) {
             console.error('❌ Ошибка обновления промокода:', error);
             return {
@@ -2161,12 +1978,40 @@
         orderData = {};
         currentOrderId = null;
         currentStep = 1;
-
         document.getElementById('promoForm').reset();
         document.getElementById('songRequestForm').reset();
-
         goToStep(1);
         showNotification('Готов к новому заказу!', 'success');
+    }
+    
+    // --- НАЧАЛО ИСПРАВЛЕНИЯ ---
+    // Функция для обновления статуса заказа должна быть здесь, на верхнем уровне
+    async function refreshOrderStatus(orderId) {
+        try {
+            console.log('🔍 Обновляем статус заказа:', orderId);
+            const ordersData = await makeAPIRequest('get', { sheetName: 'Orders' });
+            const orders = ordersData.values || [];
+            const foundOrderRow = orders.find(row => row[0] === orderId);
+
+            if (foundOrderRow) {
+                const updatedOrder = {
+                    orderId: foundOrderRow[0],
+                    status: foundOrderRow[9] || 'pending', 
+                };
+                console.log('✅ Статус заказа обновлен:', updatedOrder.status);
+                const modalTitle = document.querySelector('.modal-title');
+                if (modalTitle && modalTitle.textContent.includes(orderId)) {
+                    document.querySelector('.modal').remove();
+                    showOrderStatusModal(updatedOrder);
+                }
+                showNotification(`Статус заказа ${orderId} обновлен!`, 'success');
+            } else {
+                showNotification(`Заказ ${orderId} не найден в базе.`, 'error');
+            }
+        } catch (error) {
+            console.error('❌ Ошибка при обновлении статуса:', error);
+            showNotification('Ошибка обновления статуса. Попробуйте позже.', 'error');
+        }
     }
 
     async function checkOrderStatus() {
@@ -2177,50 +2022,9 @@
             return;
         }
 
-        async function refreshOrderStatus(orderId) {
-    try {
-        console.log('🔍 Обновляем статус заказа:', orderId);
-        
-        // Повторный поиск заказа в Google Sheets
-        const ordersData = await makeAPIRequest('get', { sheetName: 'Orders' });
-        const orders = ordersData.values || [];
-        
-        const foundOrderRow = orders.find(row => row[0] === orderId);
-
-        if (foundOrderRow) {
-            const updatedOrder = {
-                orderId: foundOrderRow[0],
-                status: foundOrderRow[9] || 'pending', // Статус заказа находится в 10-м столбце (индекс 9)
-                ... // Заполните остальные поля, если нужно
-            };
-
-            console.log('✅ Статус заказа обновлен:', updatedOrder.status);
-            
-            // Находим и обновляем модальное окно, если оно открыто
-            const modalTitle = document.querySelector('.modal-title');
-            if (modalTitle && modalTitle.textContent.includes(orderId)) {
-                // Закрываем старое модальное окно и открываем новое с обновленными данными
-                document.querySelector('.modal').remove();
-                showOrderStatusModal(updatedOrder);
-            }
-            
-            showNotification(`Статус заказа ${orderId} обновлен!`, 'success');
-        } else {
-            showNotification(`Заказ ${orderId} не найден в базе.`, 'error');
-        }
-        
-    } catch (error) {
-        console.error('❌ Ошибка при обновлении статуса:', error);
-        showNotification('Ошибка обновления статуса. Попробуйте позже.', 'error');
-    }
-}
-
-        // Валидация формата номера заказа
         const orderIdPattern = /^ORD\d{6}$/;
         if (!orderIdPattern.test(orderId)) {
             showNotification('❌ Неправильный формат номера заказа. Ожидается: ORD000000', 'error');
-
-            // Подсветка ошибки
             const orderInput = document.getElementById('orderCheckId');
             orderInput.style.borderColor = '#f56565';
             orderInput.style.animation = 'shake 0.5s ease-in-out';
@@ -2241,19 +2045,13 @@
         try {
             console.log('🔍 Проверяем статус заказа:', orderId);
 
-            // Сначала ищем в Google Sheets
             let order = null;
-
             try {
-                // Получаем все заказы из Google Sheets
-                const ordersData = await makeAPIRequest('get', {
-                    sheetName: 'Orders'
-                });
+                const ordersData = await makeAPIRequest('get', { sheetName: 'Orders' });
                 const orders = ordersData.values || [];
 
                 console.log('📋 Получено заказов из Google Sheets:', orders.length);
 
-                // Ищем заказ по ID (первый столбец)
                 const foundOrderRow = orders.find(row => row[0] === orderId);
 
                 if (foundOrderRow) {
@@ -2280,25 +2078,16 @@
                 console.warn('⚠️ Ошибка получения данных из Google Sheets:', sheetsError);
             }
 
-            // Если не найден в Sheets, ищем в локальном хранении
             if (!order) {
                 console.log('🔍 Ищем в локальном хранилище...');
-
-                // Проверяем в userOrders
                 const userOrders = JSON.parse(localStorage.getItem('userOrders') || '[]');
                 let localOrder = userOrders.find(o => o.orderId === orderId);
-
-                // Проверяем в pendingOrders
                 if (!localOrder) {
                     const pendingOrders = JSON.parse(localStorage.getItem('pendingOrders') || '[]');
                     localOrder = pendingOrders.find(o => o.orderId === orderId);
                 }
-
                 if (localOrder) {
-                    order = {
-                        ...localOrder,
-                        source: 'local'
-                    };
+                    order = { ...localOrder, source: 'local' };
                     console.log('✅ Заказ найден в локальном хранилище:', order);
                 }
             }
@@ -2306,8 +2095,6 @@
             if (order) {
                 console.log('📊 Показываем информацию о заказе');
                 showOrderStatusModal(order);
-
-                // Скрываем подсказку при успехе
                 const hintElement = document.getElementById('orderIdHint');
                 if (hintElement) {
                     hintElement.style.display = 'none';
@@ -2315,13 +2102,10 @@
             } else {
                 console.log('❌ Заказ не найден нигде');
                 showNotification('❌ Заказ не найден. Проверьте правильность номера.', 'error');
-
-                // Дополнительная информация для пользователя
                 setTimeout(() => {
                     showBrowserNotification('💡 Убедитесь что номер заказа указан правильно в формате ORD123456', 'info');
                 }, 2000);
             }
-
         } catch (error) {
             console.error('❌ Ошибка проверки статуса:', error);
             showNotification('🔌 Ошибка проверки статуса. Попробуйте позже.', 'error');
@@ -2330,6 +2114,8 @@
             originalBtn.disabled = false;
         }
     }
+    // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+
 
     function showOrderStatusModal(order) {
         console.log('📋 Показываем модальное окно для заказа:', order.orderId);
@@ -2370,11 +2156,9 @@
         const status = statusInfo[order.status] || statusInfo['pending'];
         const isFromSheets = order.source === 'sheets';
 
-        // Создаем модальное окно
         const modal = document.createElement('div');
         modal.className = 'modal';
 
-        // Закрытие по клику на фон
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.remove();
@@ -2384,7 +2168,6 @@
         const modalContent = document.createElement('div');
         modalContent.className = 'modal-content';
 
-        // Предотвращаем закрытие при клике на содержимое
         modalContent.addEventListener('click', (e) => {
             e.stopPropagation();
         });
@@ -2438,7 +2221,6 @@
 
         console.log('📋 Модальное окно создано, добавляем обработчики...');
 
-        // Обработчик закрытия
         const closeBtn = document.getElementById('closeModalBtn');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
@@ -2447,13 +2229,11 @@
             });
         }
 
-        // Обработчик обновления статуса
         const refreshBtn = document.getElementById('refreshOrderBtn');
         if (refreshBtn) {
             console.log('🔄 Добавляем обработчик для кнопки обновления');
             refreshBtn.addEventListener('click', async () => {
                 console.log('🔄 НАЖАТА кнопка обновления статуса для:', order.orderId);
-
                 const originalText = refreshBtn.innerHTML;
                 refreshBtn.innerHTML = '<span class="loading"></span>Обновляем...';
                 refreshBtn.disabled = true;
@@ -2463,7 +2243,6 @@
                 } catch (error) {
                     console.error('❌ Ошибка обновления:', error);
                 } finally {
-                    // Восстанавливаем кнопку
                     setTimeout(() => {
                         refreshBtn.innerHTML = originalText;
                         refreshBtn.disabled = false;
@@ -2472,20 +2251,17 @@
             });
         }
 
-        // Обработчик скачивания
         const downloadBtn = document.getElementById('downloadOrderBtn');
         if (downloadBtn) {
             console.log('🎵 Добавляем обработчик для кнопки скачивания');
             downloadBtn.addEventListener('click', () => {
                 console.log('🎵 НАЖАТА кнопка получения песни для:', order.orderId);
-
                 const originalText = downloadBtn.innerHTML;
                 downloadBtn.innerHTML = '<span class="loading"></span>Готовим...';
                 downloadBtn.disabled = true;
 
                 simulateDownload(order.orderId);
 
-                // Восстанавливаем кнопку
                 setTimeout(() => {
                     downloadBtn.innerHTML = originalText;
                     downloadBtn.disabled = false;
@@ -2509,7 +2285,6 @@
                 goToStep(savedData.currentStep);
             }
 
-            // Просто логируем восстановление без уведомления пользователю
             console.log('💾 Данные формы восстановлены из черновика');
         }
     }
@@ -2527,7 +2302,7 @@
     }
 
     function clearFormDraft() {
-        localStorage.removeItem('formDataDraft');
+            localStorage.removeItem('formDataDraft');
     }
 
     function setupFloatingNotes() {
@@ -2627,24 +2402,17 @@
         showNotification('Настройки сохранены!', 'success');
     }
 
-    // Автосохранение формы
     document.addEventListener('input', saveFormDraft);
     window.addEventListener('beforeunload', saveFormDraft);
 
-    // Функция для тестирования обновления ячеек (для отладки)
     async function testCellUpdate() {
         console.log('🧪 Тестируем обновление ячеек...');
-
         try {
-            // Тест обновления ячейки
             const testResult = await updateCell('PromoCodes', 'H1', 'test_' + Date.now());
             console.log('✅ Тест обновления ячейки успешен:', testResult);
-
-            // Тест добавления записи в Users
             const testUser = ['test_contact_' + Date.now(), 'Test User', new Date().toISOString(), new Date().toISOString(), 'test'];
             const appendResult = await appendToSheet('Users', testUser);
             console.log('✅ Тест добавления пользователя успешен:', appendResult);
-
             return true;
         } catch (error) {
             console.error('❌ Ошибка тестирования:', error);
@@ -2652,7 +2420,6 @@
         }
     }
 
-    // Делаем функцию доступной из консоли для отладки
     window.testCellUpdate = testCellUpdate;
     window.debugUser = async (contact) => {
         console.log('🔍 Отладка сохранения пользователя для:', contact);

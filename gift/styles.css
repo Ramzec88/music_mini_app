@@ -347,16 +347,20 @@ h1 {
 
 #song-card {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  width: clamp(340px, 90vw, 480px);
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(30px);
-  border-radius: 30px;
-  padding: 45px 35px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  /* Для центрирования Flexbox используем inset: 0 */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  
+  display: flex; /* Активируем Flexbox */
+  align-items: center; /* Центрируем по вертикали */
+  justify-content: center; /* Центрируем по горизонтали */
+  /* Убираем transform, так как Flexbox делает центрирование более надежным */
+  transform: scale(0);
+  width: auto;
+  max-width: 100%;
+  background: transparent;
   opacity: 0;
   transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
   z-index: 10;
@@ -365,7 +369,17 @@ h1 {
 
 #song-card.show {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  transform: scale(1);
+}
+
+.song-card-content {
+  width: clamp(340px, 90vw, 480px); /* Ширина теперь у внутреннего контейнера */
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(30px);
+  border-radius: 30px;
+  padding: 45px 35px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 #song-card h2 {

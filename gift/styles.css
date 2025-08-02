@@ -657,7 +657,10 @@ h1 {
 }
 
 .hidden {
-  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(0) !important;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .audio-visualizer {

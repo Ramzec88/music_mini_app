@@ -1054,37 +1054,116 @@
         { name: '📋 Скопировать ссылку', action: 'copy' }
       ];
 
+      // Get theme colors
+      const isCosmicTheme = document.body.classList.contains('cosmic-theme');
+      const primaryColor = isCosmicTheme ? '#667eea' : '#f46b8a';
+      const primaryColorHover = isCosmicTheme ? '#764ba2' : '#e64d6e';
+      const gradientBg = isCosmicTheme 
+        ? 'linear-gradient(135deg, #667eea, #764ba2)' 
+        : 'linear-gradient(135deg, #f46b8a, #e64d6e)';
+      const backdropColor = isCosmicTheme 
+        ? 'rgba(102, 126, 234, 0.1)' 
+        : 'rgba(244, 107, 138, 0.1)';
+
       const modal = document.createElement('div');
       modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.8); z-index: 1000; display: flex;
         align-items: center; justify-content: center; backdrop-filter: blur(10px);
+        animation: fadeIn 0.3s ease-out;
       `;
 
       const content = document.createElement('div');
       content.style.cssText = `
-        background: white; border-radius: 20px; padding: 30px; max-width: 350px;
-        width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        background: rgba(255, 255, 255, 0.98); 
+        backdrop-filter: blur(20px);
+        border-radius: 25px; 
+        padding: 35px; 
+        max-width: 380px;
+        width: 90%; 
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       `;
 
       content.innerHTML = `
-        <h3 style="margin: 0 0 20px 0; color: #333; text-align: center; font-size: 20px;">Поделиться подарком</h3>
+        <style>
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          .share-modal-btn {
+            display: block; 
+            width: 100%;
+            padding: 16px; 
+            margin-bottom: 12px;
+            text-decoration: none; 
+            color: #333; 
+            border: 2px solid ${primaryColor}; 
+            border-radius: 15px;
+            text-align: center; 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            font-weight: 600;
+            font-size: 15px;
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+          }
+          .share-modal-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: ${gradientBg};
+            transition: left 0.4s ease;
+            z-index: -1;
+          }
+          .share-modal-btn:hover::before {
+            left: 0;
+          }
+          .share-modal-btn:hover {
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px ${backdropColor};
+          }
+          .close-modal-btn {
+            width: 100%; 
+            padding: 16px; 
+            margin-top: 20px; 
+            background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+            border: none; 
+            border-radius: 15px; 
+            cursor: pointer; 
+            font-weight: 600;
+            font-size: 15px;
+            color: #666;
+            transition: all 0.3s ease;
+          }
+          .close-modal-btn:hover {
+            background: linear-gradient(135deg, #d0d0d0, #e5e5e5);
+            transform: translateY(-2px);
+          }
+        </style>
+        <h3 style="margin: 0 0 25px 0; color: #333; text-align: center; font-size: 22px; font-weight: 700; background: ${gradientBg}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+          Поделиться подарком
+        </h3>
         ${shareOptions.map(option => `
-          <div style="margin-bottom: 10px;">
-            <a href="${option.url || '#'}" 
-               data-action="${option.action || 'link'}"
-               style="display: block; padding: 15px; text-decoration: none; 
-                      color: #333; border: 2px solid #f46b8a; border-radius: 15px;
-                      text-align: center; transition: all 0.3s ease; font-weight: 600;"
-               onmouseover="this.style.background='#f46b8a'; this.style.color='white';"
-               onmouseout="this.style.background='transparent'; this.style.color='#333';">
-              ${option.name}
-            </a>
-          </div>
+          <a href="${option.url || '#'}" 
+             data-action="${option.action || 'link'}"
+             class="share-modal-btn">
+            ${option.name}
+          </a>
         `).join('')}
         <button onclick="this.closest('.share-modal').remove()" 
-                style="width: 100%; padding: 15px; margin-top: 20px; background: #ddd; 
-                       border: none; border-radius: 15px; cursor: pointer; font-weight: 600;">
+                class="close-modal-btn">
           Закрыть
         </button>
       `;
@@ -1093,15 +1172,25 @@
       modal.appendChild(content);
       document.body.appendChild(modal);
 
-      // Handle copy link
+      // Handle copy link with theme-aware feedback
       content.addEventListener('click', (e) => {
         if (e.target.dataset.action === 'copy') {
           e.preventDefault();
           navigator.clipboard.writeText(window.location.href).then(() => {
+            const originalText = e.target.textContent;
             e.target.textContent = '✅ Скопировано!';
+            e.target.style.background = isCosmicTheme 
+              ? 'linear-gradient(135deg, #11998e, #38ef7d)' 
+              : 'linear-gradient(135deg, #11998e, #38ef7d)';
+            e.target.style.color = 'white';
+            e.target.style.borderColor = 'transparent';
+            
             setTimeout(() => {
-              e.target.textContent = '📋 Скопировать ссылку';
-            }, 2000);
+              e.target.textContent = originalText;
+              e.target.style.background = 'transparent';
+              e.target.style.color = '#333';
+              e.target.style.borderColor = primaryColor;
+            }, 2500);
           });
         }
       });
@@ -1109,9 +1198,25 @@
       // Close on backdrop click
       modal.addEventListener('click', (e) => {
         if (e.target === modal) {
-          modal.remove();
+          modal.style.animation = 'fadeOut 0.3s ease-out';
+          content.style.animation = 'slideDown 0.3s ease-out';
+          setTimeout(() => modal.remove(), 300);
         }
       });
+
+      // Add fadeOut animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+        @keyframes slideDown {
+          from { opacity: 1; transform: translateY(0) scale(1); }
+          to { opacity: 0; transform: translateY(30px) scale(0.9); }
+        }
+      `;
+      document.head.appendChild(style);
     }
 
     // Enhanced download functionality

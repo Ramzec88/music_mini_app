@@ -55,3 +55,12 @@ body {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
 }
+
+/* Theme variants */
+body.cosmic-theme {
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+/* Theme switcher styles */
+.theme-switcher { /* весь блок стилей для переключателя */ }
+.theme-toggle { /* и все остальные стили тем */ }

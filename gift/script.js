@@ -355,17 +355,6 @@ shareBtn.addEventListener('click', async () => {
   }
 });
 
-// Гарантированное делегирование клика на кнопку закрытия
-function closeSongCard() {
-  console.log('Closing song card...');
-  songCard.classList.remove('show');
-  setTimeout(() => {
-    songCard.classList.add('hidden');
-    console.log('Song card hidden:', songCard.classList.contains('hidden')); // проверка
-    ...
-  }, 500);
-}
-
 function generateShareUrl() {
   const baseUrl = window.location.origin + window.location.pathname;
   const theme = currentTheme;

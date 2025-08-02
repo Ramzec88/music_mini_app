@@ -2177,6 +2177,44 @@
             return;
         }
 
+        async function refreshOrderStatus(orderId) {
+    try {
+        console.log('🔍 Обновляем статус заказа:', orderId);
+        
+        // Повторный поиск заказа в Google Sheets
+        const ordersData = await makeAPIRequest('get', { sheetName: 'Orders' });
+        const orders = ordersData.values || [];
+        
+        const foundOrderRow = orders.find(row => row[0] === orderId);
+
+        if (foundOrderRow) {
+            const updatedOrder = {
+                orderId: foundOrderRow[0],
+                status: foundOrderRow[9] || 'pending', // Статус заказа находится в 10-м столбце (индекс 9)
+                ... // Заполните остальные поля, если нужно
+            };
+
+            console.log('✅ Статус заказа обновлен:', updatedOrder.status);
+            
+            // Находим и обновляем модальное окно, если оно открыто
+            const modalTitle = document.querySelector('.modal-title');
+            if (modalTitle && modalTitle.textContent.includes(orderId)) {
+                // Закрываем старое модальное окно и открываем новое с обновленными данными
+                document.querySelector('.modal').remove();
+                showOrderStatusModal(updatedOrder);
+            }
+            
+            showNotification(`Статус заказа ${orderId} обновлен!`, 'success');
+        } else {
+            showNotification(`Заказ ${orderId} не найден в базе.`, 'error');
+        }
+        
+    } catch (error) {
+        console.error('❌ Ошибка при обновлении статуса:', error);
+        showNotification('Ошибка обновления статуса. Попробуйте позже.', 'error');
+    }
+}
+
         // Валидация формата номера заказа
         const orderIdPattern = /^ORD\d{6}$/;
         if (!orderIdPattern.test(orderId)) {

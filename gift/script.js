@@ -162,21 +162,36 @@ function createParticles() {
 
 // Enhanced confetti celebration
 function celebrationEffect() {
-  const duration = 4000;
+  const duration = 5000; // Увеличили время до 5 секунд
   const animationEnd = Date.now() + duration;
   const colors = window.confettiColors || ['#fdd39e', '#fbb47a', '#f46b8a', '#e64d6e', '#ffffff'];
+  
+  // Более интенсивные настройки для фейерверка
   const defaults = { 
-    startVelocity: 35, 
+    startVelocity: 45, // Увеличили скорость
     spread: 360, 
-    ticks: 80, 
-    zIndex: 0,
-    colors: colors
+    ticks: 120, // Больше тиков = дольше летят
+    zIndex: 999, // Поверх всего контента
+    colors: colors,
+    gravity: 0.8, // Медленнее падение
+    scalar: 1.2 // Крупнее частицы
   };
 
   function randomInRange(min, max) {
     return Math.random() * (max - min) + min;
   }
 
+  // Первый мощный залп
+  function initialBurst() {
+    const count = 150;
+    confetti(Object.assign({}, defaults, {
+      particleCount: count,
+      spread: 100,
+      origin: { x: 0.5, y: 0.6 }
+    }));
+  }
+
+  // Непрерывный фейерверк
   const interval = setInterval(function() {
     const timeLeft = animationEnd - Date.now();
 
@@ -184,24 +199,45 @@ function celebrationEffect() {
       return clearInterval(interval);
     }
 
-    const particleCount = 60 * (timeLeft / duration);
+    const particleCount = 80 * (timeLeft / duration);
 
+    // Боковые залпы
     confetti(Object.assign({}, defaults, {
-      particleCount,
-      origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+      particleCount: particleCount,
+      spread: 80,
+      origin: { x: randomInRange(0.1, 0.3), y: randomInRange(0.5, 0.7) }
     }));
     confetti(Object.assign({}, defaults, {
-      particleCount,
-      origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+      particleCount: particleCount,
+      spread: 80,
+      origin: { x: randomInRange(0.7, 0.9), y: randomInRange(0.5, 0.7) }
     }));
     
-    if (timeLeft > duration * 0.8) {
+    // Центральные взрывы (более частые в начале)
+    if (timeLeft > duration * 0.6) {
       confetti(Object.assign({}, defaults, {
-        particleCount: particleCount * 1.5,
-        origin: { x: 0.5, y: 0.5 }
+        particleCount: particleCount * 1.8,
+        spread: 120,
+        origin: { x: randomInRange(0.4, 0.6), y: randomInRange(0.4, 0.6) }
       }));
     }
-  }, 250);
+
+    // Дополнительные случайные взрывы
+    if (Math.random() < 0.3) {
+      confetti(Object.assign({}, defaults, {
+        particleCount: particleCount * 0.5,
+        spread: 60,
+        origin: { x: Math.random(), y: randomInRange(0.3, 0.8) }
+      }));
+    }
+  }, 200); // Чаще запускаем
+
+  // Запускаем первый мощный залп сразу
+  initialBurst();
+  
+  // Дополнительные мощные залпы
+  setTimeout(() => initialBurst(), 800);
+  setTimeout(() => initialBurst(), 1600);
 }
 
 // Open envelope with enhanced animation
@@ -227,15 +263,22 @@ openBtn.addEventListener('click', () => {
 
 function showSongCard() {
   isOpen = true;
-  songCard.classList.remove('hidden');
-  setTimeout(() => songCard.classList.add('show'), 100);
+  
+  // Сначала запускаем мощный фейерверк
   celebrationEffect();
   
+  // Показываем модальное окно с задержкой, чтобы фейерверк был заметен
+  setTimeout(() => {
+    songCard.classList.remove('hidden');
+    setTimeout(() => songCard.classList.add('show'), 50);
+  }, 1500); // Задержка 1.5 секунды для наслаждения фейерверком
+  
+  // Сбрасываем кнопку еще позже
   setTimeout(() => {
     openBtn.classList.remove('loading');
     openBtn.textContent = '🔒 Закрыть подарок';
     openBtn.disabled = false;
-  }, 1500);
+  }, 2000);
 }
 
 // Close song card with cleanup

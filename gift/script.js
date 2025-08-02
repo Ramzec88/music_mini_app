@@ -300,19 +300,19 @@ playBtn.addEventListener('click', () => {
   if (audio.paused) {
     audio.play().then(() => {
       isPlaying = true;
-      playBtn.textContent = '⏸️ Поставить на паузу';
+      playBtn.textContent = '⏸️';
       waveAnimation.classList.add('playing');
     }).catch(error => {
       console.log('Audio play failed:', error);
-      playBtn.textContent = '❌ Ошибка воспроизведения';
+      playBtn.textContent = '❌';
       setTimeout(() => {
-        playBtn.textContent = '▶️ Попробовать снова';
+        playBtn.textContent = '▶️';
       }, 2000);
     });
   } else {
     audio.pause();
     isPlaying = false;
-    playBtn.textContent = '▶️ Продолжить слушать';
+    playBtn.textContent = '▶️';
     waveAnimation.classList.remove('playing');
   }
 });
@@ -320,7 +320,7 @@ playBtn.addEventListener('click', () => {
 // Audio event handlers
 audio.addEventListener('ended', () => {
   isPlaying = false;
-  playBtn.textContent = '🔁 Слушать ещё раз';
+  playBtn.textContent = '🔁';
   waveAnimation.classList.remove('playing');
 });
 

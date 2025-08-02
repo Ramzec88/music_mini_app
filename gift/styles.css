@@ -505,10 +505,10 @@ h1 {
   position: absolute;
   top: 20px;
   right: 25px;
-  background: none;
+  background: rgba(255, 255, 255, 0.8);
   border: none;
   font-size: 28px;
-  color: #999;
+  color: #666;
   cursor: pointer;
   transition: all 0.3s ease;
   width: 35px;
@@ -517,12 +517,14 @@ h1 {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  z-index: 10;
+  backdrop-filter: blur(10px);
 }
 
 .close-btn:hover {
   color: var(--primary-color);
-  background: rgba(244, 107, 138, 0.1);
-  transform: rotate(90deg);
+  background: rgba(255, 255, 255, 0.95);
+  transform: rotate(90deg) scale(1.1);
 }
 
 /* Стили для модального окна "Поделиться" */

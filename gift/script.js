@@ -108,10 +108,15 @@ applyThemeBtn.addEventListener('click', () => {
   }, 2000);
 });
 
-// Show theme switcher on double click (for testing)
+// Show theme switcher on double click (only if not locked)
 document.addEventListener('dblclick', (e) => {
   if (e.ctrlKey || e.metaKey) {
-    themeSwitcher.classList.remove('hidden');
+    const isThemeLocked = localStorage.getItem('theme-locked') === 'true';
+    if (!isThemeLocked) {
+      themeSwitcher.classList.remove('hidden');
+    } else {
+      console.log('Theme is locked - cannot change theme');
+    }
   }
 });
 
@@ -120,15 +125,25 @@ function initializeTheme() {
   const urlParams = new URLSearchParams(window.location.search);
   const urlTheme = urlParams.get('theme');
   const savedTheme = localStorage.getItem('gift-theme');
+  const isThemeLocked = urlParams.get('locked') === 'true' || localStorage.getItem('theme-locked') === 'true';
   
+  // Priority: URL > localStorage > default
   const initialTheme = urlTheme || savedTheme || 'peach';
   applyTheme(initialTheme);
   
-  setTimeout(() => {
-    if (!themeSwitcher.classList.contains('hidden')) {
-      themeSwitcher.style.opacity = '0.7';
-    }
-  }, 10000);
+  // If theme is locked, hide the theme switcher immediately
+  if (isThemeLocked) {
+    themeSwitcher.classList.add('hidden');
+    localStorage.setItem('theme-locked', 'true');
+    console.log('Theme locked:', initialTheme);
+  } else {
+    // Auto-hide theme switcher after 10 seconds if no interaction
+    setTimeout(() => {
+      if (!themeSwitcher.classList.contains('hidden')) {
+        themeSwitcher.style.opacity = '0.7';
+      }
+    }, 10000);
+  }
 }
 
 // Create enhanced floating particles
@@ -285,15 +300,21 @@ const shareModalCloseBtn = document.getElementById('share-modal-close-btn');
 const shareBtn = document.getElementById('share-btn');
 
 shareBtn.addEventListener('click', async () => {
+  const shareUrl = generateShareUrl();
   const shareData = {
     title: '🎁 Персональный музыкальный подарок!',
     text: 'Посмотри, какой невероятный персональный подарок я получил! Это моя собственная песня! 🎵✨',
-    url: window.location.href
+    url: shareUrl
   };
 
   if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
     try {
       await navigator.share(shareData);
+      
+      // Lock theme after successful share
+      localStorage.setItem('theme-locked', 'true');
+      themeSwitcher.classList.add('hidden');
+      
       const originalText = shareBtn.innerHTML;
       shareBtn.innerHTML = '<span>✅</span><span>Поделился!</span>';
       setTimeout(() => {
@@ -309,21 +330,30 @@ shareBtn.addEventListener('click', async () => {
   }
 });
 
+function generateShareUrl() {
+  const baseUrl = window.location.origin + window.location.pathname;
+  const theme = currentTheme;
+  const locked = 'true'; // Always lock theme when sharing
+  
+  return `${baseUrl}?theme=${theme}&locked=${locked}`;
+}
+
 function showFallbackShareModal() {
-  const url = window.location.href;
+  const shareUrl = generateShareUrl();
   const text = 'Посмотри, какой невероятный персональный музыкальный подарок я получил! Это моя собственная песня! 🎵✨';
 
   const shareOptions = [
-    { name: '📱 WhatsApp', url: `https://wa.me/?text=${encodeURIComponent(text)}%20${encodeURIComponent(url)}` },
-    { name: '✈️ Telegram', url: `https://telegram.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}` },
-    { name: '🔵 VKontakte', url: `https://vk.com/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}` },
+    { name: '📱 WhatsApp', url: `https://wa.me/?text=${encodeURIComponent(text)}%20${encodeURIComponent(shareUrl)}` },
+    { name: '✈️ Telegram', url: `https://telegram.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}` },
+    { name: '🔵 VKontakte', url: `https://vk.com/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(text)}` },
     { name: '📋 Скопировать ссылку', action: 'copy', url: '#' }
   ];
 
   shareOptionsContainer.innerHTML = shareOptions.map(option => `
     <a href="${option.url}" 
        class="share-modal-btn" 
-       data-action="${option.action || 'link'}">
+       data-action="${option.action || 'link'}"
+       data-share-url="${shareUrl}">
       ${option.name}
     </a>
   `).join('');
@@ -336,13 +366,23 @@ shareOptionsContainer.addEventListener('click', (e) => {
   const btn = e.target.closest('.share-modal-btn');
   if (btn && btn.dataset.action === 'copy') {
     e.preventDefault();
-    navigator.clipboard.writeText(window.location.href).then(() => {
+    const shareUrl = btn.dataset.shareUrl || generateShareUrl();
+    
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      // Lock theme after copying share URL
+      localStorage.setItem('theme-locked', 'true');
+      themeSwitcher.classList.add('hidden');
+      
       const originalText = btn.innerHTML;
       btn.innerHTML = '✅ Скопировано!';
       setTimeout(() => {
         btn.innerHTML = originalText;
       }, 2500);
     });
+  } else if (btn && btn.dataset.action === 'link') {
+    // Lock theme when sharing via social networks
+    localStorage.setItem('theme-locked', 'true');
+    themeSwitcher.classList.add('hidden');
   }
 });
 

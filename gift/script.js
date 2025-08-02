@@ -289,6 +289,13 @@ function closeSongCard() {
   }, 500);
 }
 
+// Закрытие модалки при клике вне её содержимого
+songCard.addEventListener('click', (e) => {
+  if (e.target === songCard) {
+    closeSongCard();
+  }
+});
+
 // Enhanced play/pause functionality
 playBtn.addEventListener('click', () => {
   if (audio.paused) {

@@ -355,6 +355,9 @@ shareBtn.addEventListener('click', async () => {
   }
 });
 
+// Close song card with cleanup
+closeBtn.addEventListener('click', closeSongCard);
+
 function generateShareUrl() {
   const baseUrl = window.location.origin + window.location.pathname;
   const theme = currentTheme;
@@ -452,17 +455,6 @@ document.addEventListener('keydown', (e) => {
 document.getElementById('envelope').addEventListener('click', () => {
   if (!isOpen) {
     openBtn.click();
-  }
-});
-
-// Close song card with cleanup - исправляем обработчик
-document.addEventListener('DOMContentLoaded', () => {
-  const closeBtn = document.getElementById('close-btn');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeSongCard);
-    console.log('Close button event listener added'); // Для отладки
-  } else {
-    console.error('Close button not found!');
   }
 });
 

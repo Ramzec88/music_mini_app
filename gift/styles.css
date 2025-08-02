@@ -794,6 +794,38 @@ h1 {
   animation: spin 1s linear infinite;
 }
 
+.personal-message {
+  background: var(--song-card-bg-gradient);
+  border-radius: 20px;
+  padding: 25px;
+  margin: 25px 0;
+  border-left: 5px solid var(--primary-color);
+  backdrop-filter: blur(10px);
+}
+
+.greeting-text {
+  font-style: italic;
+  color: var(--text-color);
+  font-size: clamp(14px, 3.5vw, 16px);
+  line-height: 1.6;
+  margin: 0;
+  text-align: left;
+}
+
+.greeting-text::before {
+  content: '"';
+  font-size: 1.5em;
+  color: var(--primary-color);
+  font-family: serif;
+}
+
+.greeting-text::after {
+  content: '"';
+  font-size: 1.5em;
+  color: var(--primary-color);
+  font-family: serif;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }

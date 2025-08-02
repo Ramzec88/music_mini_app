@@ -269,27 +269,21 @@ function showSongCard() {
   }, 2000);
 }
 
-// Close song card with cleanup
-closeBtn.addEventListener('click', closeSongCard);
-
 function closeSongCard() {
+  console.log('Closing song card...'); // Для отладки
   songCard.classList.remove('show');
   setTimeout(() => {
     songCard.classList.add('hidden');
     isOpen = false;
     openBtn.textContent = '🎵 Открыть подарок';
     
-    if (envelope && envelope.totalFrames) {
-      envelope.goToAndStop(0, true);
-    } else {
-      document.getElementById('envelope').style.transform = 'rotateY(0deg) scale(1)';
-    }
+    document.getElementById('envelope').style.transform = 'rotateY(0deg) scale(1)';
     
     if (isPlaying) {
       audio.pause();
       audio.currentTime = 0;
       isPlaying = false;
-      playBtn.textContent = '▶️ Слушать мою песню';
+      playBtn.textContent = '▶️';
       waveAnimation.classList.remove('playing');
     }
   }, 500);
@@ -458,6 +452,17 @@ document.addEventListener('keydown', (e) => {
 document.getElementById('envelope').addEventListener('click', () => {
   if (!isOpen) {
     openBtn.click();
+  }
+});
+
+// Close song card with cleanup - исправляем обработчик
+document.addEventListener('DOMContentLoaded', () => {
+  const closeBtn = document.getElementById('close-btn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeSongCard);
+    console.log('Close button event listener added'); // Для отладки
+  } else {
+    console.error('Close button not found!');
   }
 });
 

@@ -24,6 +24,159 @@
       overflow-x: hidden;
       position: relative;
       text-align: center;
+      transition: background 0.8s ease;
+    }
+
+    /* Theme Variants */
+    body.cosmic-theme {
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    }
+
+    body.cosmic-theme .particle {
+      background: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+    }
+
+    /* Theme Switcher Styles */
+    .theme-switcher {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      z-index: 100;
+      min-width: 300px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.4s ease;
+      transform: translateX(0);
+    }
+
+    .theme-switcher.hidden {
+      transform: translateX(calc(100% + 40px));
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .theme-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .theme-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      transition: all 0.3s ease;
+    }
+
+    .theme-option.active {
+      color: #333;
+      transform: scale(1.1);
+    }
+
+    .theme-preview {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .theme-preview:hover {
+      transform: scale(1.1);
+      border-color: rgba(0, 0, 0, 0.2);
+    }
+
+    .theme-preview.active {
+      border-color: #333;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .peach-preview {
+      background: linear-gradient(135deg, #fdd39e, #f46b8a);
+    }
+
+    .cosmic-preview {
+      background: linear-gradient(135deg, #667eea, #f093fb);
+    }
+
+    .theme-slider {
+      position: relative;
+    }
+
+    .theme-checkbox {
+      display: none;
+    }
+
+    .theme-slider-label {
+      display: block;
+      width: 60px;
+      height: 30px;
+      background: linear-gradient(135deg, #fdd39e, #f46b8a);
+      border-radius: 15px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.4s ease;
+      box-shadow: 0 4px 15px rgba(244, 107, 138, 0.3);
+    }
+
+    .theme-checkbox:checked + .theme-slider-label {
+      background: linear-gradient(135deg, #667eea, #f093fb);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .theme-slider-button {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .theme-checkbox:checked + .theme-slider-label .theme-slider-button {
+      transform: translateX(30px);
+    }
+
+    .apply-theme-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white;
+      border: none;
+      border-radius: 15px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+    }
+
+    .apply-theme-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
     }
 
     /* Floating particles background */
@@ -130,6 +283,16 @@
       overflow: hidden;
       text-transform: uppercase;
       letter-spacing: 1px;
+    }
+
+    body.cosmic-theme .open-btn {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    body.cosmic-theme .open-btn:hover {
+      background: linear-gradient(135deg, #764ba2, #667eea);
+      box-shadow: 0 15px 35px rgba(118, 75, 162, 0.5);
     }
 
     .open-btn::before {
@@ -429,6 +592,22 @@
       .controls {
         gap: 12px;
       }
+
+      .theme-switcher {
+        top: 10px;
+        right: 10px;
+        min-width: 280px;
+        padding: 15px;
+      }
+
+      .theme-toggle {
+        gap: 10px;
+      }
+
+      .theme-preview {
+        width: 35px;
+        height: 35px;
+      }
     }
 
     @media (max-width: 480px) {
@@ -476,6 +655,28 @@
 <body>
   <div class="particles" id="particles"></div>
   
+  <!-- Theme Switcher -->
+  <div class="theme-switcher" id="theme-switcher">
+    <div class="theme-label">Выберите тему для получателя:</div>
+    <div class="theme-toggle">
+      <div class="theme-option" data-theme="peach">
+        <div class="theme-preview peach-preview"></div>
+        <span>Теплая</span>
+      </div>
+      <div class="theme-slider">
+        <input type="checkbox" id="theme-toggle" class="theme-checkbox">
+        <label for="theme-toggle" class="theme-slider-label">
+          <span class="theme-slider-button"></span>
+        </label>
+      </div>
+      <div class="theme-option" data-theme="cosmic">
+        <div class="theme-preview cosmic-preview"></div>
+        <span>Космическая</span>
+      </div>
+    </div>
+    <button class="apply-theme-btn" id="apply-theme">Применить и скрыть</button>
+  </div>
+
   <div class="main-content">
     <h1>🎁 Для тебя особенный подарок!</h1>
     <p class="subtitle">Открой и послушай свою персональную песню ✨</p>
@@ -524,8 +725,108 @@
   </div>
 
   <script>
-    // Create enhanced floating particles
-    function createParticles() {
+    // Theme switching functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeSwitcher = document.getElementById('theme-switcher');
+    const applyThemeBtn = document.getElementById('apply-theme');
+    const peachOption = document.querySelector('[data-theme="peach"]');
+    const cosmicOption = document.querySelector('[data-theme="cosmic"]');
+    const peachPreview = document.querySelector('.peach-preview');
+    const cosmicPreview = document.querySelector('.cosmic-preview');
+
+    // Initialize theme state
+    let currentTheme = 'peach';
+
+    function updateThemeUI() {
+      if (currentTheme === 'peach') {
+        peachOption.classList.add('active');
+        cosmicOption.classList.remove('active');
+        peachPreview.classList.add('active');
+        cosmicPreview.classList.remove('active');
+        themeToggle.checked = false;
+      } else {
+        cosmicOption.classList.add('active');
+        peachOption.classList.remove('active');
+        cosmicPreview.classList.add('active');
+        peachPreview.classList.remove('active');
+        themeToggle.checked = true;
+      }
+    }
+
+    function applyTheme(theme) {
+      if (theme === 'cosmic') {
+        document.body.classList.add('cosmic-theme');
+      } else {
+        document.body.classList.remove('cosmic-theme');
+      }
+      currentTheme = theme;
+      updateThemeUI();
+      
+      // Update confetti colors
+      updateConfettiColors();
+    }
+
+    function updateConfettiColors() {
+      if (currentTheme === 'cosmic') {
+        window.confettiColors = ['#667eea', '#764ba2', '#f093fb', '#ffffff', '#e0c3fc'];
+      } else {
+        window.confettiColors = ['#fdd39e', '#fbb47a', '#f46b8a', '#e64d6e', '#ffffff'];
+      }
+    }
+
+    // Theme toggle event listener
+    themeToggle.addEventListener('change', () => {
+      applyTheme(themeToggle.checked ? 'cosmic' : 'peach');
+    });
+
+    // Theme preview click handlers
+    peachPreview.addEventListener('click', () => {
+      applyTheme('peach');
+    });
+
+    cosmicPreview.addEventListener('click', () => {
+      applyTheme('cosmic');
+    });
+
+    // Apply and hide theme switcher
+    applyThemeBtn.addEventListener('click', () => {
+      themeSwitcher.classList.add('hidden');
+      
+      // Store theme preference
+      localStorage.setItem('gift-theme', currentTheme);
+      
+      // Success feedback
+      const originalText = applyThemeBtn.textContent;
+      applyThemeBtn.textContent = '✨ Тема сохранена!';
+      setTimeout(() => {
+        applyThemeBtn.textContent = originalText;
+      }, 2000);
+    });
+
+    // Show theme switcher on double click (for testing)
+    document.addEventListener('dblclick', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        themeSwitcher.classList.remove('hidden');
+      }
+    });
+
+    // Initialize theme from URL parameter or localStorage
+    function initializeTheme() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlTheme = urlParams.get('theme');
+      const savedTheme = localStorage.getItem('gift-theme');
+      
+      // Priority: URL > localStorage > default
+      const initialTheme = urlTheme || savedTheme || 'peach';
+      applyTheme(initialTheme);
+      
+      // Auto-hide theme switcher after 10 seconds if no interaction
+      setTimeout(() => {
+        if (!themeSwitcher.classList.contains('hidden')) {
+          themeSwitcher.style.opacity = '0.7';
+        }
+      }, 10000);
+    }
       const particles = document.getElementById('particles');
       for (let i = 0; i < 60; i++) {
         const particle = document.createElement('div');
@@ -571,12 +872,13 @@
     function celebrationEffect() {
       const duration = 4000;
       const animationEnd = Date.now() + duration;
+      const colors = window.confettiColors || ['#fdd39e', '#fbb47a', '#f46b8a', '#e64d6e', '#ffffff'];
       const defaults = { 
         startVelocity: 35, 
         spread: 360, 
         ticks: 80, 
         zIndex: 0,
-        colors: ['#fdd39e', '#fbb47a', '#f46b8a', '#e64d6e', '#ffffff']
+        colors: colors
       };
 
       function randomInRange(min, max) {
@@ -833,6 +1135,9 @@
 
     // Initialize particles
     createParticles();
+
+    // Initialize theme
+    initializeTheme();
 
     // Keyboard shortcuts for better UX
     document.addEventListener('keydown', (e) => {

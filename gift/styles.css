@@ -1,6 +1,32 @@
+/*
+  Объявление CSS-переменных для двух тем.
+  Это позволяет легко менять цвета по всему документу, просто меняя значение переменной.
+*/
+:root {
+  /* Переменные для "Теплой" темы (по умолчанию) */
+  --primary-color: #f46b8a;
+  --gradient-bg: linear-gradient(180deg, #fdd39e, #fbb47a);
+  --btn-gradient: linear-gradient(135deg, #f46b8a, #e64d6e);
+  --btn-hover-gradient: linear-gradient(135deg, #e64d6e, #d63d5d);
+  --shadow-color: rgba(244, 107, 138, 0.3);
+  --shadow-hover-color: rgba(230, 77, 110, 0.4);
+}
+
+/* Переменные для "Космической" темы */
+body.cosmic-theme {
+  --primary-color: #667eea;
+  --gradient-bg: linear-gradient(180deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --btn-gradient: linear-gradient(135deg, #667eea, #764ba2);
+  --btn-hover-gradient: linear-gradient(135deg, #764ba2, #667eea);
+  --shadow-color: rgba(102, 126, 234, 0.3);
+  --shadow-hover-color: rgba(118, 75, 162, 0.4);
+}
+
+/* Общие стили для тела страницы */
 body {
   font-family: 'SF Pro Display', sans-serif;
-  background: linear-gradient(180deg, #fdd39e, #fbb47a);
+  /* Теперь фон использует переменную */
+  background: var(--gradient-bg);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -22,8 +48,10 @@ body {
   50% { transform: translateY(-10px); }
 }
 
+/* Стили для кнопки "Открыть подарок" */
 .open-btn {
-  background: linear-gradient(135deg, #f46b8a, #e64d6e);
+  /* Используем переменные для фона и тени */
+  background: var(--btn-gradient);
   color: white;
   border: none;
   border-radius: 50px;
@@ -32,15 +60,17 @@ body {
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(244, 107, 138, 0.3);
+  box-shadow: 0 6px 20px var(--shadow-color);
 }
 
 .open-btn:hover {
-  background: linear-gradient(135deg, #e64d6e, #d63d5d);
-  box-shadow: 0 10px 25px rgba(230, 77, 110, 0.4);
+  /* Используем переменные для состояния hover */
+  background: var(--btn-hover-gradient);
+  box-shadow: 0 10px 25px var(--shadow-hover-color);
   transform: translateY(-2px);
 }
 
+/* Стили для карточки с песней */
 #song-card {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(25px);
@@ -56,11 +86,6 @@ body {
   transform: translate(-50%, -50%) scale(1);
 }
 
-/* Theme variants */
-body.cosmic-theme {
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-}
-
-/* Theme switcher styles */
-.theme-switcher { /* весь блок стилей для переключателя */ }
-.theme-toggle { /* и все остальные стили тем */ }
+/* Переключатель темы (оставляем без изменений) */
+.theme-switcher {}
+.theme-toggle {}

@@ -59,3 +59,8 @@ playBtn.addEventListener('click', () => {
     playBtn.textContent = '▶️ Слушать песню';
   }
 });
+
+// Theme switching functionality
+const themeToggle = document.getElementById('theme-toggle');
+// вся логика переключения тем
+function applyTheme(theme) { /* код */ }

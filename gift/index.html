@@ -1129,8 +1129,8 @@
             left: 0;
           }
           .share-modal-btn:hover {
-            color: white;
-            border-color: transparent;
+            color: white !important;
+            border-color: transparent !important;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px ${backdropColor};
           }
@@ -1155,13 +1155,16 @@
         <h3 style="margin: 0 0 25px 0; color: #333; text-align: center; font-size: 22px; font-weight: 700; background: ${gradientBg}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
           Поделиться подарком
         </h3>
-        ${shareOptions.map(option => `
-          <a href="${option.url || '#'}" 
-             data-action="${option.action || 'link'}"
-             class="share-modal-btn">
-            ${option.name}
-          </a>
-        `).join('')}
+        <div style="display: flex; flex-direction: column; gap: 0;">
+          ${shareOptions.map(option => `
+            <a href="${option.url || '#'}" 
+               data-action="${option.action || 'link'}"
+               class="share-modal-btn"
+               style="border-color: ${primaryColor};">
+              ${option.name}
+            </a>
+          `).join('')}
+        </div>
         <button onclick="this.closest('.share-modal').remove()" 
                 class="close-modal-btn">
           Закрыть

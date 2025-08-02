@@ -356,7 +356,20 @@ shareBtn.addEventListener('click', async () => {
 });
 
 // Close song card with cleanup
-closeBtn.addEventListener('click', closeSongCard);
+if (closeBtn) {
+  closeBtn.addEventListener('click', closeSongCard);
+  console.log('Close button found and event added');
+} else {
+  console.error('Close button not found!');
+  // Попробуем найти позже
+  setTimeout(() => {
+    const laterCloseBtn = document.getElementById('close-btn');
+    if (laterCloseBtn) {
+      laterCloseBtn.addEventListener('click', closeSongCard);
+      console.log('Close button found later and event added');
+    }
+  }, 1000);
+}
 
 function generateShareUrl() {
   const baseUrl = window.location.origin + window.location.pathname;

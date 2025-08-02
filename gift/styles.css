@@ -347,23 +347,16 @@ h1 {
 
 #song-card {
   position: fixed;
-  /* Для центрирования Flexbox используем inset: 0 */
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  
-  display: flex; /* Активируем Flexbox */
-  align-items: center; /* Центрируем по вертикали */
-  justify-content: center; /* Центрируем по горизонтали */
-  /* Убираем transform, так как Flexbox делает центрирование более надежным */
+  inset: 0; /* Вместо top/left/right/bottom */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto; /* Если контент больше высоты экрана */
   transform: scale(0);
-  width: auto;
-  max-width: 100%;
-  background: transparent;
   opacity: 0;
-  transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
   z-index: 10;
+  background: transparent;
+  transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
   text-align: center;
 }
 

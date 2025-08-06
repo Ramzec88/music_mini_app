@@ -27,7 +27,7 @@
 body.cosmic-theme {
   --primary-color: #667eea;
   --secondary-color: #764ba2;
-  --text-color: #fff;
+  --text-color: #333;
   --text-secondary-color: rgba(255, 255, 255, 0.8);
   /* Добавляем темные цвета для текста внутри белого модального окна */
   --modal-text-color: #333;

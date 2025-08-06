@@ -30,7 +30,7 @@ body.cosmic-theme {
   --secondary-color: #764ba2;
   --text-color: #fff;
   --text-secondary-color: #4A5568; /* rgba(163, 185, 255, 0.8); это фиолетовый оттенок цвета*/
-  --subtitle-color: rgba(163, 185, 255, 0.8); /* НОВАЯ ПЕРЕМЕННАЯ */
+  --subtitle-color: rgba(255, 255, 255, 0.8); /* НОВАЯ ПЕРЕМЕННАЯ */
 
 
   --gradient-bg: linear-gradient(180deg, #667eea 0%, #764ba2 50%, #f093fb 100%);

@@ -28,7 +28,7 @@ body.cosmic-theme {
   --primary-color: #667eea;
   --secondary-color: #764ba2;
   --text-color: #fff;
-  --text-secondary-color: rgba(163, 185, 255, 0.8);
+  --text-secondary-color: #4A5568; /* rgba(163, 185, 255, 0.8); это фиолетовый оттенок цвета*/
 
 
   --gradient-bg: linear-gradient(180deg, #667eea 0%, #764ba2 50%, #f093fb 100%);

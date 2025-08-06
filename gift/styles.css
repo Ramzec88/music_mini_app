@@ -8,6 +8,7 @@
   --secondary-color: #e64d6e;
   --text-color: #333;
   --text-secondary-color: #666;
+   --subtitle-color: #666; /* НОВАЯ ПЕРЕМЕННАЯ */
 
   --gradient-bg: linear-gradient(180deg, #fdd39e, #fbb47a);
   --btn-gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -29,6 +30,7 @@ body.cosmic-theme {
   --secondary-color: #764ba2;
   --text-color: #fff;
   --text-secondary-color: #4A5568; /* rgba(163, 185, 255, 0.8); это фиолетовый оттенок цвета*/
+  --subtitle-color: rgba(163, 185, 255, 0.8); /* НОВАЯ ПЕРЕМЕННАЯ */
 
 
   --gradient-bg: linear-gradient(180deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
@@ -76,7 +78,7 @@ h1 {
 }
 
 .subtitle {
-  color: var(--text-secondary-color);
+  color: var(--subtitle-color);
 }
 
 body.cosmic-theme .particle {

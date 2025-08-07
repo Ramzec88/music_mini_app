@@ -1,3 +1,17 @@
+// Обновленный script.js с интеграцией бэкенда
+// Конфигурация бэкенда
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyeucdkcWx77xVXOOZ3qdNjNPerPISwMeBNlvlZif2aRJmseUS4orglZxDJmVqOlJf-Yw/exec';
+const DEFAULT_SONG_URL = 'assets/song.mp3'; // Fallback для локального файла
+
+// Глобальные переменные для данных подарка
+let giftData = {
+  recipientName: 'Алексей',
+  occasion: 'День рождения',
+  personalMessage: 'Алексей, пусть этот особенный день принесет тебе море радости и пусть каждый день будет наполнен музыкой и смехом! 🎈✨',
+  songUrl: DEFAULT_SONG_URL,
+  found: false
+};
+
 // Initialize Lottie animation with fallback
 let envelope;
 try {
@@ -17,14 +31,234 @@ try {
   `;
 }
 
+// Функция загрузки данных подарка
+async function loadGiftData() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const giftCode = urlParams.get('code');
+  
+  if (!giftCode) {
+    console.log('No gift code found, using default data');
+    updateUIWithGiftData();
+    return;
+  }
+
+  try {
+    console.log('Loading gift data for code:', giftCode);
+    
+    // Показываем индикатор загрузки
+    showLoadingState();
+    
+    const response = await fetch(`${BACKEND_URL}?action=getGift&code=${giftCode}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    
+    if (data.found) {
+      giftData = {
+        ...data,
+        found: true
+      };
+      
+      // Увеличиваем счетчик просмотров
+      incrementViewCount(giftCode);
+      
+      console.log('Gift data loaded successfully:', giftData);
+    } else {
+      console.log('Gift not found, using default data');
+      showGiftNotFoundError();
+    }
+    
+  } catch (error) {
+    console.error('Error loading gift data:', error);
+    showErrorState(error.message);
+  } finally {
+    updateUIWithGiftData();
+    hideLoadingState();
+  }
+}
+
+// Увеличение счетчика просмотров
+async function incrementViewCount(giftCode) {
+  try {
+    await fetch(`${BACKEND_URL}?action=incrementViews&code=${giftCode}`);
+  } catch (error) {
+    console.error('Error incrementing view count:', error);
+  }
+}
+
+// Обновление UI с данными подарка
+function updateUIWithGiftData() {
+  // Обновляем заголовок
+  const titleElement = document.querySelector('#song-card h2');
+  if (titleElement && giftData.recipientName) {
+    const occasionEmoji = getOccasionEmoji(giftData.occasion);
+    titleElement.textContent = `${occasionEmoji} ${getOccasionTitle(giftData.occasion)}, ${giftData.recipientName}!`;
+  }
+  
+  // Обновляем описание
+  const descriptionElement = document.querySelector('#song-card p');
+  if (descriptionElement) {
+    descriptionElement.textContent = getOccasionDescription(giftData.occasion);
+  }
+  
+  // Обновляем персональное сообщение
+  const messageElement = document.querySelector('.greeting-text');
+  if (messageElement && giftData.personalMessage) {
+    messageElement.textContent = giftData.personalMessage;
+  }
+  
+  // Обновляем аудио источник
+  const audioElement = document.getElementById('audio');
+  const downloadLink = document.getElementById('download-link');
+  
+  if (audioElement && giftData.songUrl && giftData.songUrl !== DEFAULT_SONG_URL) {
+    audioElement.src = giftData.songUrl;
+    
+    if (downloadLink) {
+      downloadLink.href = giftData.songUrl;
+      downloadLink.download = `${giftData.recipientName || 'персональная'}_песня.mp3`;
+    }
+  }
+}
+
+// Получение эмодзи для повода (включая кастомные)
+function getOccasionEmoji(occasion) {
+  const emojis = {
+    'День рождения': '🎉',
+    'Новый год': '🎄',
+    'Годовщина': '💝',
+    '8 марта': '🌹',
+    'День Святого Валентина': '💕',
+    'Просто так': '✨',
+    'Свадьба': '💒',
+    'Выпускной': '🎓'
+  };
+  // Для неизвестных поводов используем универсальный эмодзи
+  return emojis[occasion] || '🎊';
+}
+
+// Получение заголовка для повода (включая кастомные)
+function getOccasionTitle(occasion) {
+  const titles = {
+    'День рождения': 'С Днём Рождения',
+    'Новый год': 'С Новым Годом',
+    'Годовщина': 'С Годовщиной',
+    '8 марта': 'С 8 Марта',
+    'День Святого Валентина': 'С Днём Святого Валентина',
+    'Просто так': 'Специально для тебя',
+    'Свадьба': 'С Днём Свадьбы',
+    'Выпускной': 'С Выпускным'
+  };
+  // Для кастомных поводов создаем заголовок динамически
+  return titles[occasion] || `Поздравляем с ${occasion}`;
+}
+
+// Получение описания для повода (включая кастомные)
+function getOccasionDescription(occasion) {
+  const descriptions = {
+    'День рождения': 'Эта песня создана специально для твоего дня рождения! Насладись уникальной композицией 🎶',
+    'Новый год': 'Встречай Новый год с персональной песней! Пусть она принесёт удачу 🎶',
+    'Годовщина': 'В честь вашего особенного дня создана эта уникальная композиция 🎶',
+    '8 марта': 'Поздравление в формате персональной песни специально для тебя 🎶',
+    'День Святого Валентина': 'Музыкальное признание в любви создано специально для тебя 🎶',
+    'Просто так': 'Эта песня создана специально для тебя просто так, чтобы подарить улыбку 🎶',
+    'Свадьба': 'Музыкальное поздравление с самым важным днём в жизни 🎶',
+    'Выпускной': 'Персональная песня в честь твоего выпускного! 🎶'
+  };
+  // Для кастомных поводов используем универсальное описание
+  return descriptions[occasion] || `Эта песня создана специально в честь ${occasion.toLowerCase()}! Насладись уникальной композицией 🎶`;
+}
+
+// Состояния загрузки и ошибок
+function showLoadingState() {
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'loading-state';
+    loadingDiv.innerHTML = `
+      <div style="text-align: center; padding: 20px;">
+        <div style="font-size: 48px; margin-bottom: 20px;">🎵</div>
+        <h3 style="color: var(--text-color); margin-bottom: 10px;">Загружаем твой подарок...</h3>
+        <p style="color: var(--text-secondary-color);">Подождите немного</p>
+      </div>
+    `;
+    mainContent.appendChild(loadingDiv);
+  }
+}
+
+function hideLoadingState() {
+  const loadingState = document.getElementById('loading-state');
+  if (loadingState) {
+    loadingState.remove();
+  }
+}
+
+function showErrorState(errorMessage) {
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) {
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'error-state';
+    errorDiv.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: var(--text-color);">
+        <div style="font-size: 48px; margin-bottom: 20px;">😔</div>
+        <h3 style="margin-bottom: 10px;">Не удалось загрузить подарок</h3>
+        <p style="color: var(--text-secondary-color); margin-bottom: 20px;">${errorMessage}</p>
+        <button onclick="location.reload()" style="background: var(--btn-gradient); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer;">
+          Попробовать снова
+        </button>
+      </div>
+    `;
+    mainContent.appendChild(errorDiv);
+  }
+}
+
+function showGiftNotFoundError() {
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) {
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'error-state';
+    errorDiv.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: var(--text-color);">
+        <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
+        <h3 style="margin-bottom: 10px;">Подарок не найден</h3>
+        <p style="color: var(--text-secondary-color); margin-bottom: 20px;">
+          Возможно, ссылка устарела или содержит ошибку
+        </p>
+        <button onclick="showDefaultGift()" style="background: var(--btn-gradient); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer;">
+          Посмотреть демо
+        </button>
+      </div>
+    `;
+    mainContent.appendChild(errorDiv);
+  }
+}
+
+function showDefaultGift() {
+  const errorState = document.getElementById('error-state');
+  if (errorState) {
+    errorState.remove();
+  }
+}
+
 // Window load effect
 window.addEventListener('load', () => {
   document.getElementById('envelope').style.transform = 'scale(0.95)';
   setTimeout(() => {
     document.getElementById('envelope').style.transform = 'scale(1)';
   }, 400);
+  
+  // Загружаем данные подарка
+  loadGiftData();
 });
 
+// Остальной код остается без изменений...
 // State variables
 let isOpen = false;
 let isPlaying = false;
@@ -35,7 +269,7 @@ const openBtn = document.getElementById('open-btn');
 const closeBtn = document.getElementById('close-btn');
 const waveAnimation = document.getElementById('wave-animation');
 
-// Theme switching functionality
+// Theme switching functionality (остается тот же код...)
 const themeToggle = document.getElementById('theme-toggle');
 const themeSwitcher = document.getElementById('theme-switcher');
 const applyThemeBtn = document.getElementById('apply-theme');
@@ -162,18 +396,17 @@ function createParticles() {
 
 // Enhanced confetti celebration
 function celebrationEffect() {
-  const duration = 1800; // Сократили до 1.8 секунд (чуть больше задержки окна)
+  const duration = 1800;
   const animationEnd = Date.now() + duration;
   const colors = window.confettiColors || ['#fdd39e', '#fbb47a', '#f46b8a', '#e64d6e', '#ffffff'];
   
-  // Более интенсивные настройки для фейерверка
   const defaults = { 
     startVelocity: 45,
     spread: 360, 
-    ticks: 100, // Немного сократили время жизни частиц
+    ticks: 100,
     zIndex: 999,
     colors: colors,
-    gravity: 1.0, // Чуть быстрее падение
+    gravity: 1.0,
     scalar: 1.2
   };
 
@@ -181,9 +414,8 @@ function celebrationEffect() {
     return Math.random() * (max - min) + min;
   }
 
-  // Первый мощный залп
   function initialBurst() {
-    const count = 120; // Немного уменьшили
+    const count = 120;
     confetti(Object.assign({}, defaults, {
       particleCount: count,
       spread: 100,
@@ -191,7 +423,6 @@ function celebrationEffect() {
     }));
   }
 
-  // Непрерывный фейерверк
   const interval = setInterval(function() {
     const timeLeft = animationEnd - Date.now();
 
@@ -199,9 +430,8 @@ function celebrationEffect() {
       return clearInterval(interval);
     }
 
-    const particleCount = 60 * (timeLeft / duration); // Уменьшили интенсивность
+    const particleCount = 60 * (timeLeft / duration);
 
-    // Боковые залпы
     confetti(Object.assign({}, defaults, {
       particleCount: particleCount,
       spread: 80,
@@ -213,7 +443,6 @@ function celebrationEffect() {
       origin: { x: randomInRange(0.7, 0.9), y: randomInRange(0.5, 0.7) }
     }));
     
-    // Центральные взрывы (только в первую половину)
     if (timeLeft > duration * 0.5) {
       confetti(Object.assign({}, defaults, {
         particleCount: particleCount * 1.5,
@@ -221,9 +450,8 @@ function celebrationEffect() {
         origin: { x: randomInRange(0.4, 0.6), y: randomInRange(0.4, 0.6) }
       }));
     }
-  }, 300); // Реже запускаем залпы
+  }, 300);
 
-  // Запускаем только 2 мощных залпа вместо 3
   initialBurst();
   setTimeout(() => initialBurst(), 600);
 }
@@ -244,7 +472,6 @@ openBtn.addEventListener('click', () => {
       setTimeout(showSongCard, 800);
     }
   } else {
-    // Close envelope
     closeSongCard();
   }
 });
@@ -252,16 +479,13 @@ openBtn.addEventListener('click', () => {
 function showSongCard() {
   isOpen = true;
   
-  // Сначала запускаем мощный фейерверк
   celebrationEffect();
   
-  // Показываем модальное окно с задержкой, чтобы фейерверк был заметен
   setTimeout(() => {
     songCard.classList.remove('hidden');
     setTimeout(() => songCard.classList.add('show'), 50);
-  }, 1500); // Задержка 1.5 секунды для наслаждения фейерверком
+  }, 1500);
   
-  // Сбрасываем кнопку еще позже
   setTimeout(() => {
     openBtn.classList.remove('loading');
     openBtn.textContent = '🔒 Закрыть подарок';
@@ -270,7 +494,7 @@ function showSongCard() {
 }
 
 function closeSongCard() {
-  console.log('Closing song card...'); // Для отладки
+  console.log('Closing song card...');
   songCard.classList.remove('show');
   setTimeout(() => {
     songCard.classList.add('hidden');
@@ -289,7 +513,6 @@ function closeSongCard() {
   }, 500);
 }
 
-// Закрытие модалки при клике вне её содержимого
 songCard.addEventListener('click', (e) => {
   if (e.target === songCard) {
     closeSongCard();
@@ -335,7 +558,7 @@ shareBtn.addEventListener('click', async () => {
   const shareUrl = generateShareUrl();
   const shareData = {
     title: '🎁 Персональный музыкальный подарок!',
-    text: 'Посмотри, какой невероятный персональный подарок я получил! Это моя собственная песня! 🎵✨',
+    text: `Посмотри, какой невероятный персональный ${giftData.occasion.toLowerCase()} подарок я получил! Это моя собственная песня! 🎵✨`,
     url: shareUrl
   };
 
@@ -343,7 +566,6 @@ shareBtn.addEventListener('click', async () => {
     try {
       await navigator.share(shareData);
       
-      // Lock theme after successful share
       localStorage.setItem('theme-locked', 'true');
       themeSwitcher.classList.add('hidden');
       
@@ -363,16 +585,20 @@ shareBtn.addEventListener('click', async () => {
 });
 
 function generateShareUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const giftCode = urlParams.get('code');
   const baseUrl = window.location.origin + window.location.pathname;
-  const theme = currentTheme;
-  const locked = 'true'; // Always lock theme when sharing
   
-  return `${baseUrl}?theme=${theme}&locked=${locked}`;
+  if (giftCode) {
+    return `${baseUrl}?code=${giftCode}&theme=${currentTheme}&locked=true`;
+  } else {
+    return `${baseUrl}?theme=${currentTheme}&locked=true`;
+  }
 }
 
 function showFallbackShareModal() {
   const shareUrl = generateShareUrl();
-  const text = 'Посмотри, какой невероятный персональный музыкальный подарок я получил! Это моя собственная песня! 🎵✨';
+  const text = `Посмотри, какой невероятный персональный ${giftData.occasion.toLowerCase()} подарок я получил! Это моя собственная песня! 🎵✨`;
 
   const shareOptions = [
     { name: '📱 WhatsApp', url: `https://wa.me/?text=${encodeURIComponent(text)}%20${encodeURIComponent(shareUrl)}` },
@@ -380,6 +606,11 @@ function showFallbackShareModal() {
     { name: '🔵 VKontakte', url: `https://vk.com/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(text)}` },
     { name: '📋 Скопировать ссылку', action: 'copy', url: '#' }
   ];
+
+  // Создаем модальное окно если его нет
+  if (!shareModal) {
+    createShareModal();
+  }
 
   shareOptionsContainer.innerHTML = shareOptions.map(option => `
     <a href="${option.url}" 
@@ -393,15 +624,33 @@ function showFallbackShareModal() {
   shareModal.classList.remove('hidden');
 }
 
+function createShareModal() {
+  const modal = document.createElement('div');
+  modal.id = 'share-modal';
+  modal.className = 'share-modal hidden';
+  modal.innerHTML = `
+    <div class="share-modal-content">
+      <h3 class="share-modal-title">Поделиться подарком</h3>
+      <div id="share-options"></div>
+      <button class="share-modal-close-btn" id="share-modal-close-btn">Закрыть</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  // Добавляем обработчики
+  modal.querySelector('#share-modal-close-btn').addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+}
+
 // Handle copy action
-shareOptionsContainer.addEventListener('click', (e) => {
+document.addEventListener('click', (e) => {
   const btn = e.target.closest('.share-modal-btn');
   if (btn && btn.dataset.action === 'copy') {
     e.preventDefault();
     const shareUrl = btn.dataset.shareUrl || generateShareUrl();
     
     navigator.clipboard.writeText(shareUrl).then(() => {
-      // Lock theme after copying share URL
       localStorage.setItem('theme-locked', 'true');
       themeSwitcher.classList.add('hidden');
       
@@ -412,32 +661,42 @@ shareOptionsContainer.addEventListener('click', (e) => {
       }, 2500);
     });
   } else if (btn && btn.dataset.action === 'link') {
-    // Lock theme when sharing via social networks
     localStorage.setItem('theme-locked', 'true');
     themeSwitcher.classList.add('hidden');
   }
 });
 
-shareModalCloseBtn.addEventListener('click', () => {
-  shareModal.classList.add('hidden');
-});
+if (shareModalCloseBtn) {
+  shareModalCloseBtn.addEventListener('click', () => {
+    shareModal.classList.add('hidden');
+  });
+}
 
 // Enhanced download functionality
 document.getElementById('download-link').addEventListener('click', (e) => {
   e.preventDefault();
   
-  const a = document.createElement('a');
-  a.href = 'assets/song.mp3';
-  a.download = 'my_personalized_birthday_song.mp3';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const downloadUrl = giftData.songUrl || DEFAULT_SONG_URL;
+  const fileName = `${giftData.recipientName || 'персональная'}_песня_${giftData.occasion.replace(/\s+/g, '_')}.mp3`;
+  
+  // Если это внешняя ссылка (S3), открываем в новой вкладке
+  if (downloadUrl.startsWith('http') && !downloadUrl.includes(window.location.hostname)) {
+    window.open(downloadUrl, '_blank');
+  } else {
+    // Локальный файл - обычная загрузка
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
   
   const btn = e.target.closest('.download-btn');
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '<span>✅</span><span>Загружено!</span>';
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = '✅';
   setTimeout(() => {
-    btn.innerHTML = originalText;
+    btn.innerHTML = originalHTML;
   }, 3000);
 });
 

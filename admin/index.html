@@ -505,6 +505,14 @@
                     <div id="manual-mode">
                         <form id="manual-gift-form">
                             <div class="form-group">
+                                <label class="form-label">📦 Номер заказа (опционально)</label>
+                                <input type="text" class="form-control" name="orderNumber" placeholder="Например: ORD123456">
+                                <small style="color: #6c757d; margin-top: 5px; display: block;">
+                                    Если указан, данные будут обновлены в существующем заказе. Если не указан - создастся новая запись.
+                                </small>
+                            </div>
+
+                            <div class="form-group">
                                 <label class="form-label">👤 Имя получателя *</label>
                                 <input type="text" class="form-control" name="recipientName" required placeholder="Например: Алексей">
                             </div>
@@ -891,7 +899,8 @@
                 }, 500);
 
                 // Подготавливаем данные для отправки
-                const giftCode = generateGiftCode();
+                const orderNumber = formData.get('orderNumber')?.trim() || '';
+                const giftCode = orderNumber || generateGiftCode();
                 const submitFormData = new FormData();
                 
                 submitFormData.append('action', 'createGift');
@@ -900,6 +909,11 @@
                 submitFormData.append('personalMessage', formData.get('personalMessage'));
                 submitFormData.append('giftCode', giftCode);
                 submitFormData.append('songFile', audioFile);
+                
+                // Если указан номер заказа, передаем его
+                if (orderNumber) {
+                    submitFormData.append('orderNumber', orderNumber);
+                }
 
                 // Отправляем запрос
                 const response = await fetch(BACKEND_URL, {
@@ -912,10 +926,23 @@
                 progressFill.style.width = '100%';
 
                 if (result.success) {
-                    showAlert(`Подарок создан! Код: ${result.giftCode}`, 'success');
-                    showGiftResult(result);
+                    const successMessage = orderNumber 
+                        ? `Подарок создан и привязан к заказу ${orderNumber}! Код: ${result.giftCode}`
+                        : `Подарок создан! Код: ${result.giftCode}`;
+                    
+                    showAlert(successMessage, 'success');
+                    
+                    // Показываем результат с информацией о связи с заказом
+                    showGiftResult(result, orderNumber ? { orderNumber, isManual: true } : null);
+                    
                     e.target.reset();
                     document.getElementById('custom-occasion').style.display = 'none';
+                    
+                    // Если был указан номер заказа, обновляем списки
+                    if (orderNumber) {
+                        loadOrders();
+                        loadGifts();
+                    }
                 } else {
                     throw new Error(result.error || 'Неизвестная ошибка');
                 }
@@ -1197,13 +1224,24 @@
             
             let orderInfo = '';
             if (order) {
-                orderInfo = `
-                    <div style="margin-bottom: 15px;">
-                        <strong>Заказ:</strong> ${order.orderNumber || order.id}<br>
-                        <strong>Получатель:</strong> ${order.recipientName}<br>
-                        <strong>Повод:</strong> ${order.occasion}
-                    </div>
-                `;
+                if (order.isManual) {
+                    // Ручной режим с указанным номером заказа
+                    orderInfo = `
+                        <div style="margin-bottom: 15px;">
+                            <strong>Заказ:</strong> ${order.orderNumber}<br>
+                            <span style="color: #28a745;">✅ Данные обновлены в существующем заказе</span>
+                        </div>
+                    `;
+                } else {
+                    // Режим "По заказу"
+                    orderInfo = `
+                        <div style="margin-bottom: 15px;">
+                            <strong>Заказ:</strong> ${order.orderNumber || order.id}<br>
+                            <strong>Получатель:</strong> ${order.recipientName}<br>
+                            <strong>Повод:</strong> ${order.occasion}
+                        </div>
+                    `;
+                }
             }
             
             alertDiv.innerHTML = `

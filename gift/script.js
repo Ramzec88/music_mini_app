@@ -1,7 +1,10 @@
-// Обновленный script.js с интеграцией бэкенда
+// Обновленный script.js с исправленной генерацией URL
 // Конфигурация бэкенда
 const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyeucdkcWx77xVXOOZ3qdNjNPerPISwMeBNlvlZif2aRJmseUS4orglZxDJmVqOlJf-Yw/exec';
 const DEFAULT_SONG_URL = 'assets/song.mp3'; // Fallback для локального файла
+
+// Базовый URL для формирования ссылок
+const BASE_APP_URL = 'https://music-mini-app-omega.vercel.app/gift/';
 
 // Глобальные переменные для данных подарка
 let giftData = {
@@ -258,7 +261,6 @@ window.addEventListener('load', () => {
   loadGiftData();
 });
 
-// Остальной код остается без изменений...
 // State variables
 let isOpen = false;
 let isPlaying = false;
@@ -269,7 +271,7 @@ const openBtn = document.getElementById('open-btn');
 const closeBtn = document.getElementById('close-btn');
 const waveAnimation = document.getElementById('wave-animation');
 
-// Theme switching functionality (остается тот же код...)
+// Theme switching functionality
 const themeToggle = document.getElementById('theme-toggle');
 const themeSwitcher = document.getElementById('theme-switcher');
 const applyThemeBtn = document.getElementById('apply-theme');
@@ -584,16 +586,24 @@ shareBtn.addEventListener('click', async () => {
   }
 });
 
+// ИСПРАВЛЕННАЯ функция генерации URL для шаринга
 function generateShareUrl() {
   const urlParams = new URLSearchParams(window.location.search);
   const giftCode = urlParams.get('code');
-  const baseUrl = window.location.origin + window.location.pathname;
+  
+  // Формируем корректный URL на основе BASE_APP_URL
+  let shareUrl;
   
   if (giftCode) {
-    return `${baseUrl}?code=${giftCode}&theme=${currentTheme}&locked=true`;
+    // Если есть gift code, формируем полную ссылку с параметрами
+    shareUrl = `${BASE_APP_URL}?code=${giftCode}&theme=${currentTheme}&locked=true`;
   } else {
-    return `${baseUrl}?theme=${currentTheme}&locked=true`;
+    // Если нет gift code, используем только тему
+    shareUrl = `${BASE_APP_URL}?theme=${currentTheme}&locked=true`;
   }
+  
+  console.log('Generated share URL:', shareUrl);
+  return shareUrl;
 }
 
 function showFallbackShareModal() {

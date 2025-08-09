@@ -552,7 +552,27 @@
             margin-top: 10px;
             display: none;
         }
-    </style>
+    
+  /* === Added: actions row for preview/send buttons === */
+  .actions-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .btn[disabled]{
+    opacity: .6;
+    pointer-events: none;
+  }
+  .btn-linklike{
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+</style>
 </head>
 <body>
     <div class="container">
@@ -650,6 +670,20 @@
                                 <span>🎁</span>
                                 <span>Создать подарок</span>
                             </button>
+<div class="actions-row" id="manual-actions">
+  <a id="manual-preview-btn"
+     class="btn btn-secondary btn-linklike"
+     href="javascript:void(0)"
+     target="_blank"
+     rel="noopener"
+     aria-disabled="true"
+     disabled>👀 Предварительный просмотр</a>
+
+  <button type="button"
+          class="btn btn-success"
+          id="manual-send-btn"
+          disabled>✉️ Отправить</button>
+</div>
                         </form>
                     </div>
 
@@ -695,6 +729,20 @@
                                 <span>🎁</span>
                                 <span>Создать подарок для заказа</span>
                             </button>
+<div class="actions-row" id="order-actions" style="display:none;">
+  <a id="order-preview-btn"
+     class="btn btn-secondary btn-linklike"
+     href="javascript:void(0)"
+     target="_blank"
+     rel="noopener"
+     aria-disabled="true"
+     disabled>👀 Предварительный просмотр</a>
+
+  <button type="button"
+          class="btn btn-success"
+          id="order-send-btn"
+          disabled>✉️ Отправить</button>
+</div>
                         </form>
                     </div>
                 </div>
@@ -776,6 +824,14 @@
         let selectedFiles = {
             manual: null,
             order: null
+        };
+
+        // Added: state for last created gift
+        let lastGift = {
+            url: null,
+            code: null,
+            orderNumber: null,
+            mode: null // 'manual' | 'order'
         };
 
         // Инициализация
@@ -880,6 +936,22 @@
             // Формы создания подарков
             document.getElementById('manual-gift-form').addEventListener('submit', handleManualGiftSubmit);
             document.getElementById('order-gift-form').addEventListener('submit', handleOrderGiftSubmit);
+
+            // Added: preview and send buttons
+            document.getElementById('manual-preview-btn')?.addEventListener('click', () => {
+                const href = document.getElementById('manual-preview-btn').getAttribute('data-href');
+                if (href) window.open(href, '_blank', 'noopener');
+            });
+            document.getElementById('manual-send-btn')?.addEventListener('click', () => {
+                sendGiftToTelegram('manual');
+            });
+            document.getElementById('order-preview-btn')?.addEventListener('click', () => {
+                const href = document.getElementById('order-preview-btn').getAttribute('data-href');
+                if (href) window.open(href, '_blank', 'noopener');
+            });
+            document.getElementById('order-send-btn')?.addEventListener('click', () => {
+                sendGiftToTelegram('order');
+            });
         }
 
         // Настройка загрузки файлов
@@ -1218,6 +1290,9 @@
                     // Показываем результат с информацией о связи с заказом
                     showGiftResult(result, orderNumber ? { orderNumber, isManual: true } : null);
                     
+                    const giftUrl = `${FRONTEND_BASE_URL}?code=${result.giftCode}`;
+                    enableActionButtons('manual', giftUrl, result.giftCode, (formData.get('orderNumber')?.trim() || null));
+
                     // Сброс формы
                     e.target.reset();
                     resetFileUpload('manual');
@@ -1327,6 +1402,9 @@
                     showAlert(`Подарок для заказа ${selectedOrder.orderNumber || selectedOrder.id} создан!`, 'success');
                     showGiftResult(result, selectedOrder);
                     
+                    const giftUrl = `${FRONTEND_BASE_URL}?code=${result.giftCode}`;
+                    enableActionButtons('order', giftUrl, result.giftCode, (selectedOrder?.orderNumber || selectedOrder?.id || null));
+
                     // Сбрасываем форму
                     e.target.reset();
                     resetFileUpload('order');
@@ -1608,6 +1686,76 @@
                 reader.onerror = error => reject(error);
             });
         }
-    </script>
+    
+        // === Added: enable action buttons after gift creation ===
+        function enableActionButtons(mode, giftUrl, giftCode, orderNumber = null) {
+            lastGift = { url: giftUrl, code: giftCode, orderNumber, mode };
+            if (mode === 'manual') {
+                const preview = document.getElementById('manual-preview-btn');
+                const send = document.getElementById('manual-send-btn');
+                if (preview && send) {
+                    preview.setAttribute('data-href', giftUrl);
+                    preview.removeAttribute('disabled');
+                    preview.setAttribute('aria-disabled', 'false');
+                    send.removeAttribute('disabled');
+                }
+            } else {
+                const actions = document.getElementById('order-actions');
+                if (actions) actions.style.display = 'flex';
+                const preview = document.getElementById('order-preview-btn');
+                const send = document.getElementById('order-send-btn');
+                if (preview && send) {
+                    preview.setAttribute('data-href', giftUrl);
+                    preview.removeAttribute('disabled');
+                    preview.setAttribute('aria-disabled', 'false');
+                    send.removeAttribute('disabled');
+                }
+            }
+        }
+
+        // === Added: send gift via Telegram bot (admin panel only) ===
+        async function sendGiftToTelegram(mode) {
+            if (!lastGift.url || !lastGift.code) {
+                showAlert('Сначала создайте подарок', 'error');
+                return;
+            }
+
+            const orderNumber = lastGift.orderNumber || (mode === 'order' ? (selectedOrder?.orderNumber || selectedOrder?.id || null) : null);
+
+            const btnId = mode === 'order' ? 'order-send-btn' : 'manual-send-btn';
+            const btn = document.getElementById(btnId);
+            const prevHTML = btn?.innerHTML;
+
+            try {
+                if (btn) {
+                    btn.classList.add('loading');
+                    btn.innerHTML = '<span class="spinner"></span><span>Отправляем…</span>';
+                }
+
+                const fd = new FormData();
+                fd.append('action', 'sendToTelegram'); // backend should handle Telegram-send only
+                fd.append('giftUrl', lastGift.url);
+                fd.append('giftCode', lastGift.code);
+                if (orderNumber) fd.append('orderNumber', orderNumber);
+
+                const resp = await fetch(BACKEND_URL, { method: 'POST', body: fd });
+                const json = await resp.json();
+
+                if (json.success) {
+                    showAlert('Подарок отправлен в Telegram заказчику!', 'success');
+                } else {
+                    throw new Error(json.error || 'Не удалось отправить в Telegram');
+                }
+            } catch (e) {
+                showAlert('Ошибка при отправке: ' + e.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.classList.remove('loading');
+                    btn.innerHTML = prevHTML;
+                }
+            }
+        }
+
+</script>
 </body>
 </html>

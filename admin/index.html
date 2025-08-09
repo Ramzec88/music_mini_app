@@ -1124,6 +1124,16 @@
             orderInfo.classList.add('show');
         }
 
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '⏳ Ожидает',
+                'processing': '🔄 В обработке',
+                'sent': '✅ Отправлено',
+                'delivered': '📦 Доставлено'
+            };
+            return statusMap[status] || '❓ Неизвестно';
+        }
+
         function getStatusColor(status) {
             const statusColors = {
                 'pending': '#ffc107',

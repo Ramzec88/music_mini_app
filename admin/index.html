@@ -1133,7 +1133,11 @@
                 submitFormData.append('occasion', formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'));
                 submitFormData.append('personalMessage', formData.get('personalMessage'));
                 submitFormData.append('giftCode', giftCode);
+                
+                // Пробуем разные варианты названия поля для файла
+                submitFormData.append('audioFile', audioFile, audioFile.name);
                 submitFormData.append('songFile', audioFile, audioFile.name);
+                submitFormData.append('file', audioFile, audioFile.name);
                 
                 // Если указан номер заказа, передаем его
                 if (orderNumber) {
@@ -1145,8 +1149,19 @@
                     occasion: formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'),
                     giftCode: giftCode,
                     fileName: audioFile.name,
-                    fileSize: audioFile.size
+                    fileSize: audioFile.size,
+                    fileType: audioFile.type
                 });
+
+                // Логируем все поля FormData
+                console.log('FormData contents:');
+                for (let pair of submitFormData.entries()) {
+                    if (pair[1] instanceof File) {
+                        console.log(pair[0] + ': FILE - ' + pair[1].name + ' (' + pair[1].size + ' bytes, ' + pair[1].type + ')');
+                    } else {
+                        console.log(pair[0] + ': ' + pair[1]);
+                    }
+                }
 
                 // Отправляем запрос
                 const response = await fetch(BACKEND_URL, {
@@ -1237,7 +1252,11 @@
                 submitFormData.append('occasion', selectedOrder.occasion);
                 submitFormData.append('personalMessage', generatePersonalMessage(selectedOrder));
                 submitFormData.append('giftCode', giftCode);
+                
+                // Пробуем разные варианты названия поля для файла
+                submitFormData.append('audioFile', audioFile, audioFile.name);
                 submitFormData.append('songFile', audioFile, audioFile.name);
+                submitFormData.append('file', audioFile, audioFile.name);
 
                 console.log('Sending order gift data:', {
                     orderNumber: selectedOrder.orderNumber || selectedOrder.id,
@@ -1245,8 +1264,19 @@
                     occasion: selectedOrder.occasion,
                     giftCode: giftCode,
                     fileName: audioFile.name,
-                    fileSize: audioFile.size
+                    fileSize: audioFile.size,
+                    fileType: audioFile.type
                 });
+
+                // Логируем все поля FormData
+                console.log('FormData contents:');
+                for (let pair of submitFormData.entries()) {
+                    if (pair[1] instanceof File) {
+                        console.log(pair[0] + ': FILE - ' + pair[1].name + ' (' + pair[1].size + ' bytes, ' + pair[1].type + ')');
+                    } else {
+                        console.log(pair[0] + ': ' + pair[1]);
+                    }
+                }
 
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',

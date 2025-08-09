@@ -1132,16 +1132,25 @@
                 const fileBase64 = await convertFileToBase64(audioFile);
                 
                 // Используем FormData но с base64 данными
-                const submitFormData = new FormData();
-                
+               const submitFormData = new FormData();
+
                 submitFormData.append('action', 'createGift');
                 submitFormData.append('recipientName', formData.get('recipientName'));
-                submitFormData.append('occasion', formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'));
+                submitFormData.append(
+                  'occasion',
+                  formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion')
+                );
                 submitFormData.append('personalMessage', formData.get('personalMessage'));
                 submitFormData.append('giftCode', giftCode);
-                submitFormData.append('audioFileBase64', fileBase64);
-                submitFormData.append('fileName', audioFile.name);
-                submitFormData.append('fileType', audioFile.type);
+                
+                // оригинальный файл
+                submitFormData.append('songFile', audioFile);
+                
+                // base64 версия файла
+                const dataUrl = await readFileAsDataURL(audioFile);
+                submitFormData.append('audioBase64', dataUrl);
+                submitFormData.append('filename', audioFile.name);
+                submitFormData.append('mimeType', audioFile.type || 'audio/mpeg');
                 submitFormData.append('fileSize', audioFile.size.toString());
 
                 // Если указан номер заказа, передаем его
@@ -1252,9 +1261,15 @@
                 submitFormData.append('occasion', selectedOrder.occasion);
                 submitFormData.append('personalMessage', generatePersonalMessage(selectedOrder));
                 submitFormData.append('giftCode', giftCode);
-                submitFormData.append('audioFileBase64', fileBase64);
-                submitFormData.append('fileName', audioFile.name);
-                submitFormData.append('fileType', audioFile.type);
+                
+                // оригинальный файл
+                submitFormData.append('songFile', audioFile);
+                
+                // base64 версия файла
+                const dataUrl = await readFileAsDataURL(audioFile);
+                submitFormData.append('audioBase64', dataUrl);
+                submitFormData.append('filename', audioFile.name);
+                submitFormData.append('mimeType', audioFile.type || 'audio/mpeg');
                 submitFormData.append('fileSize', audioFile.size.toString());
 
                 console.log('Sending order gift data with FormData + base64:', {
@@ -1334,6 +1349,16 @@
                 result += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             return result;
+        }
+
+        // Читаем файл и получаем dataURL (base64)
+        function readFileAsDataURL(file) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
         }
 
         // Загрузка заказов

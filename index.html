@@ -1522,7 +1522,7 @@
 
             const userContact = getUserContact();
 
-            if (userContact === 'pending') {
+            if (userContact === 'Новый') {
                 orderCreationPending = true;
                 confirmBtn.innerHTML = originalText;
                 confirmBtn.disabled = false;
@@ -1577,7 +1577,7 @@
                         orderData.genre,
                         orderData.theme,
                         orderData.wishes,
-                        'pending',
+                        'Новый',
                         new Date().toISOString(),
                         '', // completedAt
                         '', // fileId  
@@ -1594,7 +1594,7 @@
                         localOrders.push({
                             ...orderData,
                             orderId: currentOrderId,
-                            status: 'pending',
+                            status: 'Новый',
                             createdAt: new Date().toISOString(),
                             source: isInTelegram ? 'telegram' : 'web'
                         });
@@ -1996,7 +1996,7 @@
             if (foundOrderRow) {
                 const updatedOrder = {
                     orderId: foundOrderRow[0],
-                    status: foundOrderRow[9] || 'pending', 
+                    status: foundOrderRow[9] || 'Новый', 
                 };
                 console.log('✅ Статус заказа обновлен:', updatedOrder.status);
                 const modalTitle = document.querySelector('.modal-title');
@@ -2065,7 +2065,7 @@
                         genre: foundOrderRow[6],
                         theme: foundOrderRow[7],
                         wishes: foundOrderRow[8],
-                        status: foundOrderRow[9] || 'pending',
+                        status: foundOrderRow[9] || 'Новый',
                         createdAt: foundOrderRow[10],
                         completedAt: foundOrderRow[11],
                         fileId: foundOrderRow[12],
@@ -2153,7 +2153,7 @@
             }
         };
 
-        const status = statusInfo[order.status] || statusInfo['pending'];
+        const status = statusInfo[order.status] || statusInfo['Новый'];
         const isFromSheets = order.source === 'sheets';
 
         const modal = document.createElement('div');
@@ -2197,7 +2197,7 @@
                     </div>
                 </div>
                 
-                ${order.status === 'pending' || order.status === 'pending_sync' ? `
+                ${order.status === 'Новый' || order.status === 'pending_sync' ? `
                     <div style="text-align: center; padding: 12px; background: #f0f4ff; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem;">
                         <strong>📅 Сроки:</strong> 2-5 рабочих дней
                     </div>

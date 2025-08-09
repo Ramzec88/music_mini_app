@@ -1009,6 +1009,26 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
+
+        // Печатаем все пары ключ-значение из FormData
+        (function debugFormData(fd) {
+          const out = {};
+          for (const [k, v] of fd.entries()) {
+            if (k === 'audioBase64') {
+              // Печатаем только длину и первые символы, чтобы не засорять консоль
+              out[k] = {
+                length: typeof v === 'string' ? v.length : '(not a string)',
+                startsWith: typeof v === 'string' ? v.slice(0, 30) : ''
+              };
+            } else if (k === 'songFile') {
+              out[k] = (v && v.name) ? { name: v.name, size: v.size, type: v.type } : typeof v;
+            } else {
+              out[k] = v;
+            }
+          }
+          console.log('FORM DATA DEBUG →', out);
+        })(submitFormData);
+        
         // Загрузка заказов для поиска
         async function loadOrdersForSearch() {
             try {

@@ -825,6 +825,9 @@
             setupEventListeners();
             setupFileUploads();
             setupFormHandlers();
+            
+            // Загружаем тестовые данные сразу
+            loadTestOrdersData();
         });
 
         function setupEventListeners() {
@@ -1121,14 +1124,69 @@
             orderInfo.classList.add('show');
         }
 
-        function getStatusText(status) {
-            const statusMap = {
-                'pending': '⏳ Ожидает',
-                'processing': '🔄 В обработке',
-                'sent': '✅ Отправлено',
-                'delivered': '📦 Доставлено'
+        function getStatusColor(status) {
+            const statusColors = {
+                'pending': '#ffc107',
+                'processing': '#17a2b8',
+                'sent': '#28a745',
+                'delivered': '#6f42c1'
             };
-            return statusMap[status] || '❓ Неизвестно';
+            return statusColors[status] || '#6c757d';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Не указана';
+            
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('ru-RU', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                return dateString;
+            }
+        }
+
+        function createGiftForOrder(orderIdentifier) {
+            console.log('Создание подарка для заказа:', orderIdentifier);
+            
+            // Переключаемся на вкладку создания подарка
+            const createTab = document.querySelector('[data-tab="create"]');
+            const orderModeBtn = document.querySelector('[data-mode="order"]');
+            
+            if (createTab) {
+                createTab.click();
+                
+                setTimeout(() => {
+                    if (orderModeBtn) {
+                        orderModeBtn.click();
+                        
+                        setTimeout(() => {
+                            // Автоматически выбираем заказ
+                            selectOrderForGift(orderIdentifier);
+                        }, 100);
+                    }
+                }, 100);
+            }
+        }
+
+        function viewGift(giftCode) {
+            console.log('Просмотр подарка:', giftCode);
+            if (giftCode) {
+                const giftUrl = `${FRONTEND_BASE_URL}?code=${giftCode}`;
+                window.open(giftUrl, '_blank');
+            } else {
+                showAlert('error', 'Код подарка не найден');
+            }
+        }
+
+        function editOrder(orderIdentifier) {
+            console.log('Редактирование заказа:', orderIdentifier);
+            showAlert('info', 'Функция редактирования заказа в разработке');
         }
 
         function handleManualGiftCreation() {
@@ -1143,7 +1201,7 @@
             showAlert('success', 'Функция создания подарка для заказа в разработке');
         }
 
-        function loadOrders() {
+        async function loadOrders() {
             console.log('Загрузка заказов');
             const container = document.getElementById('orders-container');
             const loading = document.getElementById('orders-loading');
@@ -1151,22 +1209,126 @@
             loading.style.display = 'block';
             container.innerHTML = '';
             
-            // Имитация загрузки
-            setTimeout(() => {
+            try {
+                console.log('Отправляем запрос на сервер для загрузки заказов...');
+                
+                const response = await fetch(BACKEND_URL + '?action=getOrders', {
+                    method: 'GET'
+                });
+                
+                console.log('Ответ от сервера получен:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Данные заказов получены:', data);
+                
                 loading.style.display = 'none';
+                
+                if (data.success && data.orders && data.orders.length > 0) {
+                    // Сохраняем данные заказов для поиска
+                    ordersData = data.orders;
+                    
+                    container.innerHTML = data.orders.map(order => `
+                        <div class="order-card">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                                <h4 style="margin: 0; color: #667eea;">
+                                    ${order.orderNumber || 'Заказ #' + order.id}
+                                </h4>
+                                <span style="background: ${getStatusColor(order.status)}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                                    ${getStatusText(order.status)}
+                                </span>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <p style="margin: 0 0 8px 0;"><strong>👤 Получатель:</strong> ${order.recipientName || 'Не указано'}</p>
+                                <p style="margin: 0 0 8px 0;"><strong>🎉 Повод:</strong> ${order.occasion || 'Не указан'}</p>
+                                <p style="margin: 0 0 8px 0;"><strong>📅 Дата:</strong> ${formatDate(order.createdAt)}</p>
+                                <p style="margin: 0 0 8px 0;"><strong>📱 Телефон:</strong> ${order.phone || 'Не указан'}</p>
+                            </div>
+                            
+                            ${order.personalMessage ? `
+                                <div style="background: rgba(102, 126, 234, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                                    <p style="margin: 0; font-style: italic; color: #495057;">
+                                        "${order.personalMessage}"
+                                    </p>
+                                </div>
+                            ` : ''}
+                            
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                ${order.status !== 'sent' ? `
+                                    <button class="btn btn-success" onclick="createGiftForOrder('${order.orderNumber || order.id}')" style="font-size: 12px; padding: 8px 12px; min-width: auto;">
+                                        🎁 Создать подарок
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-info" onclick="viewGift('${order.giftCode}')" style="font-size: 12px; padding: 8px 12px; min-width: auto;">
+                                        👀 Посмотреть подарок
+                                    </button>
+                                `}
+                                
+                                <button class="btn btn-warning" onclick="editOrder('${order.orderNumber || order.id}')" style="font-size: 12px; padding: 8px 12px; min-width: auto;">
+                                    ✏️ Редактировать
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                } else {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #6c757d; grid-column: 1 / -1;">
+                            <div style="font-size: 48px; margin-bottom: 20px;">📋</div>
+                            <p>Заказы не найдены</p>
+                            <button class="btn btn-primary" onclick="loadOrders()" style="margin-top: 15px;">
+                                🔄 Попробовать снова
+                            </button>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Ошибка загрузки заказов:', error);
+                loading.style.display = 'none';
+                
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #6c757d;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">📋</div>
-                        <p>Заказы не найдены или функция в разработке</p>
+                    <div style="text-align: center; padding: 40px; color: #dc3545; grid-column: 1 / -1;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+                        <p>Ошибка загрузки заказов</p>
+                        <p style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+                            ${error.message}
+                        </p>
+                        <button class="btn btn-primary" onclick="loadOrders()" style="margin-top: 15px;">
+                            🔄 Попробовать снова
+                        </button>
                     </div>
                 `;
-            }, 1000);
+                
+                // Загружаем тестовые данные как fallback
+                loadTestOrdersData();
+            }
         }
 
         function loadOrdersForSearch() {
             console.log('Загрузка заказов для поиска');
-            // Здесь будет загрузка данных с сервера
-            // Пока используем тестовые данные
+            
+            // Если данные уже загружены, не делаем повторный запрос
+            if (ordersData.length > 0) {
+                console.log('Данные заказов уже загружены:', ordersData.length);
+                return;
+            }
+            
+            // Попробуем загрузить с сервера
+            loadOrders().then(() => {
+                console.log('Заказы загружены для поиска');
+            }).catch(error => {
+                console.error('Ошибка загрузки заказов для поиска:', error);
+                loadTestOrdersData();
+            });
+        }
+
+        function loadTestOrdersData() {
+            console.log('Загружаем тестовые данные заказов');
             ordersData = [
                 {
                     id: '1',
@@ -1174,8 +1336,9 @@
                     recipientName: 'Алексей Петров',
                     occasion: 'День рождения',
                     status: 'pending',
-                    createdAt: '2024-01-15',
-                    personalMessage: 'Поздравляю с днем рождения!'
+                    createdAt: '2024-01-15T10:30:00Z',
+                    personalMessage: 'Поздравляю с днем рождения! Желаю счастья, здоровья и успехов!',
+                    phone: '+7 (999) 123-45-67'
                 },
                 {
                     id: '2',
@@ -1183,10 +1346,79 @@
                     recipientName: 'Мария Иванова',
                     occasion: 'Новый год',
                     status: 'processing',
-                    createdAt: '2024-01-14',
-                    personalMessage: 'С Новым годом!'
+                    createdAt: '2024-01-14T15:45:00Z',
+                    personalMessage: 'С Новым годом! Пусть он принесет много радости!',
+                    phone: '+7 (888) 987-65-43'
+                },
+                {
+                    id: '3',
+                    orderNumber: 'ORD123458',
+                    recipientName: 'Елена Сидорова',
+                    occasion: '8 марта',
+                    status: 'sent',
+                    createdAt: '2024-01-13T12:20:00Z',
+                    personalMessage: 'Поздравляю с 8 марта! Будь всегда такой же прекрасной!',
+                    phone: '+7 (777) 555-33-22',
+                    giftCode: 'GIFT001'
                 }
             ];
+            
+            // Если мы на вкладке заказов, обновляем отображение
+            const activeTab = document.querySelector('.nav-tab.active');
+            if (activeTab && activeTab.dataset.tab === 'orders') {
+                displayTestOrders();
+            }
+        }
+
+        function displayTestOrders() {
+            const container = document.getElementById('orders-container');
+            const loading = document.getElementById('orders-loading');
+            
+            loading.style.display = 'none';
+            
+            container.innerHTML = ordersData.map(order => `
+                <div class="order-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <h4 style="margin: 0; color: #667eea;">
+                            ${order.orderNumber || 'Заказ #' + order.id}
+                        </h4>
+                        <span style="background: ${getStatusColor(order.status)}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                            ${getStatusText(order.status)}
+                        </span>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <p style="margin: 0 0 8px 0;"><strong>👤 Получатель:</strong> ${order.recipientName || 'Не указано'}</p>
+                        <p style="margin: 0 0 8px 0;"><strong>🎉 Повод:</strong> ${order.occasion || 'Не указан'}</p>
+                        <p style="margin: 0 0 8px 0;"><strong>📅 Дата:</strong> ${formatDate(order.createdAt)}</p>
+                        <p style="margin: 0 0 8px 0;"><strong>📱 Телефон:</strong> ${order.phone || 'Не указан'}</p>
+                    </div>
+                    
+                    ${order.personalMessage ? `
+                        <div style="background: rgba(102, 126, 234, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                            <p style="margin: 0; font-style: italic; color: #495057;">
+                                "${order.personalMessage}"
+                            </p>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        ${order.status !== 'sent' ? `
+                            <button class="btn btn-success" onclick="createGiftForOrder('${order.orderNumber || order.id}')" style="font-size: 12px; padding: 8px 12px; min-width: auto;">
+                                🎁 Создать подарок
+                            </button>
+                        ` : `
+                            <button class="btn btn-info" onclick="viewGift('${order.giftCode}')" style="font-size: 12px; padding: 8px 12px; min-width: auto;">
+                                👀 Посмотреть подарок
+                            </button>
+                        `}
+                        
+                        <button class="btn btn-warning" onclick="editOrder('${order.orderNumber || order.id}')" style="font-size: 12px; padding: 8px 12px; min-width: auto;">
+                            ✏️ Редактировать
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function loadGifts() {

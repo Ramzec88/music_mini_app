@@ -1131,36 +1131,38 @@
                 console.log('Converting file to base64...');
                 const fileBase64 = await convertFileToBase64(audioFile);
                 
-                // Создаем JSON payload вместо FormData
-                const payload = {
-                    action: 'createGift',
-                    recipientName: formData.get('recipientName'),
-                    occasion: formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'),
-                    personalMessage: formData.get('personalMessage'),
-                    giftCode: giftCode,
-                    audioFileBase64: fileBase64,
-                    fileName: audioFile.name,
-                    fileType: audioFile.type,
-                    fileSize: audioFile.size
-                };
+                // Используем FormData но с base64 данными
+                const submitFormData = new FormData();
+                
+                submitFormData.append('action', 'createGift');
+                submitFormData.append('recipientName', formData.get('recipientName'));
+                submitFormData.append('occasion', formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'));
+                submitFormData.append('personalMessage', formData.get('personalMessage'));
+                submitFormData.append('giftCode', giftCode);
+                submitFormData.append('audioFileBase64', fileBase64);
+                submitFormData.append('fileName', audioFile.name);
+                submitFormData.append('fileType', audioFile.type);
+                submitFormData.append('fileSize', audioFile.size.toString());
 
                 // Если указан номер заказа, передаем его
                 if (orderNumber) {
-                    payload.orderNumber = orderNumber;
+                    submitFormData.append('orderNumber', orderNumber);
                 }
 
-                console.log('Sending manual gift data as JSON:', {
-                    ...payload,
-                    audioFileBase64: '[BASE64_DATA_LENGTH: ' + fileBase64.length + ']'
+                console.log('Sending manual gift data with FormData + base64:', {
+                    recipientName: formData.get('recipientName'),
+                    occasion: formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'),
+                    giftCode: giftCode,
+                    fileName: audioFile.name,
+                    fileSize: audioFile.size,
+                    fileType: audioFile.type,
+                    base64Length: fileBase64.length
                 });
 
-                // Отправляем как JSON
+                // Отправляем как FormData (без Content-Type заголовка)
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
+                    body: submitFormData
                 });
 
                 const result = await response.json();
@@ -1240,33 +1242,36 @@
                 console.log('Converting file to base64...');
                 const fileBase64 = await convertFileToBase64(audioFile);
                 
-                // Создаем JSON payload
+                // Используем FormData с base64 данными
                 const giftCode = generateGiftCode();
-                const payload = {
-                    action: 'createGift',
+                const submitFormData = new FormData();
+                
+                submitFormData.append('action', 'createGift');
+                submitFormData.append('orderNumber', selectedOrder.orderNumber || selectedOrder.id);
+                submitFormData.append('recipientName', selectedOrder.recipientName);
+                submitFormData.append('occasion', selectedOrder.occasion);
+                submitFormData.append('personalMessage', generatePersonalMessage(selectedOrder));
+                submitFormData.append('giftCode', giftCode);
+                submitFormData.append('audioFileBase64', fileBase64);
+                submitFormData.append('fileName', audioFile.name);
+                submitFormData.append('fileType', audioFile.type);
+                submitFormData.append('fileSize', audioFile.size.toString());
+
+                console.log('Sending order gift data with FormData + base64:', {
                     orderNumber: selectedOrder.orderNumber || selectedOrder.id,
                     recipientName: selectedOrder.recipientName,
                     occasion: selectedOrder.occasion,
-                    personalMessage: generatePersonalMessage(selectedOrder),
                     giftCode: giftCode,
-                    audioFileBase64: fileBase64,
                     fileName: audioFile.name,
+                    fileSize: audioFile.size,
                     fileType: audioFile.type,
-                    fileSize: audioFile.size
-                };
-
-                console.log('Sending order gift data as JSON:', {
-                    ...payload,
-                    audioFileBase64: '[BASE64_DATA_LENGTH: ' + fileBase64.length + ']'
+                    base64Length: fileBase64.length
                 });
 
-                // Отправляем как JSON
+                // Отправляем как FormData (без Content-Type заголовка)
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
+                    body: submitFormData
                 });
 
                 const result = await response.json();

@@ -1088,9 +1088,11 @@
                     <strong>Дата заказа:</strong>
                     <div class="order-detail-value">${order.createdAt || order.orderDate || 'Не указана'}</div>
                 </div>
-                <div class="order-item">
-                    <strong>Заказчик:</strong>
-                    <div class="order-detail-value">${order.userContact || 'Не указан'}</div>
+                <div class="order-detail">
+                  <strong>Заказчик:</strong>
+                  <div class="order-detail-value">
+                    ${order.userContact || order.contact || order.customerContact || 'Не указан'}
+                  </div>
                 </div>
 
                 

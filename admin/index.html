@@ -1126,23 +1126,31 @@
                 // Подготавливаем данные для отправки
                 const orderNumber = formData.get('orderNumber')?.trim() || '';
                 const giftCode = orderNumber || generateGiftCode();
+                
+                // Создаем новую FormData для отправки
                 const submitFormData = new FormData();
                 
+                // Добавляем все текстовые поля
                 submitFormData.append('action', 'createGift');
                 submitFormData.append('recipientName', formData.get('recipientName'));
                 submitFormData.append('occasion', formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'));
                 submitFormData.append('personalMessage', formData.get('personalMessage'));
                 submitFormData.append('giftCode', giftCode);
                 
-                // Пробуем разные варианты названия поля для файла
-                submitFormData.append('audioFile', audioFile, audioFile.name);
-                submitFormData.append('songFile', audioFile, audioFile.name);
-                submitFormData.append('file', audioFile, audioFile.name);
-                
                 // Если указан номер заказа, передаем его
                 if (orderNumber) {
                     submitFormData.append('orderNumber', orderNumber);
                 }
+
+                // Пробуем разные способы добавления файла
+                submitFormData.append('audioFile', audioFile);
+                submitFormData.append('songFile', audioFile);
+                submitFormData.append('file', audioFile);
+                submitFormData.append('uploadedFile', audioFile);
+                
+                // Также пробуем с явным указанием имени файла
+                submitFormData.append('audio', audioFile, audioFile.name);
+                submitFormData.append('song', audioFile, audioFile.name);
 
                 console.log('Sending manual gift data:', {
                     recipientName: formData.get('recipientName'),
@@ -1162,6 +1170,16 @@
                         console.log(pair[0] + ': ' + pair[1]);
                     }
                 }
+
+                // Попробуем также отправить как blob
+                console.log('Trying with different content types...');
+                
+                // Альтернативный способ - конвертируем в base64
+                const fileBase64 = await convertFileToBase64(audioFile);
+                submitFormData.append('audioFileBase64', fileBase64);
+                submitFormData.append('fileName', audioFile.name);
+                submitFormData.append('fileType', audioFile.type);
+                submitFormData.append('fileSize', audioFile.size.toString());
 
                 // Отправляем запрос
                 const response = await fetch(BACKEND_URL, {
@@ -1253,10 +1271,15 @@
                 submitFormData.append('personalMessage', generatePersonalMessage(selectedOrder));
                 submitFormData.append('giftCode', giftCode);
                 
-                // Пробуем разные варианты названия поля для файла
-                submitFormData.append('audioFile', audioFile, audioFile.name);
-                submitFormData.append('songFile', audioFile, audioFile.name);
-                submitFormData.append('file', audioFile, audioFile.name);
+                // Пробуем разные способы добавления файла
+                submitFormData.append('audioFile', audioFile);
+                submitFormData.append('songFile', audioFile);
+                submitFormData.append('file', audioFile);
+                submitFormData.append('uploadedFile', audioFile);
+                
+                // Также пробуем с явным указанием имени файла
+                submitFormData.append('audio', audioFile, audioFile.name);
+                submitFormData.append('song', audioFile, audioFile.name);
 
                 console.log('Sending order gift data:', {
                     orderNumber: selectedOrder.orderNumber || selectedOrder.id,
@@ -1277,6 +1300,13 @@
                         console.log(pair[0] + ': ' + pair[1]);
                     }
                 }
+
+                // Добавляем base64 версию файла
+                const fileBase64 = await convertFileToBase64(audioFile);
+                submitFormData.append('audioFileBase64', fileBase64);
+                submitFormData.append('fileName', audioFile.name);
+                submitFormData.append('fileType', audioFile.type);
+                submitFormData.append('fileSize', audioFile.size.toString());
 
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',
@@ -1548,6 +1578,20 @@
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
                 showAlert('Ссылка скопирована!', 'success');
+            });
+        }
+
+        // Функция для конвертации файла в base64
+        function convertFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    // Убираем префикс "data:audio/mpeg;base64," и оставляем только base64
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
             });
         }
     </script>

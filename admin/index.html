@@ -1126,65 +1126,41 @@
                 // Подготавливаем данные для отправки
                 const orderNumber = formData.get('orderNumber')?.trim() || '';
                 const giftCode = orderNumber || generateGiftCode();
-                
-                // Создаем новую FormData для отправки
-                const submitFormData = new FormData();
-                
-                // Добавляем все текстовые поля
-                submitFormData.append('action', 'createGift');
-                submitFormData.append('recipientName', formData.get('recipientName'));
-                submitFormData.append('occasion', formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'));
-                submitFormData.append('personalMessage', formData.get('personalMessage'));
-                submitFormData.append('giftCode', giftCode);
-                
-                // Если указан номер заказа, передаем его
-                if (orderNumber) {
-                    submitFormData.append('orderNumber', orderNumber);
-                }
 
-                // Пробуем разные способы добавления файла
-                submitFormData.append('audioFile', audioFile);
-                submitFormData.append('songFile', audioFile);
-                submitFormData.append('file', audioFile);
-                submitFormData.append('uploadedFile', audioFile);
+                // Конвертируем файл в base64
+                console.log('Converting file to base64...');
+                const fileBase64 = await convertFileToBase64(audioFile);
                 
-                // Также пробуем с явным указанием имени файла
-                submitFormData.append('audio', audioFile, audioFile.name);
-                submitFormData.append('song', audioFile, audioFile.name);
-
-                console.log('Sending manual gift data:', {
+                // Создаем JSON payload вместо FormData
+                const payload = {
+                    action: 'createGift',
                     recipientName: formData.get('recipientName'),
                     occasion: formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'),
+                    personalMessage: formData.get('personalMessage'),
                     giftCode: giftCode,
+                    audioFileBase64: fileBase64,
                     fileName: audioFile.name,
-                    fileSize: audioFile.size,
-                    fileType: audioFile.type
-                });
+                    fileType: audioFile.type,
+                    fileSize: audioFile.size
+                };
 
-                // Логируем все поля FormData
-                console.log('FormData contents:');
-                for (let pair of submitFormData.entries()) {
-                    if (pair[1] instanceof File) {
-                        console.log(pair[0] + ': FILE - ' + pair[1].name + ' (' + pair[1].size + ' bytes, ' + pair[1].type + ')');
-                    } else {
-                        console.log(pair[0] + ': ' + pair[1]);
-                    }
+                // Если указан номер заказа, передаем его
+                if (orderNumber) {
+                    payload.orderNumber = orderNumber;
                 }
 
-                // Попробуем также отправить как blob
-                console.log('Trying with different content types...');
-                
-                // Альтернативный способ - конвертируем в base64
-                const fileBase64 = await convertFileToBase64(audioFile);
-                submitFormData.append('audioFileBase64', fileBase64);
-                submitFormData.append('fileName', audioFile.name);
-                submitFormData.append('fileType', audioFile.type);
-                submitFormData.append('fileSize', audioFile.size.toString());
+                console.log('Sending manual gift data as JSON:', {
+                    ...payload,
+                    audioFileBase64: '[BASE64_DATA_LENGTH: ' + fileBase64.length + ']'
+                });
 
-                // Отправляем запрос
+                // Отправляем как JSON
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',
-                    body: submitFormData
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
                 });
 
                 const result = await response.json();
@@ -1260,57 +1236,37 @@
                     progressFill.style.width = progress + '%';
                 }, 300);
 
-                // Подготавливаем данные
+                // Конвертируем файл в base64
+                console.log('Converting file to base64...');
+                const fileBase64 = await convertFileToBase64(audioFile);
+                
+                // Создаем JSON payload
                 const giftCode = generateGiftCode();
-                const submitFormData = new FormData();
-                
-                submitFormData.append('action', 'createGift');
-                submitFormData.append('orderNumber', selectedOrder.orderNumber || selectedOrder.id);
-                submitFormData.append('recipientName', selectedOrder.recipientName);
-                submitFormData.append('occasion', selectedOrder.occasion);
-                submitFormData.append('personalMessage', generatePersonalMessage(selectedOrder));
-                submitFormData.append('giftCode', giftCode);
-                
-                // Пробуем разные способы добавления файла
-                submitFormData.append('audioFile', audioFile);
-                submitFormData.append('songFile', audioFile);
-                submitFormData.append('file', audioFile);
-                submitFormData.append('uploadedFile', audioFile);
-                
-                // Также пробуем с явным указанием имени файла
-                submitFormData.append('audio', audioFile, audioFile.name);
-                submitFormData.append('song', audioFile, audioFile.name);
-
-                console.log('Sending order gift data:', {
+                const payload = {
+                    action: 'createGift',
                     orderNumber: selectedOrder.orderNumber || selectedOrder.id,
                     recipientName: selectedOrder.recipientName,
                     occasion: selectedOrder.occasion,
+                    personalMessage: generatePersonalMessage(selectedOrder),
                     giftCode: giftCode,
+                    audioFileBase64: fileBase64,
                     fileName: audioFile.name,
-                    fileSize: audioFile.size,
-                    fileType: audioFile.type
+                    fileType: audioFile.type,
+                    fileSize: audioFile.size
+                };
+
+                console.log('Sending order gift data as JSON:', {
+                    ...payload,
+                    audioFileBase64: '[BASE64_DATA_LENGTH: ' + fileBase64.length + ']'
                 });
 
-                // Логируем все поля FormData
-                console.log('FormData contents:');
-                for (let pair of submitFormData.entries()) {
-                    if (pair[1] instanceof File) {
-                        console.log(pair[0] + ': FILE - ' + pair[1].name + ' (' + pair[1].size + ' bytes, ' + pair[1].type + ')');
-                    } else {
-                        console.log(pair[0] + ': ' + pair[1]);
-                    }
-                }
-
-                // Добавляем base64 версию файла
-                const fileBase64 = await convertFileToBase64(audioFile);
-                submitFormData.append('audioFileBase64', fileBase64);
-                submitFormData.append('fileName', audioFile.name);
-                submitFormData.append('fileType', audioFile.type);
-                submitFormData.append('fileSize', audioFile.size.toString());
-
+                // Отправляем как JSON
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',
-                    body: submitFormData
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
                 });
 
                 const result = await response.json();

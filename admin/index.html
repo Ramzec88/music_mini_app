@@ -159,6 +159,79 @@
             color: white;
         }
 
+        /* Улучшенные стили для загрузки файлов */
+        .file-upload-area {
+            border: 2px dashed #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .file-upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .file-upload-area.has-file {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+
+        .file-upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #6c757d;
+        }
+
+        .file-upload-text {
+            margin-bottom: 10px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .file-upload-hint {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .file-info {
+            display: none;
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #155724;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .hidden-file-input {
+            position: absolute;
+            left: -9999px;
+            opacity: 0;
+        }
+
         /* Стили для поиска заказов */
         .order-search {
             position: relative;
@@ -389,11 +462,12 @@
 
         .progress-bar {
             width: 100%;
-            height: 6px;
+            height: 8px;
             background: #e9ecef;
-            border-radius: 3px;
+            border-radius: 4px;
             margin-top: 15px;
             overflow: hidden;
+            display: none;
         }
 
         .progress-fill {
@@ -467,6 +541,16 @@
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
         }
     </style>
 </head>
@@ -545,13 +629,20 @@
 
                             <div class="form-group">
                                 <label class="form-label">🎵 Аудиофайл *</label>
-                                <input type="file" class="form-control file-input" name="audioFile" accept="audio/*" required>
-                                <small style="color: #6c757d; margin-top: 5px; display: block;">
-                                    Поддерживаемые форматы: MP3, WAV, M4A. Максимальный размер: 10 МБ
-                                </small>
+                                <div class="file-upload-area" id="manual-file-upload">
+                                    <div class="file-upload-icon">🎵</div>
+                                    <div class="file-upload-text">Нажмите или перетащите аудиофайл</div>
+                                    <div class="file-upload-hint">Поддерживаемые форматы: MP3, WAV, M4A, OGG. Максимальный размер: 10 МБ</div>
+                                    <input type="file" class="hidden-file-input" name="audioFile" accept="audio/*,.mp3,.wav,.m4a,.ogg" required>
+                                </div>
+                                <div class="file-info" id="manual-file-info">
+                                    <div class="file-name" id="manual-file-name"></div>
+                                    <div class="file-size" id="manual-file-size"></div>
+                                </div>
+                                <div class="error-message" id="manual-file-error"></div>
                             </div>
 
-                            <div class="progress-bar" id="manual-upload-progress" style="display: none;">
+                            <div class="progress-bar" id="manual-upload-progress">
                                 <div class="progress-fill"></div>
                             </div>
 
@@ -583,13 +674,20 @@
                         <form id="order-gift-form" style="display: none;">
                             <div class="form-group">
                                 <label class="form-label">🎵 Аудиофайл для заказа *</label>
-                                <input type="file" class="form-control file-input" name="orderAudioFile" accept="audio/*" required>
-                                <small style="color: #6c757d; margin-top: 5px; display: block;">
-                                    Поддерживаемые форматы: MP3, WAV, M4A. Максимальный размер: 10 МБ
-                                </small>
+                                <div class="file-upload-area" id="order-file-upload">
+                                    <div class="file-upload-icon">🎵</div>
+                                    <div class="file-upload-text">Нажмите или перетащите аудиофайл</div>
+                                    <div class="file-upload-hint">Поддерживаемые форматы: MP3, WAV, M4A, OGG. Максимальный размер: 10 МБ</div>
+                                    <input type="file" class="hidden-file-input" name="orderAudioFile" accept="audio/*,.mp3,.wav,.m4a,.ogg" required>
+                                </div>
+                                <div class="file-info" id="order-file-info">
+                                    <div class="file-name" id="order-file-name"></div>
+                                    <div class="file-size" id="order-file-size"></div>
+                                </div>
+                                <div class="error-message" id="order-file-error"></div>
                             </div>
 
-                            <div class="progress-bar" id="order-upload-progress" style="display: none;">
+                            <div class="progress-bar" id="order-upload-progress">
                                 <div class="progress-fill"></div>
                             </div>
 
@@ -675,10 +773,15 @@
         // Глобальные переменные
         let ordersData = [];
         let selectedOrder = null;
+        let selectedFiles = {
+            manual: null,
+            order: null
+        };
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
+            setupFileUploads();
             loadStats();
         });
 
@@ -779,6 +882,133 @@
             document.getElementById('order-gift-form').addEventListener('submit', handleOrderGiftSubmit);
         }
 
+        // Настройка загрузки файлов
+        function setupFileUploads() {
+            setupFileUpload('manual');
+            setupFileUpload('order');
+        }
+
+        function setupFileUpload(mode) {
+            const uploadArea = document.getElementById(`${mode}-file-upload`);
+            const fileInput = uploadArea.querySelector('input[type="file"]');
+            const fileInfo = document.getElementById(`${mode}-file-info`);
+            const fileName = document.getElementById(`${mode}-file-name`);
+            const fileSize = document.getElementById(`${mode}-file-size`);
+            const errorDiv = document.getElementById(`${mode}-file-error`);
+
+            // Клик по области загрузки
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // Обработка выбора файла
+            fileInput.addEventListener('change', (e) => {
+                handleFileSelect(e.target.files[0], mode);
+            });
+
+            // Drag & Drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect(files[0], mode);
+                }
+            });
+
+            function handleFileSelect(file, mode) {
+                const uploadArea = document.getElementById(`${mode}-file-upload`);
+                const fileInfo = document.getElementById(`${mode}-file-info`);
+                const fileName = document.getElementById(`${mode}-file-name`);
+                const fileSize = document.getElementById(`${mode}-file-size`);
+                const errorDiv = document.getElementById(`${mode}-file-error`);
+                const fileInput = uploadArea.querySelector('input[type="file"]');
+
+                // Сброс предыдущих ошибок
+                errorDiv.style.display = 'none';
+                errorDiv.textContent = '';
+
+                if (!file) {
+                    resetFileUpload(mode);
+                    return;
+                }
+
+                // Проверка типа файла
+                const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/ogg', 'audio/x-m4a'];
+                const fileExtension = file.name.toLowerCase().split('.').pop();
+                const allowedExtensions = ['mp3', 'wav', 'm4a', 'ogg'];
+
+                if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+                    showFileError(`Неподдерживаемый тип файла. Разрешены: MP3, WAV, M4A, OGG`, mode);
+                    resetFileUpload(mode);
+                    return;
+                }
+
+                // Проверка размера файла (10 МБ)
+                const maxSize = 10 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    showFileError(`Файл слишком большой. Максимальный размер: 10 МБ`, mode);
+                    resetFileUpload(mode);
+                    return;
+                }
+
+                // Сохраняем файл
+                selectedFiles[mode] = file;
+
+                // Обновляем интерфейс
+                uploadArea.classList.add('has-file');
+                uploadArea.querySelector('.file-upload-text').textContent = 'Файл выбран';
+                uploadArea.querySelector('.file-upload-hint').textContent = 'Нажмите для выбора другого файла';
+                
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileInfo.classList.add('show');
+
+                // Создаем новый FileList для input
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+
+                console.log(`File selected for ${mode}:`, file.name, formatFileSize(file.size));
+            }
+        }
+
+        function resetFileUpload(mode) {
+            const uploadArea = document.getElementById(`${mode}-file-upload`);
+            const fileInfo = document.getElementById(`${mode}-file-info`);
+            const fileInput = uploadArea.querySelector('input[type="file"]');
+
+            selectedFiles[mode] = null;
+            uploadArea.classList.remove('has-file');
+            uploadArea.querySelector('.file-upload-text').textContent = 'Нажмите или перетащите аудиофайл';
+            uploadArea.querySelector('.file-upload-hint').textContent = 'Поддерживаемые форматы: MP3, WAV, M4A, OGG. Максимальный размер: 10 МБ';
+            fileInfo.classList.remove('show');
+            fileInput.value = '';
+        }
+
+        function showFileError(message, mode) {
+            const errorDiv = document.getElementById(`${mode}-file-error`);
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
         // Загрузка заказов для поиска
         async function loadOrdersForSearch() {
             try {
@@ -872,15 +1102,10 @@
             const progressBar = document.getElementById('manual-upload-progress');
             const progressFill = progressBar.querySelector('.progress-fill');
             
-            // Валидация
-            const audioFile = formData.get('audioFile');
-            if (!audioFile || audioFile.size === 0) {
+            // Проверяем выбранный файл
+            const audioFile = selectedFiles.manual;
+            if (!audioFile) {
                 showAlert('Пожалуйста, выберите аудиофайл', 'error');
-                return;
-            }
-            
-            if (audioFile.size > 10 * 1024 * 1024) {
-                showAlert('Размер файла не должен превышать 10 МБ', 'error');
                 return;
             }
 
@@ -893,10 +1118,10 @@
                 // Симуляция прогресса
                 let progress = 0;
                 const progressInterval = setInterval(() => {
-                    progress += Math.random() * 30;
-                    if (progress > 90) progress = 90;
+                    progress += Math.random() * 20;
+                    if (progress > 85) progress = 85;
                     progressFill.style.width = progress + '%';
-                }, 500);
+                }, 300);
 
                 // Подготавливаем данные для отправки
                 const orderNumber = formData.get('orderNumber')?.trim() || '';
@@ -908,12 +1133,20 @@
                 submitFormData.append('occasion', formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'));
                 submitFormData.append('personalMessage', formData.get('personalMessage'));
                 submitFormData.append('giftCode', giftCode);
-                submitFormData.append('songFile', audioFile);
+                submitFormData.append('songFile', audioFile, audioFile.name);
                 
                 // Если указан номер заказа, передаем его
                 if (orderNumber) {
                     submitFormData.append('orderNumber', orderNumber);
                 }
+
+                console.log('Sending manual gift data:', {
+                    recipientName: formData.get('recipientName'),
+                    occasion: formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'),
+                    giftCode: giftCode,
+                    fileName: audioFile.name,
+                    fileSize: audioFile.size
+                });
 
                 // Отправляем запрос
                 const response = await fetch(BACKEND_URL, {
@@ -925,6 +1158,8 @@
                 clearInterval(progressInterval);
                 progressFill.style.width = '100%';
 
+                console.log('Backend response:', result);
+
                 if (result.success) {
                     const successMessage = orderNumber 
                         ? `Подарок создан и привязан к заказу ${orderNumber}! Код: ${result.giftCode}`
@@ -935,7 +1170,9 @@
                     // Показываем результат с информацией о связи с заказом
                     showGiftResult(result, orderNumber ? { orderNumber, isManual: true } : null);
                     
+                    // Сброс формы
                     e.target.reset();
+                    resetFileUpload('manual');
                     document.getElementById('custom-occasion').style.display = 'none';
                     
                     // Если был указан номер заказа, обновляем списки
@@ -967,22 +1204,15 @@
                 return;
             }
             
-            const formData = new FormData(e.target);
-            const createBtn = document.getElementById('order-create-btn');
-            const progressBar = document.getElementById('order-upload-progress');
-            const progressFill = progressBar.querySelector('.progress-fill');
-            
-            // Валидация
-            const audioFile = formData.get('orderAudioFile');
-            if (!audioFile || audioFile.size === 0) {
+            const audioFile = selectedFiles.order;
+            if (!audioFile) {
                 showAlert('Пожалуйста, выберите аудиофайл для заказа', 'error');
                 return;
             }
             
-            if (audioFile.size > 10 * 1024 * 1024) {
-                showAlert('Размер файла не должен превышать 10 МБ', 'error');
-                return;
-            }
+            const createBtn = document.getElementById('order-create-btn');
+            const progressBar = document.getElementById('order-upload-progress');
+            const progressFill = progressBar.querySelector('.progress-fill');
 
             try {
                 createBtn.classList.add('loading');
@@ -992,10 +1222,10 @@
                 // Симуляция прогресса
                 let progress = 0;
                 const progressInterval = setInterval(() => {
-                    progress += Math.random() * 30;
-                    if (progress > 90) progress = 90;
+                    progress += Math.random() * 20;
+                    if (progress > 85) progress = 85;
                     progressFill.style.width = progress + '%';
-                }, 500);
+                }, 300);
 
                 // Подготавливаем данные
                 const giftCode = generateGiftCode();
@@ -1007,7 +1237,16 @@
                 submitFormData.append('occasion', selectedOrder.occasion);
                 submitFormData.append('personalMessage', generatePersonalMessage(selectedOrder));
                 submitFormData.append('giftCode', giftCode);
-                submitFormData.append('songFile', audioFile);
+                submitFormData.append('songFile', audioFile, audioFile.name);
+
+                console.log('Sending order gift data:', {
+                    orderNumber: selectedOrder.orderNumber || selectedOrder.id,
+                    recipientName: selectedOrder.recipientName,
+                    occasion: selectedOrder.occasion,
+                    giftCode: giftCode,
+                    fileName: audioFile.name,
+                    fileSize: audioFile.size
+                });
 
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',
@@ -1018,12 +1257,15 @@
                 clearInterval(progressInterval);
                 progressFill.style.width = '100%';
 
+                console.log('Backend response:', result);
+
                 if (result.success) {
                     showAlert(`Подарок для заказа ${selectedOrder.orderNumber || selectedOrder.id} создан!`, 'success');
                     showGiftResult(result, selectedOrder);
                     
                     // Сбрасываем форму
                     e.target.reset();
+                    resetFileUpload('order');
                     document.getElementById('selected-order-info').classList.remove('show');
                     document.getElementById('order-gift-form').style.display = 'none';
                     document.getElementById('order-search').value = '';

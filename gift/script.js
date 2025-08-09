@@ -186,7 +186,7 @@ function showLoadingState() {
     const loadingDiv = document.createElement('div');
     loadingDiv.id = 'loading-state';
     loadingDiv.innerHTML = `
-      <div style="text-align: center; padding: 20px;">
+      <div style="text-align: center; padding: 10px;">
         <div style="font-size: 48px; margin-bottom: 10px;">🎵</div>
         <h3 style="color: var(--text-color); margin-bottom: 7px;">Загружаем твой подарок...</h3>
         <p style="color: var(--text-secondary-color);">Подождите немного</p>

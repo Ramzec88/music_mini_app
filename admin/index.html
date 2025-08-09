@@ -825,35 +825,54 @@
         let lastCreatedGift = null; // Для хранения данных последнего созданного подарка
 
         // Инициализация
-        document.addEventListener('DOMContentLoaded', () => {
-            setupEventListeners();
-            setupFileUploads();
-        });
+        function init() {
+          setupEventListeners();
+          setupFileUploads();
+        }
+        
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', init);
+        } else {
+          init(); // DOM уже готов – запускаем сразу
+        }
 
         function setupEventListeners() {
-            // Переключение табов
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const targetTab = tab.dataset.tab;
-                    
-                    // Убираем активный класс со всех табов и панелей
-                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-                    
-                    // Добавляем активный класс к выбранному табу и панели
-                    tab.classList.add('active');
-                    document.getElementById(targetTab).classList.add('active');
-                    
-                    // Дополнительная логика для конкретных вкладок
-                    if (targetTab === 'orders') {
-                        loadOrders();
-                    } else if (targetTab === 'manage') {
-                        loadGifts();
-                    } else if (targetTab === 'stats') {
-                        loadStats();
-                    }
-                });
+          // Переключение табов
+          const tabs  = document.querySelectorAll('.nav-tab');
+          const panes = document.querySelectorAll('.tab-pane');
+        
+          if (!tabs.length || !panes.length) {
+            console.warn('Tabs or panes not found');
+            return;
+          }
+        
+          tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+              const targetTab = tab.dataset.tab;
+        
+              // снять активность
+              tabs.forEach(t => t.classList.remove('active'));
+              panes.forEach(p => p.classList.remove('active'));
+        
+              // активировать выбранные
+              tab.classList.add('active');
+              const pane = document.getElementById(targetTab);
+              if (pane) pane.classList.add('active'); // защита от опечатки в id
+        
+              // подгрузка данных для вкладок
+              if (targetTab === 'orders')      loadOrders();
+              else if (targetTab === 'manage') loadGifts();
+              else if (targetTab === 'stats')  loadStats();
             });
+          });
+        
+          // Переключение режима создания (оставь, если используется)
+          document.querySelectorAll('.toggle-option').forEach(option => {
+            option.addEventListener('click', () => {
+              const mode = option.dataset.mode;
+              // твоя логика переключения режима...
+            });
+          });
 
             // Переключение режима создания
             document.querySelectorAll('.toggle-option').forEach(option => {

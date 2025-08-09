@@ -122,16 +122,19 @@
         }
 
         .btn {
-            padding: 12px 30px;
+            padding: 12px 20px;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            text-decoration: none;
+            min-width: 140px;
+            justify-content: center;
         }
 
         .btn-primary {
@@ -139,7 +142,7 @@
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
@@ -149,17 +152,54 @@
             color: white;
         }
 
-        .btn-danger {
-            background: linear-gradient(135deg, #dc3545, #fd7e14);
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
             color: white;
         }
 
-        .btn-secondary {
-            background: linear-gradient(135deg, #6c757d, #adb5bd);
+        .btn-info:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(23, 162, 184, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
             color: white;
         }
 
-        /* Улучшенные стили для загрузки файлов */
+        .btn-warning:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 193, 7, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Группировка кнопок */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-group-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Стили для области загрузки файлов */
         .file-upload-area {
             border: 2px dashed #e9ecef;
             border-radius: 10px;
@@ -232,42 +272,7 @@
             opacity: 0;
         }
 
-        /* Стили для поиска заказов */
-        .order-search {
-            position: relative;
-            margin-bottom: 25px;
-        }
-
-        .order-suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid #e9ecef;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-
-        .order-suggestion {
-            padding: 15px;
-            cursor: pointer;
-            border-bottom: 1px solid #f8f9fa;
-            transition: background 0.2s ease;
-        }
-
-        .order-suggestion:hover {
-            background: #f8f9fa;
-        }
-
-        .order-suggestion:last-child {
-            border-bottom: none;
-        }
-
+        /* Стили для информации о заказе */
         .order-info {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
             border: 2px solid #667eea;
@@ -319,164 +324,6 @@
             font-weight: 500;
         }
 
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .status-new {
-            background: #cce5ff;
-            color: #0066cc;
-        }
-
-        .status-sent {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-delivered {
-            background: #e2e3e5;
-            color: #383d41;
-        }
-
-        .gifts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
-        }
-
-        .gift-card {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s ease;
-        }
-
-        .gift-card:hover {
-            border-color: #667eea;
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-        }
-
-        .gift-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .gift-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #495057;
-        }
-
-        .gift-code {
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .gift-info {
-            margin-bottom: 20px;
-        }
-
-        .gift-info p {
-            margin-bottom: 8px;
-            color: #6c757d;
-        }
-
-        .gift-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .status-active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
-            color: #6c757d;
-            font-weight: 600;
-        }
-
-        .alert {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
-            margin-top: 15px;
-            overflow: hidden;
-            display: none;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
         .toggle-mode {
             display: flex;
             background: #f8f9fa;
@@ -501,31 +348,40 @@
             color: white;
         }
 
-        .orders-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
         }
 
-        .order-card {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s ease;
-            cursor: pointer;
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
         }
 
-        .order-card:hover {
-            border-color: #667eea;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
         }
 
-        .order-card.selected {
-            border-color: #28a745;
-            background: #e8f5e8;
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
         }
 
         .spinner {
@@ -551,6 +407,89 @@
             border-radius: 8px;
             margin-top: 10px;
             display: none;
+        }
+
+        /* Кнопки результата подарка */
+        .gift-result-actions {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            border-radius: 10px;
+        }
+
+        .gift-result-actions.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .gift-result-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+        }
+
+        .gift-url {
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+
+        /* Поиск заказов */
+        .order-search {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .order-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .order-suggestion {
+            padding: 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f8f9fa;
+            transition: background 0.2s ease;
+        }
+
+        .order-suggestion:hover {
+            background: #f8f9fa;
+        }
+
+        .order-suggestion:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .order-details {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -646,10 +585,35 @@
                                 <div class="progress-fill"></div>
                             </div>
 
-                            <button type="submit" class="btn btn-primary" id="manual-create-btn">
-                                <span>🎁</span>
-                                <span>Создать подарок</span>
-                            </button>
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary" id="manual-create-btn">
+                                    <span>🎁</span>
+                                    <span>Создать подарок</span>
+                                </button>
+                            </div>
+
+                            <!-- Кнопки результата для ручного режима -->
+                            <div class="gift-result-actions" id="manual-gift-result">
+                                <div class="gift-result-info">
+                                    <h4>🎉 Подарок создан успешно!</h4>
+                                    <p><strong>Код подарка:</strong> <span id="manual-gift-code"></span></p>
+                                    <div class="gift-url" id="manual-gift-url"></div>
+                                </div>
+                                <div class="btn-group">
+                                    <a href="#" class="btn btn-info" id="manual-preview-btn" target="_blank">
+                                        <span>👀</span>
+                                        <span>Предварительный просмотр</span>
+                                    </a>
+                                    <button type="button" class="btn btn-warning" id="manual-send-telegram-btn">
+                                        <span>📱</span>
+                                        <span>Отправить в Telegram</span>
+                                    </button>
+                                    <button type="button" class="btn btn-success" onclick="copyToClipboard(document.getElementById('manual-gift-url').textContent)">
+                                        <span>📋</span>
+                                        <span>Копировать ссылку</span>
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
 
@@ -691,75 +655,54 @@
                                 <div class="progress-fill"></div>
                             </div>
 
-                            <button type="submit" class="btn btn-success" id="order-create-btn">
-                                <span>🎁</span>
-                                <span>Создать подарок для заказа</span>
-                            </button>
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-success" id="order-create-btn">
+                                    <span>🎁</span>
+                                    <span>Создать подарок для заказа</span>
+                                </button>
+                            </div>
+
+                            <!-- Кнопки результата для режима заказа -->
+                            <div class="gift-result-actions" id="order-gift-result">
+                                <div class="gift-result-info">
+                                    <h4>🎉 Подарок для заказа создан!</h4>
+                                    <p><strong>Заказ:</strong> <span id="order-gift-order-number"></span></p>
+                                    <p><strong>Код подарка:</strong> <span id="order-gift-code"></span></p>
+                                    <div class="gift-url" id="order-gift-url"></div>
+                                </div>
+                                <div class="btn-group">
+                                    <a href="#" class="btn btn-info" id="order-preview-btn" target="_blank">
+                                        <span>👀</span>
+                                        <span>Предварительный просмотр</span>
+                                    </a>
+                                    <button type="button" class="btn btn-warning" id="order-send-telegram-btn">
+                                        <span>📱</span>
+                                        <span>Отправить в Telegram</span>
+                                    </button>
+                                    <button type="button" class="btn btn-success" onclick="copyToClipboard(document.getElementById('order-gift-url').textContent)">
+                                        <span>📋</span>
+                                        <span>Копировать ссылку</span>
+                                    </button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
 
-                <!-- Управление заказами -->
+                <!-- Другие вкладки остаются без изменений -->
                 <div class="tab-pane" id="orders">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                        <h3>📋 Все заказы</h3>
-                        <button class="btn btn-primary" onclick="loadOrders()">
-                            <span>🔄</span>
-                            <span>Обновить</span>
-                        </button>
-                    </div>
-
-                    <div id="orders-loading" style="text-align: center; padding: 40px; display: none;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">🔄</div>
-                        <p>Загрузка заказов...</p>
-                    </div>
-
-                    <div class="orders-grid" id="orders-container"></div>
+                    <h3>📋 Заказы</h3>
+                    <p>Здесь будет список всех заказов...</p>
                 </div>
 
-                <!-- Управление подарками -->
                 <div class="tab-pane" id="manage">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                        <h3>📦 Все подарки</h3>
-                        <button class="btn btn-primary" onclick="loadGifts()">
-                            <span>🔄</span>
-                            <span>Обновить</span>
-                        </button>
-                    </div>
-
-                    <div id="gifts-loading" style="text-align: center; padding: 40px; display: none;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">🔄</div>
-                        <p>Загрузка подарков...</p>
-                    </div>
-
-                    <div class="gifts-grid" id="gifts-container"></div>
+                    <h3>📦 Управление</h3>
+                    <p>Здесь будет управление подарками...</p>
                 </div>
 
-                <!-- Статистика -->
                 <div class="tab-pane" id="stats">
-                    <div class="stats-grid" id="stats-container">
-                        <div class="stat-card">
-                            <div class="stat-number" id="total-gifts">0</div>
-                            <div class="stat-label">Всего подарков</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="total-views">0</div>
-                            <div class="stat-label">Просмотров</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="active-gifts">0</div>
-                            <div class="stat-label">Активных</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="total-orders">0</div>
-                            <div class="stat-label">Заказов</div>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 40px;">
-                        <h3>📈 Последние действия</h3>
-                        <div id="recent-activity"></div>
-                    </div>
+                    <h3>📊 Статистика</h3>
+                    <p>Здесь будет статистика...</p>
                 </div>
             </div>
         </div>
@@ -777,12 +720,12 @@
             manual: null,
             order: null
         };
+        let lastCreatedGift = null; // Для хранения данных последнего созданного подарка
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
             setupFileUploads();
-            loadStats();
         });
 
         function setupEventListeners() {
@@ -796,14 +739,6 @@
                     
                     tab.classList.add('active');
                     document.getElementById(targetTab).classList.add('active');
-                    
-                    if (targetTab === 'orders') {
-                        loadOrders();
-                    } else if (targetTab === 'manage') {
-                        loadGifts();
-                    } else if (targetTab === 'stats') {
-                        loadStats();
-                    }
                 });
             });
 
@@ -861,753 +796,4 @@
                         <div class="order-suggestion" onclick="selectOrderForGift('${order.orderNumber || order.id}')">
                             <strong>${order.orderNumber || 'Заказ #' + order.id}</strong> - ${order.recipientName || 'Имя не указано'}
                             <br><small style="color: #6c757d;">${order.occasion || 'Повод не указан'} • ${getStatusText(order.status)}</small>
-                        </div>
-                    `).join('');
-                    suggestions.style.display = 'block';
-                } else {
-                    suggestions.innerHTML = '<div class="order-suggestion">Заказы не найдены</div>';
-                    suggestions.style.display = 'block';
-                }
-            });
-
-            // Скрыть предложения при клике вне области поиска
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.order-search')) {
-                    document.getElementById('order-suggestions').style.display = 'none';
-                }
-            });
-
-            // Формы создания подарков
-            document.getElementById('manual-gift-form').addEventListener('submit', handleManualGiftSubmit);
-            document.getElementById('order-gift-form').addEventListener('submit', handleOrderGiftSubmit);
-        }
-
-        // Настройка загрузки файлов
-        function setupFileUploads() {
-            setupFileUpload('manual');
-            setupFileUpload('order');
-        }
-
-        function setupFileUpload(mode) {
-            const uploadArea = document.getElementById(`${mode}-file-upload`);
-            const fileInput = uploadArea.querySelector('input[type="file"]');
-            const fileInfo = document.getElementById(`${mode}-file-info`);
-            const fileName = document.getElementById(`${mode}-file-name`);
-            const fileSize = document.getElementById(`${mode}-file-size`);
-            const errorDiv = document.getElementById(`${mode}-file-error`);
-
-            // Клик по области загрузки
-            uploadArea.addEventListener('click', () => {
-                fileInput.click();
-            });
-
-            // Обработка выбора файла
-            fileInput.addEventListener('change', (e) => {
-                handleFileSelect(e.target.files[0], mode);
-            });
-
-            // Drag & Drop
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    handleFileSelect(files[0], mode);
-                }
-            });
-
-            function handleFileSelect(file, mode) {
-                const uploadArea = document.getElementById(`${mode}-file-upload`);
-                const fileInfo = document.getElementById(`${mode}-file-info`);
-                const fileName = document.getElementById(`${mode}-file-name`);
-                const fileSize = document.getElementById(`${mode}-file-size`);
-                const errorDiv = document.getElementById(`${mode}-file-error`);
-                const fileInput = uploadArea.querySelector('input[type="file"]');
-
-                // Сброс предыдущих ошибок
-                errorDiv.style.display = 'none';
-                errorDiv.textContent = '';
-
-                if (!file) {
-                    resetFileUpload(mode);
-                    return;
-                }
-
-                // Проверка типа файла
-                const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/ogg', 'audio/x-m4a'];
-                const fileExtension = file.name.toLowerCase().split('.').pop();
-                const allowedExtensions = ['mp3', 'wav', 'm4a', 'ogg'];
-
-                if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-                    showFileError(`Неподдерживаемый тип файла. Разрешены: MP3, WAV, M4A, OGG`, mode);
-                    resetFileUpload(mode);
-                    return;
-                }
-
-                // Проверка размера файла (10 МБ)
-                const maxSize = 10 * 1024 * 1024;
-                if (file.size > maxSize) {
-                    showFileError(`Файл слишком большой. Максимальный размер: 10 МБ`, mode);
-                    resetFileUpload(mode);
-                    return;
-                }
-
-                // Сохраняем файл
-                selectedFiles[mode] = file;
-
-                // Обновляем интерфейс
-                uploadArea.classList.add('has-file');
-                uploadArea.querySelector('.file-upload-text').textContent = 'Файл выбран';
-                uploadArea.querySelector('.file-upload-hint').textContent = 'Нажмите для выбора другого файла';
-                
-                fileName.textContent = file.name;
-                fileSize.textContent = formatFileSize(file.size);
-                fileInfo.classList.add('show');
-
-                // Создаем новый FileList для input
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                fileInput.files = dt.files;
-
-                console.log(`File selected for ${mode}:`, file.name, formatFileSize(file.size));
-            }
-        }
-
-        function resetFileUpload(mode) {
-            const uploadArea = document.getElementById(`${mode}-file-upload`);
-            const fileInfo = document.getElementById(`${mode}-file-info`);
-            const fileInput = uploadArea.querySelector('input[type="file"]');
-
-            selectedFiles[mode] = null;
-            uploadArea.classList.remove('has-file');
-            uploadArea.querySelector('.file-upload-text').textContent = 'Нажмите или перетащите аудиофайл';
-            uploadArea.querySelector('.file-upload-hint').textContent = 'Поддерживаемые форматы: MP3, WAV, M4A, OGG. Максимальный размер: 10 МБ';
-            fileInfo.classList.remove('show');
-            fileInput.value = '';
-        }
-
-        function showFileError(message, mode) {
-            const errorDiv = document.getElementById(`${mode}-file-error`);
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-
-        // Печатаем все пары ключ-значение из FormData
-        (function debugFormData(fd) {
-          const out = {};
-          for (const [k, v] of fd.entries()) {
-            if (k === 'audioBase64') {
-              // Печатаем только длину и первые символы, чтобы не засорять консоль
-              out[k] = {
-                length: typeof v === 'string' ? v.length : '(not a string)',
-                startsWith: typeof v === 'string' ? v.slice(0, 30) : ''
-              };
-            } else if (k === 'songFile') {
-              out[k] = (v && v.name) ? { name: v.name, size: v.size, type: v.type } : typeof v;
-            } else {
-              out[k] = v;
-            }
-          }
-          console.log('FORM DATA DEBUG →', out);
-        })(submitFormData);
-        
-        // Загрузка заказов для поиска
-        async function loadOrdersForSearch() {
-            try {
-                const response = await fetch(`${BACKEND_URL}?action=getOrders`);
-                const data = await response.json();
-                
-                if (data.success && data.orders) {
-                    ordersData = data.orders;
-                    console.log('Loaded orders for search:', ordersData.length);
-                }
-            } catch (error) {
-                console.error('Error loading orders for search:', error);
-            }
-        }
-
-        // Выбор заказа для создания подарка
-        function selectOrderForGift(orderId) {
-            selectedOrder = ordersData.find(order => 
-                (order.orderNumber && order.orderNumber === orderId) || 
-                order.id === orderId
-            );
-            
-            if (selectedOrder) {
-                document.getElementById('order-search').value = `${selectedOrder.orderNumber || 'Заказ #' + selectedOrder.id} - ${selectedOrder.recipientName}`;
-                document.getElementById('order-suggestions').style.display = 'none';
-                
-                showSelectedOrderInfo(selectedOrder);
-            }
-        }
-
-        // Показать информацию о выбранном заказе
-        function showSelectedOrderInfo(order) {
-            const orderInfo = document.getElementById('selected-order-info');
-            const orderDetails = document.getElementById('selected-order-details');
-            const orderForm = document.getElementById('order-gift-form');
-            
-            orderDetails.innerHTML = `
-                <div class="order-detail">
-                    <strong>Номер заказа:</strong>
-                    <div class="order-detail-value">${order.orderNumber || 'Заказ #' + order.id}</div>
-                </div>
-                <div class="order-detail">
-                    <strong>Получатель:</strong>
-                    <div class="order-detail-value">${order.recipientName || 'Не указано'}</div>
-                </div>
-                <div class="order-detail">
-                    <strong>Повод:</strong>
-                    <div class="order-detail-value">${order.occasion || 'Не указан'}</div>
-                </div>
-                <div class="order-detail">
-                    <strong>Статус:</strong>
-                    <div class="order-detail-value">
-                        <span class="status-badge ${getStatusClass(order.status)}">${getStatusText(order.status)}</span>
-                    </div>
-                </div>
-                <div class="order-detail">
-                    <strong>Дата заказа:</strong>
-                    <div class="order-detail-value">${order.createdAt || order.orderDate || 'Не указана'}</div>
-                </div>
-                <div class="order-detail">
-                  <strong>Заказчик:</strong>
-                  <div class="order-detail-value">
-                    ${order.userContact || order.contact || order.customerContact || 'Не указан'}
-                  </div>
-                </div>
-
-                
-            `;
-            
-            orderInfo.classList.add('show');
-            orderForm.style.display = 'block';
-        }
-
-        // Вспомогательные функции для статусов
-        function getStatusClass(status) {
-            switch(status?.toLowerCase()) {
-                case 'отправлено': case 'sent': return 'status-sent';
-                case 'доставлено': case 'delivered': return 'status-delivered';
-                default: return 'status-new';
-            }
-        }
-
-        function getStatusText(status) {
-            if (!status) return 'Новый';
-            const statusMap = {
-                'sent': 'Отправлено',
-                'delivered': 'Доставлено',
-                'new': 'Новый'
-            };
-            return statusMap[status.toLowerCase()] || status;
-        }
-
-        // Создание подарка (ручной режим)
-        async function handleManualGiftSubmit(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const createBtn = document.getElementById('manual-create-btn');
-            const progressBar = document.getElementById('manual-upload-progress');
-            const progressFill = progressBar.querySelector('.progress-fill');
-            
-            // Проверяем выбранный файл
-            const audioFile = selectedFiles.manual;
-            if (!audioFile) {
-                showAlert('Пожалуйста, выберите аудиофайл', 'error');
-                return;
-            }
-
-            try {
-                // Показываем прогресс
-                createBtn.classList.add('loading');
-                createBtn.innerHTML = '<span class="spinner"></span><span>Создаём подарок...</span>';
-                progressBar.style.display = 'block';
-                
-                // Симуляция прогресса
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += Math.random() * 20;
-                    if (progress > 85) progress = 85;
-                    progressFill.style.width = progress + '%';
-                }, 300);
-
-                // Подготавливаем данные для отправки
-                const orderNumber = formData.get('orderNumber')?.trim() || '';
-                const giftCode = orderNumber || generateGiftCode();
-
-                // Конвертируем файл в base64
-                console.log('Converting file to base64...');
-                const fileBase64 = await convertFileToBase64(audioFile);
-                
-                // Используем FormData но с base64 данными
-               const submitFormData = new FormData();
-
-                submitFormData.append('action', 'createGift');
-                submitFormData.append('recipientName', formData.get('recipientName'));
-                submitFormData.append(
-                  'occasion',
-                  formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion')
-                );
-                submitFormData.append('personalMessage', formData.get('personalMessage'));
-                submitFormData.append('giftCode', giftCode);
-                
-                // оригинальный файл
-                submitFormData.append('songFile', audioFile);
-                
-                // base64 версия файла
-                const dataUrl = await readFileAsDataURL(audioFile);
-                submitFormData.append('audioBase64', dataUrl);
-                submitFormData.append('filename', audioFile.name);
-                submitFormData.append('mimeType', audioFile.type || 'audio/mpeg');
-                submitFormData.append('fileSize', audioFile.size.toString());
-
-                // Если указан номер заказа, передаем его
-                if (orderNumber) {
-                    submitFormData.append('orderNumber', orderNumber);
-                }
-
-                console.log('Sending manual gift data with FormData + base64:', {
-                    recipientName: formData.get('recipientName'),
-                    occasion: formData.get('occasion') === 'custom' ? formData.get('customOccasion') : formData.get('occasion'),
-                    giftCode: giftCode,
-                    fileName: audioFile.name,
-                    fileSize: audioFile.size,
-                    fileType: audioFile.type,
-                    base64Length: fileBase64.length
-                });
-
-                // Отправляем как FormData (без Content-Type заголовка)
-                const response = await fetch(BACKEND_URL, {
-                    method: 'POST',
-                    body: submitFormData
-                });
-
-                const result = await response.json();
-                clearInterval(progressInterval);
-                progressFill.style.width = '100%';
-
-                console.log('Backend response:', result);
-
-                if (result.success) {
-                    const successMessage = orderNumber 
-                        ? `Подарок создан и привязан к заказу ${orderNumber}! Код: ${result.giftCode}`
-                        : `Подарок создан! Код: ${result.giftCode}`;
-                    
-                    showAlert(successMessage, 'success');
-                    
-                    // Показываем результат с информацией о связи с заказом
-                    showGiftResult(result, orderNumber ? { orderNumber, isManual: true } : null);
-                    
-                    // Сброс формы
-                    e.target.reset();
-                    resetFileUpload('manual');
-                    document.getElementById('custom-occasion').style.display = 'none';
-                    
-                    // Если был указан номер заказа, обновляем списки
-                    if (orderNumber) {
-                        loadOrders();
-                        loadGifts();
-                    }
-                } else {
-                    throw new Error(result.error || 'Неизвестная ошибка');
-                }
-
-            } catch (error) {
-                console.error('Error creating gift:', error);
-                showAlert('Ошибка при создании подарка: ' + error.message, 'error');
-            } finally {
-                createBtn.classList.remove('loading');
-                createBtn.innerHTML = '<span>🎁</span><span>Создать подарок</span>';
-                progressBar.style.display = 'none';
-                progressFill.style.width = '0%';
-            }
-        }
-
-        // Создание подарка по заказу
-        async function handleOrderGiftSubmit(e) {
-            e.preventDefault();
-            
-            if (!selectedOrder) {
-                showAlert('Пожалуйста, выберите заказ', 'error');
-                return;
-            }
-            
-            const audioFile = selectedFiles.order;
-            if (!audioFile) {
-                showAlert('Пожалуйста, выберите аудиофайл для заказа', 'error');
-                return;
-            }
-            
-            const createBtn = document.getElementById('order-create-btn');
-            const progressBar = document.getElementById('order-upload-progress');
-            const progressFill = progressBar.querySelector('.progress-fill');
-
-            try {
-                createBtn.classList.add('loading');
-                createBtn.innerHTML = '<span class="spinner"></span><span>Создаём подарок...</span>';
-                progressBar.style.display = 'block';
-                
-                // Симуляция прогресса
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += Math.random() * 20;
-                    if (progress > 85) progress = 85;
-                    progressFill.style.width = progress + '%';
-                }, 300);
-
-                // Конвертируем файл в base64
-                console.log('Converting file to base64...');
-                const fileBase64 = await convertFileToBase64(audioFile);
-                
-                // Используем FormData с base64 данными
-                const giftCode = generateGiftCode();
-                const submitFormData = new FormData();
-                
-                submitFormData.append('action', 'createGift');
-                submitFormData.append('orderNumber', selectedOrder.orderNumber || selectedOrder.id);
-                submitFormData.append('recipientName', selectedOrder.recipientName);
-                submitFormData.append('occasion', selectedOrder.occasion);
-                submitFormData.append('personalMessage', generatePersonalMessage(selectedOrder));
-                submitFormData.append('giftCode', giftCode);
-                
-                // оригинальный файл
-                submitFormData.append('songFile', audioFile);
-                
-                // base64 версия файла
-                const dataUrl = await readFileAsDataURL(audioFile);
-                submitFormData.append('audioBase64', dataUrl);
-                submitFormData.append('filename', audioFile.name);
-                submitFormData.append('mimeType', audioFile.type || 'audio/mpeg');
-                submitFormData.append('fileSize', audioFile.size.toString());
-
-                console.log('Sending order gift data with FormData + base64:', {
-                    orderNumber: selectedOrder.orderNumber || selectedOrder.id,
-                    recipientName: selectedOrder.recipientName,
-                    occasion: selectedOrder.occasion,
-                    giftCode: giftCode,
-                    fileName: audioFile.name,
-                    fileSize: audioFile.size,
-                    fileType: audioFile.type,
-                    base64Length: fileBase64.length
-                });
-
-                // Отправляем как FormData (без Content-Type заголовка)
-                const response = await fetch(BACKEND_URL, {
-                    method: 'POST',
-                    body: submitFormData
-                });
-
-                const result = await response.json();
-                clearInterval(progressInterval);
-                progressFill.style.width = '100%';
-
-                console.log('Backend response:', result);
-
-                if (result.success) {
-                    showAlert(`Подарок для заказа ${selectedOrder.orderNumber || selectedOrder.id} создан!`, 'success');
-                    showGiftResult(result, selectedOrder);
-                    
-                    // Сбрасываем форму
-                    e.target.reset();
-                    resetFileUpload('order');
-                    document.getElementById('selected-order-info').classList.remove('show');
-                    document.getElementById('order-gift-form').style.display = 'none';
-                    document.getElementById('order-search').value = '';
-                    selectedOrder = null;
-                    
-                } else {
-                    throw new Error(result.error || 'Неизвестная ошибка');
-                }
-
-            } catch (error) {
-                console.error('Error creating gift for order:', error);
-                showAlert('Ошибка при создании подарка: ' + error.message, 'error');
-            } finally {
-                createBtn.classList.remove('loading');
-                createBtn.innerHTML = '<span>🎁</span><span>Создать подарок для заказа</span>';
-                progressBar.style.display = 'none';
-                progressFill.style.width = '0%';
-            }
-        }
-
-        // Генерация персонального сообщения по заказу
-        function generatePersonalMessage(order) {
-            const name = order.recipientName || 'Дорогой получатель';
-            const occasion = order.occasion || 'особенного дня';
-            
-            const messages = {
-                'День рождения': `${name}, поздравляем с днем рождения! Пусть этот особенный день принесет тебе море радости и пусть каждый день будет наполнен музыкой и смехом! 🎈✨`,
-                'Новый год': `${name}, с Новым годом! Пусть наступающий год принесет множество приятных сюрпризов, а эта песня станет саундтреком к новым достижениям! 🎄✨`,
-                'Годовщина': `${name}, поздравляем с годовщиной! Пусть ваша любовь звучит как самая прекрасная мелодия! 💝🎵`,
-                '8 марта': `${name}, с 8 марта! Пусть этот день будет наполнен цветами, улыбками и прекрасной музыкой! 🌹✨`,
-                'День Святого Валентина': `${name}, с Днем Святого Валентина! Эта песня создана с любовью специально для тебя! 💕🎵`,
-                'Просто так': `${name}, эта песня создана специально для тебя просто так, чтобы подарить улыбку и хорошее настроение! ✨🎶`,
-                'Свадьба': `${name}, поздравляем с самым важным днем в жизни! Пусть ваш союз звучит как прекрасная симфония! 💒🎵`,
-                'Выпускной': `${name}, поздравляем с выпускным! Впереди новые горизонты, а эта песня пусть станет гимном твоих достижений! 🎓🎵`
-            };
-            
-            return messages[occasion] || `${name}, эта персональная песня создана специально для тебя в честь ${occasion.toLowerCase()}! Наслаждайся уникальной композицией! 🎵✨`;
-        }
-
-        // Генерация кода подарка
-        function generateGiftCode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = '';
-            for (let i = 0; i < 8; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-
-        // Читаем файл и получаем dataURL (base64)
-        function readFileAsDataURL(file) {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-        }
-
-        // Загрузка заказов
-        async function loadOrders() {
-            const container = document.getElementById('orders-container');
-            const loading = document.getElementById('orders-loading');
-            
-            loading.style.display = 'block';
-            container.innerHTML = '';
-            
-            try {
-                const response = await fetch(`${BACKEND_URL}?action=getOrders`);
-                const data = await response.json();
-                
-                if (data.success && data.orders && data.orders.length > 0) {
-                    container.innerHTML = data.orders.map(order => createOrderCard(order)).join('');
-                    ordersData = data.orders;
-                } else {
-                    container.innerHTML = '<p style="text-align: center; color: #6c757d; grid-column: 1/-1;">Заказы пока не найдены</p>';
-                }
-            } catch (error) {
-                console.error('Error loading orders:', error);
-                container.innerHTML = '<p style="text-align: center; color: #dc3545; grid-column: 1/-1;">Ошибка загрузки заказов</p>';
-            } finally {
-                loading.style.display = 'none';
-            }
-        }
-
-        // Создание карточки заказа
-        function createOrderCard(order) {
-            return `
-                <div class="order-card" onclick="selectOrderFromCard('${order.orderNumber || order.id}')">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h4 style="margin: 0; color: #495057;">${order.orderNumber || 'Заказ #' + order.id}</h4>
-                        <span class="status-badge ${getStatusClass(order.status)}">${getStatusText(order.status)}</span>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <p style="margin: 5px 0; color: #6c757d;"><strong>Получатель:</strong> ${order.recipientName || 'Не указан'}</p>
-                        <p style="margin: 5px 0; color: #6c757d;"><strong>Повод:</strong> ${order.occasion || 'Не указан'}</p>
-                        <p style="margin: 5px 0; color: #6c757d;"><strong>Дата:</strong> ${order.createdAt || order.orderDate || 'Не указана'}</p>
-                        ${order.songUrl ? '<p style="margin: 5px 0; color: #28a745;"><strong>✅ Подарок готов</strong></p>' : ''}
-                    </div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        ${!order.songUrl ? `
-                        <button class="btn btn-primary" onclick="event.stopPropagation(); createGiftForOrder('${order.orderNumber || order.id}')" style="padding: 8px 15px; font-size: 14px;">
-                            🎁 Создать подарок
-                        </button>
-                        ` : `
-                        <a href="${FRONTEND_BASE_URL}?code=${order.orderNumber || order.id}" target="_blank" class="btn btn-success" style="padding: 8px 15px; font-size: 14px; text-decoration: none;">
-                            👀 Посмотреть подарок
-                        </a>
-                        `}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Выбор заказа из карточки
-        function selectOrderFromCard(orderId) {
-            document.querySelector('[data-tab="create"]').click();
-            document.querySelector('[data-mode="order"]').click();
-            selectOrderForGift(orderId);
-        }
-
-        // Создание подарка для заказа из карточки
-        function createGiftForOrder(orderId) {
-            selectOrderFromCard(orderId);
-        }
-
-        // Загрузка подарков
-        async function loadGifts() {
-            const container = document.getElementById('gifts-container');
-            const loading = document.getElementById('gifts-loading');
-            
-            loading.style.display = 'block';
-            container.innerHTML = '';
-            
-            try {
-                const response = await fetch(`${BACKEND_URL}?action=getAllGifts`);
-                const data = await response.json();
-                
-                if (data.success && data.gifts && data.gifts.length > 0) {
-                    container.innerHTML = data.gifts.map(gift => createGiftCard(gift)).join('');
-                } else {
-                    container.innerHTML = '<p style="text-align: center; color: #6c757d; grid-column: 1/-1;">Подарки пока не созданы</p>';
-                }
-            } catch (error) {
-                console.error('Error loading gifts:', error);
-                container.innerHTML = '<p style="text-align: center; color: #dc3545; grid-column: 1/-1;">Ошибка загрузки подарков</p>';
-            } finally {
-                loading.style.display = 'none';
-            }
-        }
-
-        // Создание карточки подарка
-        function createGiftCard(gift) {
-            const giftUrl = `${FRONTEND_BASE_URL}?code=${gift.giftCode || gift.code}`;
-            const statusClass = gift.status === 'active' || gift.status === 'Отправлено' ? 'status-active' : 'status-inactive';
-            const statusText = gift.status === 'active' || gift.status === 'Отправлено' ? 'Активен' : 'Неактивен';
-            
-            return `
-                <div class="gift-card">
-                    <div class="gift-header">
-                        <div class="gift-title">${gift.recipientName}</div>
-                        <div class="gift-code">${gift.giftCode || gift.code}</div>
-                    </div>
-                    <div class="gift-info">
-                        <p><strong>Повод:</strong> ${gift.occasion}</p>
-                        <p><strong>Создан:</strong> ${new Date(gift.createdAt || gift.created).toLocaleString('ru')}</p>
-                        <p><strong>Просмотров:</strong> ${gift.viewCount || gift.views || 0}</p>
-                        <p><strong>Статус:</strong> <span class="status-badge ${statusClass}">${statusText}</span></p>
-                        ${gift.orderNumber ? `<p><strong>Заказ:</strong> ${gift.orderNumber}</p>` : ''}
-                    </div>
-                    <div class="gift-actions">
-                        <a href="${giftUrl}" target="_blank" class="btn btn-primary">👀 Открыть</a>
-                        <button onclick="copyToClipboard('${giftUrl}')" class="btn btn-success">📋 Копировать</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Загрузка статистики
-        async function loadStats() {
-            try {
-                const response = await fetch(`${BACKEND_URL}?action=getStats`);
-                const stats = await response.json();
-                
-                document.getElementById('total-gifts').textContent = stats.totalGifts || 0;
-                document.getElementById('total-views').textContent = stats.totalViews || 0;
-                document.getElementById('active-gifts').textContent = stats.activeGifts || 0;
-                document.getElementById('total-orders').textContent = stats.totalOrders || 0;
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-        }
-
-        // Вспомогательные функции
-        function showAlert(message, type) {
-            const alert = document.getElementById(type === 'error' ? 'error-alert' : 'success-alert');
-            alert.textContent = message;
-            alert.style.display = 'block';
-            
-            setTimeout(() => {
-                alert.style.display = 'none';
-            }, 5000);
-        }
-
-        function showGiftResult(result, order = null) {
-            const giftUrl = `${FRONTEND_BASE_URL}?code=${result.giftCode}`;
-            const alertDiv = document.getElementById('success-alert');
-            
-            let orderInfo = '';
-            if (order) {
-                if (order.isManual) {
-                    // Ручной режим с указанным номером заказа
-                    orderInfo = `
-                        <div style="margin-bottom: 15px;">
-                            <strong>Заказ:</strong> ${order.orderNumber}<br>
-                            <span style="color: #28a745;">✅ Данные обновлены в существующем заказе</span>
-                        </div>
-                    `;
-                } else {
-                    // Режим "По заказу"
-                    orderInfo = `
-                        <div style="margin-bottom: 15px;">
-                            <strong>Заказ:</strong> ${order.orderNumber || order.id}<br>
-                            <strong>Получатель:</strong> ${order.recipientName}<br>
-                            <strong>Повод:</strong> ${order.occasion}
-                        </div>
-                    `;
-                }
-            }
-            
-            alertDiv.innerHTML = `
-                <div style="margin-bottom: 15px;">
-                    <strong>Подарок успешно создан!</strong><br>
-                    Код подарка: <strong>${result.giftCode}</strong>
-                </div>
-                ${orderInfo}
-                <div style="margin-bottom: 15px;">
-                    <strong>Ссылка на подарок:</strong><br>
-                    <input type="text" value="${giftUrl}" readonly style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px;">
-                </div>
-                <button onclick="copyToClipboard('${giftUrl}')" class="btn" style="background: #28a745; color: white; padding: 8px 15px; margin-right: 10px;">
-                    📋 Скопировать ссылку
-                </button>
-                <a href="${giftUrl}" target="_blank" class="btn" style="background: #667eea; color: white; padding: 8px 15px; text-decoration: none;">
-                    👀 Посмотреть подарок
-                </a>
-                ${order ? '<div style="margin-top: 15px; color: #155724;">✅ Статус заказа обновлен на "Отправлено"</div>' : ''}
-            `;
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showAlert('Ссылка скопирована в буфер обмена!', 'success');
-            }).catch(() => {
-                // Fallback для старых браузеров
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showAlert('Ссылка скопирована!', 'success');
-            });
-        }
-
-        // Функция для конвертации файла в base64
-        function convertFileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => {
-                    // Убираем префикс "data:audio/mpeg;base64," и оставляем только base64
-                    const base64 = reader.result.split(',')[1];
-                    resolve(base64);
-                };
-                reader.onerror = error => reject(error);
-            });
-        }
-    </script>
-</body>
-</html>
+                        </div

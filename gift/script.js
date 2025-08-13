@@ -160,7 +160,7 @@ function getOccasionTitle(occasion) {
     'Выпускной': 'С Выпускным'
   };
   // Для кастомных поводов создаем заголовок динамически
-  return titles[occasion] || `Поздравляем с ${occasion}`;
+  return titles[occasion] || `Поздравляю с ${occasion}`;
 }
 
 // Получение описания для повода (включая кастомные)
